@@ -1,0 +1,38 @@
+{
+  "name": "statementpro-backend",
+  "version": "1.0.0",
+  "description": "StatementPro SaaS Backend — Express + MongoDB + JWT",
+  "main": "dist/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "seed": "tsx src/scripts/seedSuperAdmin.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.7.2",
+    "ua-parser-js": "^2.0.10"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.0.0",
+    "@types/ua-parser-js": "^0.7.39",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

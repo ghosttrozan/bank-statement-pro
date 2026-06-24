@@ -1,0 +1,452 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer utilities {
+  .custom-shadow {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  }
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #F8FAFC;
+}
+
+/* Print layout optimizations for zero whitespace at the top of A4 pages */
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background-color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0 !important;
+  }
+
+  /* Remove all margins, paddings, centers, and width-locks for all potential parent/wrapper elements during print */
+  #root,
+  .min-h-screen,
+  main,
+  .flex-1,
+  .animate-fadeIn,
+  .print-container-target,
+  .print-page-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: block !important;
+  }
+
+  /* Make sure every printed page starts exactly at the boundaries of the A4 layout with no gaps */
+  .print-page {
+    margin: 0 !important;
+    padding-top: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-width: 210mm !important;
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Remove any margins from the first child within the print page */
+  .print-page > div:first-child,
+  .print-page > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  /* Direct top child must not push elements down */
+  .print-page > div > *:first-child {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+}
+
+/* Metadata Section Styling */
+.sbi-metadata-container {
+  display: flex;
+  flex-direction: column;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
+  margin-top: 4px;
+}
+
+.sbi-metadata-upper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 36px;
+  margin-bottom: 24px;
+}
+
+.sbi-metadata-customer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sbi-metadata-customer-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: #000000;
+  line-height: 1.2;
+}
+
+.sbi-metadata-customer-email {
+  font-size: 13px;
+  color: #000000;
+  line-height: 1.2;
+}
+
+.sbi-metadata-customer-address {
+  font-size: 13px;
+  color: #000000;
+  line-height: 2;
+  white-space: pre-wrap;
+}
+
+.sbi-metadata-bank-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sbi-metadata-bank-name {
+  font-size: 18.6px;
+  color: #00B7FF;
+  line-height: 1.1;
+}
+
+.sbi-metadata-branch-name {
+  font-size: 13px;
+  color: #000000;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.sbi-metadata-branch-address {
+  font-size: 11px;
+  color: #000000;
+  line-height: 1.2;
+  white-space: pre-wrap;
+  margin-top: 4px;
+}
+
+.sbi-metadata-lower {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 36px;
+}
+
+.sbi-metadata-row {
+  display: grid;
+  align-items: center;
+  height: 27px;
+}
+
+.sbi-metadata-row-left {
+  grid-template-columns: 140px 10px 1fr;
+}
+
+.sbi-metadata-row-right {
+  grid-template-columns: 120px 10px 1fr;
+}
+
+.sbi-metadata-label {
+  font-size: 13px;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.sbi-metadata-colon {
+  font-size: 13px;
+  color: #000000;
+  text-align: left;
+}
+
+.sbi-metadata-value {
+  font-size: 13px;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.sbi-metadata-block {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  column-gap: 8px;
+  align-items: stretch;
+}
+
+.sbi-metadata-icon-container {
+  border-right: 1.2px solid #663391;
+  color: #663391;
+  display: flex;
+  justify-content: center;
+  padding-right: 8px;
+  height: 26px;
+  align-self: start;
+  margin-top: 1px;
+}
+
+.sbi-metadata-icon {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sbi-metadata-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.0;
+}
+
+.sbi-metadata-block-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.sbi-metadata-block-no-icon {
+  padding-left: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+}
+
+.sbi-stretch-block {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.sbi-address-stretch-block {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.sbi-stretch-block .sbi-metadata-icon-container {
+  height: auto !important;
+  align-self: stretch;
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Admin Panel Light Theme Overrides
+   ========================================================================== */
+.admin-panel-root {
+  background-color: #f8fafc !important;
+  color: #334155 !important;
+}
+
+/* Backgrounds - Override dark slate panels and wrappers */
+.admin-panel-root .bg-slate-950,
+.admin-panel-root header.bg-slate-950,
+.admin-panel-root .bg-slate-950\/40,
+.admin-panel-root .bg-slate-950\/30,
+.admin-panel-root .bg-slate-950\/20,
+.admin-panel-root .bg-slate-950\/10 {
+  background-color: #f8fafc !important;
+}
+
+.admin-panel-root aside.bg-slate-900,
+.admin-panel-root .bg-slate-900,
+.admin-panel-root .bg-slate-900\/50,
+.admin-panel-root .bg-indigo-950\/20,
+.admin-panel-root div.fixed.z-50.max-w-xl,
+.admin-panel-root div.fixed.z-50.max-w-lg {
+  background-color: #ffffff !important;
+}
+
+/* Specific Sidebar Overrides */
+.admin-panel-root aside {
+  background-color: #ffffff !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+.admin-panel-root aside div.bg-slate-950\/40 {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+.admin-panel-root aside nav a {
+  color: #475569 !important; /* slate-600 */
+}
+.admin-panel-root aside nav a:hover {
+  background-color: #f1f5f9 !important; /* slate-100 */
+  color: #0f172a !important; /* slate-900 */
+}
+.admin-panel-root aside nav a.bg-indigo-600\/15 {
+  background-color: #e0e7ff !important; /* indigo-100 */
+  color: #4f46e5 !important;            /* indigo-600 */
+  border-left: 4px solid #4f46e5 !important;
+}
+.admin-panel-root aside nav a.bg-indigo-600\/15 svg {
+  color: #4f46e5 !important;
+}
+
+/* Sidebar Footer Generator Button */
+.admin-panel-root aside .bg-slate-950\/30 {
+  background-color: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+.admin-panel-root aside .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+.admin-panel-root aside .bg-slate-800:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Borders Override */
+.admin-panel-root .border-slate-900,
+.admin-panel-root .border-slate-850,
+.admin-panel-root .border-slate-800,
+.admin-panel-root .border-slate-800\/80,
+.admin-panel-root .border-slate-800\/50,
+.admin-panel-root .border-slate-700,
+.admin-panel-root .divide-slate-800\/50 > *,
+.admin-panel-root .divide-y > * {
+  border-color: #e2e8f0 !important;
+}
+
+/* Tables and Tr Row Styling */
+.admin-panel-root tr {
+  background-color: #ffffff !important;
+  color: #475569 !important;
+}
+.admin-panel-root tr.bg-slate-950\/40 {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+}
+.admin-panel-root tr.hover\:bg-slate-800\/30:hover,
+.admin-panel-root tr:hover {
+  background-color: #f8fafc !important;
+}
+
+/* Inputs, Select, Textareas */
+.admin-panel-root input[type="text"],
+.admin-panel-root input[type="tel"],
+.admin-panel-root input[type="password"],
+.admin-panel-root input[type="number"],
+.admin-panel-root select,
+.admin-panel-root textarea {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #1e293b !important;
+}
+.admin-panel-root input::placeholder,
+.admin-panel-root textarea::placeholder {
+  color: #94a3b8 !important;
+}
+.admin-panel-root input:focus,
+.admin-panel-root select:focus,
+.admin-panel-root textarea:focus {
+  border-color: #6366f1 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Inactive toggles inside settings page */
+.admin-panel-root input[type="checkbox"]:not(:checked) + div.bg-slate-800 {
+  background-color: #cbd5e1 !important;
+  border-color: #cbd5e1 !important;
+}
+.admin-panel-root input[type="checkbox"]:not(:checked) + div.bg-slate-800::after {
+  background-color: #ffffff !important;
+}
+
+/* Typography Color Mappings */
+.admin-panel-root .text-slate-100,
+.admin-panel-root .text-slate-200 {
+  color: #0f172a !important; /* slate-900 */
+}
+.admin-panel-root .text-slate-300,
+.admin-panel-root .text-slate-350,
+.admin-panel-root .text-slate-400 {
+  color: #334155 !important; /* slate-700 */
+}
+.admin-panel-root .text-slate-500,
+.admin-panel-root .text-slate-550 {
+  color: #64748b !important; /* slate-500 */
+}
+.admin-panel-root .text-indigo-300,
+.admin-panel-root .text-indigo-400 {
+  color: #4f46e5 !important; /* indigo-600 */
+}
+
+/* Buttons Hovers */
+.admin-panel-root button.text-slate-500:hover,
+.admin-panel-root button.text-slate-400:hover,
+.admin-panel-root button.hover\:bg-slate-800:hover:not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-red"]):not([class*="text-amber"]):not([class*="text-purple"]) {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Plan tags and other dark inline blocks */
+.admin-panel-root span.bg-slate-800,
+.admin-panel-root span[class*="bg-slate-800"] {
+  background-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* Bulk actions top bar alert */
+.admin-panel-root .bg-indigo-950\/40 {
+  background-color: #e0e7ff !important;
+  border: 1px solid #c7d2fe !important;
+  color: #3730a3 !important;
+}
+.admin-panel-root .bg-indigo-950\/40 span {
+  color: #3730a3 !important;
+}
+.admin-panel-root .bg-indigo-950\/40 button {
+  background-color: #ffffff !important;
+  border: 1px solid #c7d2fe !important;
+  color: #4f46e5 !important;
+}
+.admin-panel-root .bg-indigo-950\/40 button:hover {
+  background-color: #e0e7ff !important;
+}
+
+/* Modals overlays backdrops */
+.admin-panel-root .bg-slate-950\/70,
+.admin-panel-root .bg-slate-950\/60 {
+  background-color: rgba(15, 23, 42, 0.4) !important;
+}
+
+/* Recharts grid lines & tooltip adjustments */
+.admin-panel-root .recharts-cartesian-grid line {
+  stroke: #e2e8f0 !important;
+}
+.admin-panel-root .recharts-text {
+  fill: #64748b !important;
+}
+.admin-panel-root .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+
+
+
+
+

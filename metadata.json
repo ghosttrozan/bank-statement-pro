@@ -1,0 +1,6 @@
+{
+  "name": "Bank Statement Generator",
+  "description": "Professional dynamic banking statement generator for SBI and Kotak Mahindra Bank with customizable customer details, realistic transaction models, and A4 print templates.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
