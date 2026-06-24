@@ -14,7 +14,7 @@ export interface IRefreshToken extends Document {
 const refreshTokenSchema = new Schema<IRefreshToken>(
   {
     userId:         { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    tokenHash:      { type: String, required: true, unique: true },
+    tokenHash:      { type: String, required: true, },
     sessionVersion: { type: Number, required: true },
     expiresAt:      { type: Date, required: true },
     isRevoked:      { type: Boolean, default: false },

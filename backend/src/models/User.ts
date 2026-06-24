@@ -54,8 +54,8 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>(
   {
     fullName:     { type: String, required: true, trim: true },
-    username:     { type: String, required: true, unique: true, lowercase: true, trim: true },
-    phoneNumber:  { type: String, required: true, unique: true, trim: true },
+    username:     { type: String, required: true, lowercase: true, trim: true },
+    phoneNumber:  { type: String, required: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
     role:         { type: String, enum: ['SUPER_ADMIN', 'ADMIN', 'USER'], default: 'USER' },
     createdBy:    { type: Schema.Types.ObjectId, ref: 'User', default: null },

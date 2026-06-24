@@ -34,7 +34,7 @@ app.use(secureHeaders);
 // CORS configuration (allow cookies/credentials and restrict origin)
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  : ['http://localhost:3000', 'http://127.0.0.1:3000','https://bank-statement-pro.netlify.app/login'];
 
 app.use(
   cors({

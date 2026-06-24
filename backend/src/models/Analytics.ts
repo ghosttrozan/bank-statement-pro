@@ -14,7 +14,7 @@ export interface IAnalytics extends Document {
 
 const analyticsSchema = new Schema<IAnalytics>(
   {
-    userId:             { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+    userId:             { type: Schema.Types.ObjectId, ref: 'User', required: true, },
     totalGenerated:     { type: Number, default: 0 },
     todayGenerated:     { type: Number, default: 0 },
     weeklyGenerated:    { type: Number, default: 0 },
