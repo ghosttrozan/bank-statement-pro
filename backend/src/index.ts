@@ -25,7 +25,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// Connect to Database
 // ── Global Middlewares ──
 
 // Apply secure HTTP headers via helmet
@@ -50,6 +49,10 @@ app.use(requestLogger);
 
 // Global API Rate Limiter
 app.use('/api', apiLimiter);
+
+app.get('/', (_req, res) => {
+  res.status(200).json({ status: 'ok', service: 'statementpro-backend' });
+});
 
 // ── Route Bindings ──
 app.use('/api/auth', authRoutes);
