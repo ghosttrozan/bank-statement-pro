@@ -11,6 +11,7 @@ import connectDB from './config/db';
 import { secureHeaders } from './middleware/secureHeaders';
 import { apiLimiter } from './middleware/rateLimiter';
 import { requestLogger } from './middleware/requestLogger';
+import { ensureSuperAdmin } from './services/superAdminService';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -22,29 +23,18 @@ import settingsRoutes from './routes/settings';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Connect to Database
-connectDB();
-
 // ── Global Middlewares ──
 
 // Apply secure HTTP headers via helmet
 app.use(secureHeaders);
 
-// CORS configuration (allow cookies/credentials and restrict origin)
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000', 'http://127.0.0.1:3000','https://bank-statement-pro.netlify.app/login'];
-
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+      callback(null, origin || true);
     },
     credentials: true,
   })
@@ -78,10 +68,20 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-// Bind to 127.0.0.1 for testing security compliance
-const server = app.listen(Number(PORT), '127.0.0.1', () => {
-  console.log(`[Server] StatementPro backend is running on http://127.0.0.1:${PORT}`);
-  console.log(`[Server] Listening restricted to localhost/127.0.0.1`);
+async function startServer() {
+  await connectDB();
+  await ensureSuperAdmin();
+
+  const server = app.listen(Number(PORT), HOST, () => {
+    console.log(`[Server] StatementPro backend is running on http://${HOST}:${PORT}`);
+  });
+
+  return server;
+}
+
+startServer().catch((error) => {
+  console.error('[Server] Failed to start backend:', error);
+  process.exit(1);
 });
 
 export default app;
