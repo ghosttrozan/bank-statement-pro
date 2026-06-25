@@ -169,7 +169,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
   const pageChunks = settings.bankStyle === 'SBI' 
     ? chunkTransactionsForA4(transactions, 6, 21)
-    : chunkTransactionsForA4(transactions, 13, 23);
+    : chunkTransactionsForA4(transactions, 15, 28);
 
   const allPages = [...pageChunks, [] as Transaction[]];
 
@@ -507,7 +507,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
       src="/kotak-logo1.png"   // replace with your actual image path
       alt="Kotak Mahindra Bank"
       style={{
-        height: '80px',               // adjust to match visual size of the text
+        height: '100px',               // adjust to match visual size of the text
         width: 'auto',
         display: 'block',
       }}
@@ -521,7 +521,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
       alt="Account Statement"
       style={{
         height: 'auto',
-        maxHeight: '80px',            // adjust as needed
+        maxHeight: '90px',            // adjust as needed
         width: 'auto',
         display: 'block',
       }}
@@ -537,7 +537,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             justifyContent: 'space-between',
                             alignItems: 'center',
                           }}>
-                            <span className='text-3xl font-semibold '>Account Statement <div style={{
+                            <span className='text-2xl font-semibold '>Account Statement <div style={{
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
@@ -660,101 +660,198 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   )}
 
                   {/* STATEMENT TRANSACTIONS LIST TABLE */}
-                  {chunkTransactions.length > 0 && (
-                    <div className={`${settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm]'}`}>
-                      {settings.bankStyle === 'SBI' ? (
-                        <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>
-                          <thead>
-                            <tr style={{ height: '32px', backgroundColor: '#5452AA', color: '#ffffff', fontSize: '10px', fontWeight: 600, userSelect: 'none' }}>
-                              <th style={{ width: '9%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '2px solid #E0E0E0' }}>Value Date</th>
-                              <th style={{ width: '9%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>Post Date</th>
-                              <th style={{ width: '33%', padding: '3px 4px', textAlign: 'left', fontWeight: 600, border: '1px solid #E0E0E0' }}>Details</th>
-                              <th style={{ width: '12%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0', lineHeight: '1.2' }}>Ref No/<br/>Cheque<br/>No</th>
-                              <th style={{ width: '12%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>₹ Debit</th>
-                              <th style={{ width: '12%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>₹ Credit</th>
-                              <th style={{ width: '13%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>Balance</th>
-                            </tr>
-                          </thead>
-                          <tbody style={{ backgroundColor: '#ffffff', color: '#111827' }}>
-                            
+                 {chunkTransactions.length > 0 && (
+  <div className={`${settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm] mt-2'}`}>
+    {settings.bankStyle === 'SBI' ? (
+      /* ─── SBI TABLE (unchanged) ──────────────────────────────── */
+      <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>
+        <thead>
+          <tr style={{ height: '32px', backgroundColor: '#5452AA', color: '#ffffff', fontSize: '10px', fontWeight: 600, userSelect: 'none' }}>
+            <th style={{ width: '9%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '2px solid #E0E0E0' }}>Value Date</th>
+            <th style={{ width: '9%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>Post Date</th>
+            <th style={{ width: '33%', padding: '3px 4px', textAlign: 'left', fontWeight: 600, border: '1px solid #E0E0E0' }}>Details</th>
+            <th style={{ width: '12%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0', lineHeight: '1.2' }}>Ref No/<br/>Cheque<br/>No</th>
+            <th style={{ width: '12%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>₹ Debit</th>
+            <th style={{ width: '12%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>₹ Credit</th>
+            <th style={{ width: '13%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>Balance</th>
+          </tr>
+        </thead>
+        <tbody style={{ backgroundColor: '#ffffff', color: '#111827' }}>
+          {chunkTransactions.map((tx) => (
+            <tr key={tx.id} style={{ borderBottom: '1px solid #e5e7eb', height: 'auto', lineHeight: '1.2' }}>
+              <td style={{ width: '9%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px', whiteSpace: 'nowrap' }}>{tx.valueDate}</td>
+              <td style={{ width: '9%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px', whiteSpace: 'nowrap' }}>{tx.postDate}</td>
+              <td style={{ width: '33%', padding: '5.5px 4px', textAlign: 'left', border: '1px solid #e5e7eb', fontSize: '8.5px', lineHeight: '1.2', textTransform: 'uppercase' }}>
+                <div style={{ wordBreak: 'break-all', lineHeight: '1' }}>{formatSbiDetails(tx.details, tx.refNo)}</div>
+              </td>
+              <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px' }}>-</td>
+              <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', paddingRight: '6px' }}>
+                {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
+              </td>
+              <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', paddingRight: '6px' }}>
+                {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
+              </td>
+              <td style={{ width: '13%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', fontWeight: '500', paddingRight: '6px' }}>
+                {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+          ))}
+          <tr style={{ height: '25px', backgroundColor: '#5452AA', userSelect: 'none' }}>
+            <td colSpan={7} style={{ padding: 0, margin: 0, height: '25px', border: '1px solid #5452AA' }}></td>
+          </tr>
+        </tbody>
+      </table>
+    ) : (
+      /* ─── KOTAK TABLE – updated header UI ──────────────────── */
+        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+    {/* ── Title Bar ── */}
+    <div style={{
+      backgroundColor: '#ED1C24',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      margin: '',
+      padding: '0 8mm',
+      boxSizing: 'border-box',
+      fontFamily: 'Arial, Helvetica, sans-serif',
+    }}>
+      <span style={{
+        color: '#ffffff',
+        fontSize: '18px',
+        fontWeight: 500,
+        fontFamily: 'Arial, Helvetica, sans-serif',
+        letterSpacing: '0.3px',
+        textAlign: 'center',
+      }}>
+        Savings Account Transactions
+      </span>
+    </div>
 
-                            {chunkTransactions.map((tx) => (
-                              <tr key={tx.id} style={{ borderBottom: '1px solid #e5e7eb', height: 'auto', lineHeight: '1.2' }}>
-                                <td style={{ width: '9%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px', whiteSpace: 'nowrap' }}>{tx.valueDate}</td>
-                                <td style={{ width: '9%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px', whiteSpace: 'nowrap' }}>{tx.postDate}</td>
-                                <td style={{ width: '33%', padding: '5.5px 4px', textAlign: 'left', border: '1px solid #e5e7eb', fontSize: '8.5px', lineHeight: '1.2', textTransform: 'uppercase' }}>
-                                  <div style={{ wordBreak: 'break-all', lineHeight: '1' }}>{formatSbiDetails(tx.details, tx.refNo)}</div>
-                                </td>
-                                <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px' }}>
-                                  -
-                                </td>
-                                <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', paddingRight: '6px' }}>
-                                  {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
-                                </td>
-                                <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', paddingRight: '6px' }}>
-                                  {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
-                                </td>
-                                <td style={{ width: '13%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', fontWeight: '500', paddingRight: '6px' }}>
-                                  {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                </td>
-                              </tr>
-                            ))}
-
-                            {/* Mandated Solid Purple Footer Row height 25px spanning all columns */}
-                            <tr style={{ height: '25px', backgroundColor: '#5452AA', userSelect: 'none' }}>
-                              <td colSpan={7} style={{ padding: 0, margin: 0, height: '25px', border: '1px solid #5452AA' }}></td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      ) : (
-                        <table className="w-full text-left text-[10px] font-sans border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
-                          <thead>
-                            <tr style={{ background: '#ED1C24', color: '#ffffff', fontSize: '9.5px', fontWeight: 700, userSelect: 'none' }}>
-                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Date</th>
-                              <th style={{ width: '31%', padding: '5px 5px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Description</th>
-                              <th style={{ width: '15%', padding: '5px 5px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.2)', lineHeight: 1.2 }}>Chq/Ref No.<br/>Narration</th>
-                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Value Date</th>
-                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'right', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Withdrawal<br/>Dr.(&#8377;)</th>
-                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'right', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Deposit<br/>Cr.(&#8377;)</th>
-                              <th style={{ width: '10%', padding: '5px 5px', textAlign: 'right' }}>Balance<br/>(&#8377;)</th>
-                            </tr>
-                          </thead>
-                          <tbody style={{ fontSize: '9px', color: '#111827' }}>
-                            {/* Brought forward row for subsequent pages */}
-                            {!isFirst && (
-                              <tr style={{ background: '#fef2f2', borderBottom: '1px solid #fca5a5' }}>
-                                <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af',  borderRight: '1px solid #e5e7eb' }}>{chunkTransactions[0]?.valueDate}</td>
-                                <td style={{ padding: '4px 5px', fontWeight: 600, color: '#374151', borderRight: '1px solid #e5e7eb' }} colSpan={2}>Balance brought forward from page {pageIndex}</td>
-                                <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af', borderRight: '1px solid #e5e7eb' }}>--</td>
-                                <td style={{ padding: '4px 5px', textAlign: 'right', borderRight: '1px solid #e5e7eb' }}>--</td>
-                                <td style={{ padding: '4px 5px', textAlign: 'right', borderRight: '1px solid #e5e7eb' }}>--</td>
-                                <td style={{ padding: '4px 5px', textAlign: 'right', fontWeight: 700, color: '#111827',  }}>&#8377;{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                              </tr>
-                            )}
-                            {chunkTransactions.map((tx, txIdx) => (
-                              <tr key={tx.id} style={{ borderBottom: '1px solid #f3f4f6', background: txIdx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', color: '#374151' }}>{tx.valueDate}</td>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'left', lineHeight: 1.3, borderRight: '1px solid #e5e7eb', color: '#111827', fontWeight: 500 }}>
-                                  {tx.details.toUpperCase()}
-                                </td>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'center',   fontSize: '8px', color: '#6b7280', borderRight: '1px solid #e5e7eb', wordBreak: 'break-all' }}>{tx.refNo || '--'}</td>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'center',   fontSize: '8.5px', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', color: '#374151' }}>{tx.postDate}</td>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'right',   borderRight: '1px solid #e5e7eb', color: tx.debit ? '#b91c1c' : '#9ca3af', fontWeight: tx.debit ? 600 : 400 }}>
-                                  {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
-                                </td>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'right',   borderRight: '1px solid #e5e7eb', color: tx.credit ? '#15803d' : '#9ca3af', fontWeight: tx.credit ? 600 : 400 }}>
-                                  {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
-                                </td>
-                                <td style={{ padding: '3.5px 5px', textAlign: 'right',   fontWeight: 700, color: '#111827' }}>
-                                  {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                  )}
+    {/* ── Table ── */}
+    <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: 'none' }}>
+      <thead>
+        <tr style={{
+          backgroundColor: '#A8A8A8',
+          height: '42px',
+          userSelect: 'none',
+          borderBottom: '1px solid #DDDDDD',
+        }}>
+          <th style={{
+            width: '11%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Date</th>
+          <th style={{
+            width: '31%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Description</th>
+          <th style={{
+            width: '13%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Chq/Ref. No.</th>
+          <th style={{
+            width: '10%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Value Date</th>
+          <th style={{
+            width: '11%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Withdrawal (Dr.)</th>
+          <th style={{
+            width: '11%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Deposit (Cr.)</th>
+          <th style={{
+            width: '13%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            color: '#ffffff',
+            fontSize: '14px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>Balance</th>
+        </tr>
+      </thead>
+      <tbody style={{ fontSize: '9px', color: '#111827' }}>
+        {/* Brought forward row for subsequent pages */}
+        {!isFirst && (
+          <tr style={{ background: '#fef2f2', borderBottom: '1px solid #DDDDDD' }}>
+            <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af' }}>{chunkTransactions[0]?.valueDate}</td>
+            <td style={{ padding: '4px 5px', fontWeight: 600, color: '#374151' }} colSpan={2}>Balance brought forward from page {pageIndex}</td>
+            <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af' }}>--</td>
+            <td style={{ padding: '4px 5px', textAlign: 'right', color: '#9ca3af' }}>--</td>
+            <td style={{ padding: '4px 5px', textAlign: 'right', color: '#9ca3af' }}>--</td>
+            <td style={{ padding: '4px 5px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>&#8377;{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+          </tr>
+        )}
+        {chunkTransactions.map((tx, txIdx) => (
+          <tr key={tx.id} style={{ borderBottom: '3px solid #f3f4f6', background: txIdx % 2 === 0 ? '#ffffff' : '#ffffff' }}>
+            <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', color: '#374151' }}>{tx.valueDate}</td>
+            <td style={{ padding: '3.5px 5px', textAlign: 'left', lineHeight: 1.3, color: '#111827', fontWeight: 500 }}>
+              {tx.details.toUpperCase()}
+            </td>
+            <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8px', color: '#6b7280', wordBreak: 'break-all' }}>{tx.refNo || '--'}</td>
+            <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', color: '#374151' }}>{tx.postDate}</td>
+            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.debit ? '#b91c1c' : '#9ca3af', fontWeight: tx.debit ? 600 : 400 }}>
+              {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+            </td>
+            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.credit ? '#15803d' : '#9ca3af', fontWeight: tx.credit ? 600 : 400 }}>
+              {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+            </td>
+            <td style={{ padding: '3.5px 5px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>
+              {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+    )}
+  </div>
+)}
 
                 </div>
 
