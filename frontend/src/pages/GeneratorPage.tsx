@@ -407,7 +407,7 @@ export default function GeneratorPage() {
   const handleInputChange = (field: keyof CustomerDetails, value: string) => {
     let finalValue = value;
     if (field === 'accountHolderName') {
-      finalValue = value.toUpperCase();
+      finalValue = value;
     }
     const nextCustomer = { ...customer, [field]: finalValue };
     setCustomer(nextCustomer);
