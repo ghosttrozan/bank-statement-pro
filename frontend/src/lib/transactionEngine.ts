@@ -886,7 +886,7 @@ function generateRawSalariedTransactions(
           id: `tx_salary_${salaryDate.getTime()}`,
           valueDate: dateStr,
           postDate: dateStr,
-          details: `BY TRANSFER-NEFT*SBIN*${ref}*${companyName}`,
+          details: `BY TRANSFER-NEFT*SBIN*${ref}*SALARY - ${companyName}`,
           refNo: ref,
           debit: null,
           credit: salaryAmount,
