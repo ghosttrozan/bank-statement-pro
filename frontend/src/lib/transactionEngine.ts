@@ -53,6 +53,41 @@ export function isoToIndianFormat(isoStr: string): string {
   return `${parts[2]}-${parts[1]}-${parts[0]}`;
 }
 
+// ─── Date range helper ──────────────────────────────────────────────────
+function getDateRange(settings: StatementSettings, localTime?: string): { startDay: Date; endDay: Date } {
+  // Custom mode: use fromDate and toDate if provided
+  if (settings.generationMode === 'custom' && settings.fromDate && settings.toDate) {
+    const start = new Date(settings.fromDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(settings.toDate);
+    end.setHours(23, 59, 59, 999);
+    return { startDay: start, endDay: end };
+  }
+
+  // Duration mode (default): fixed start = 01-01-2026, end = today (or localTime)
+  const currentDate = localTime ? new Date(localTime) : new Date();
+  const startDay = new Date(2026, 0, 1, 0, 0, 0);
+  const endDay = new Date(currentDate.getTime());
+  endDay.setHours(23, 59, 59, 999);
+  return { startDay, endDay };
+}
+
+// ─── NEW: Salary info helper ─────────────────────────────────────────────
+function getSalaryInfo(settings: StatementSettings): { company: string; amount: number } {
+  // Manual mode: use provided values if valid
+  if (settings.salaryMode === 'manual' && settings.companyName && settings.monthlySalary && settings.monthlySalary > 0) {
+    return {
+      company: settings.companyName.trim(),
+      amount: Math.round(settings.monthlySalary),
+    };
+  }
+  // Auto mode: generate random
+  return {
+    company: getRandomCompany(),
+    amount: getRandomSalaryAmount(),
+  };
+}
+
 // List of Indian companies for salary credits (salaried mode)
 const SALARY_COMPANIES = [
   'INFOSYS BPO LTD',
@@ -218,11 +253,8 @@ function generateRawStatementTransactions(
   info: AccountInfo,
   localTime: string
 ): Transaction[] {
-  // 1. Establish the dates boundaries: fixed start = 01 Jan 2026, end = today
-  const currentDate = localTime ? new Date(localTime) : new Date();
-  const startDay = new Date(2026, 0, 1, 0, 0, 0);  // 01-01-2026 hardcoded
-  const endDay = new Date(currentDate.getTime());
-  endDay.setHours(23, 59, 59, 999);
+  // Use the date range helper
+  const { startDay, endDay } = getDateRange(settings, localTime);
   
   // Calculate total number of days in range dynamically
   const totalDays = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)));
@@ -263,7 +295,7 @@ function generateRawStatementTransactions(
     }
   }
 
-  // Combine Jan 1st, in-between days, and today's date
+  // Combine first day, in-between days, and last day
   const activeDaysConfig: { date: Date; txCount: number }[] = [
     { date: new Date(startDay.getTime()), txCount: jan1TxCount },
     ...inBetweenConfigs,
@@ -330,7 +362,7 @@ function generateRawStatementTransactions(
   let interestAccumulator = 0;
   let rawTxPointer = 0;
 
-  // Iterate day by day
+  // Iterate day by day from startDay to endDay
   const curDate = new Date(startDay.getTime());
   while (curDate <= endDay) {
     const curYear = curDate.getFullYear();
@@ -668,14 +700,11 @@ function generateRawSalariedTransactions(
   info: AccountInfo,
   localTime: string
 ): Transaction[] {
-  const currentDate = localTime ? new Date(localTime) : new Date();
-  const startDay = new Date(2026, 0, 1, 0, 0, 0);  // 01-01-2026 hardcoded
-  const endDay = new Date(currentDate.getTime());
-  endDay.setHours(23, 59, 59, 999);
+  // Use the date range helper
+  const { startDay, endDay } = getDateRange(settings, localTime);
 
-  // ── Fix salary info for entire statement ─────────────────────────────────
-  const salaryAmount = getRandomSalaryAmount();
-  const companyName = getRandomCompany();
+  // ── Get salary info from settings (manual or auto) ────────────────────
+  const { company: companyName, amount: salaryAmount } = getSalaryInfo(settings);
 
   // ── Target transaction count (from settings) ─────────────────────────────
   const targetTxCount = Math.max(10, settings.pageCount === 'Custom'
@@ -692,17 +721,17 @@ function generateRawSalariedTransactions(
 
   let runningBal = info.openingBalance;
 
-  // Generate Jan 1st transactions (5-10)
-  const jan1Times: Date[] = [];
-  const jan1Date = new Date(startDay.getTime());
+  // Generate first day transactions (startDay)
+  const firstDayTimes: Date[] = [];
+  const firstDayDate = new Date(startDay.getTime());
   for (let k = 0; k < jan1TxCount; k++) {
-    const txTime = new Date(jan1Date.getTime());
+    const txTime = new Date(firstDayDate.getTime());
     txTime.setHours(randRange(8, 22), randRange(0, 59), randRange(0, 59));
-    jan1Times.push(txTime);
+    firstDayTimes.push(txTime);
   }
-  jan1Times.sort((a, b) => a.getTime() - b.getTime());
+  firstDayTimes.sort((a, b) => a.getTime() - b.getTime());
 
-  const jan1Txs: Transaction[] = jan1Times.map((txTime, k) => {
+  const firstDayTxs: Transaction[] = firstDayTimes.map((txTime, k) => {
     const isCredit = Math.random() < 0.15;
     const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
     const amount = Math.round(tmpl.amount());
@@ -716,7 +745,7 @@ function generateRawSalariedTransactions(
     }
     const dateStr = formatDate(txTime);
     return {
-      id: `tx_sl_jan_${k}_${txTime.getTime()}`,
+      id: `tx_sl_first_${k}_${txTime.getTime()}`,
       valueDate: dateStr,
       postDate: dateStr,
       details: tmpl.detail(),
@@ -804,16 +833,16 @@ function generateRawSalariedTransactions(
     inBetweenTxs.push(...dayTxs.map(d => d.tx));
   }
 
-  // Now generate today's transactions (5-15) using the accumulated runningBal
-  const todayTimes: Date[] = [];
+  // Now generate last day (endDay) transactions (5-15) using the accumulated runningBal
+  const lastDayTimes: Date[] = [];
   for (let k = 0; k < todayTxCount; k++) {
     const txTime = new Date(endDay.getTime());
     txTime.setHours(randRange(8, 22), randRange(0, 59), randRange(0, 59));
-    todayTimes.push(txTime);
+    lastDayTimes.push(txTime);
   }
-  todayTimes.sort((a, b) => a.getTime() - b.getTime());
+  lastDayTimes.sort((a, b) => a.getTime() - b.getTime());
 
-  const todayTxs: Transaction[] = todayTimes.map((txTime, k) => {
+  const lastDayTxs: Transaction[] = lastDayTimes.map((txTime, k) => {
     const isCredit = Math.random() < 0.15;
     const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
     const amount = Math.round(tmpl.amount());
@@ -827,7 +856,7 @@ function generateRawSalariedTransactions(
     }
     const dateStr = formatDate(txTime);
     return {
-      id: `tx_sl_today_${k}_${txTime.getTime()}`,
+      id: `tx_sl_last_${k}_${txTime.getTime()}`,
       valueDate: dateStr,
       postDate: dateStr,
       details: tmpl.detail(),
@@ -838,29 +867,35 @@ function generateRawSalariedTransactions(
     };
   });
 
-  const allTxs: Transaction[] = [...jan1Txs, ...inBetweenTxs, ...todayTxs];
+  const allTxs: Transaction[] = [...firstDayTxs, ...inBetweenTxs, ...lastDayTxs];
 
-  // ── Inject salary credits on 1st of each month ──────────────────────────
+  // ── Inject salary credits on the 1st of every month that falls within the range ──
   const salaryTxs: { sortKey: number; tx: Transaction }[] = [];
-  for (let m = 0; m < 6; m++) {
-    const salaryDate = new Date(startDay.getFullYear(), startDay.getMonth() + m, 1, 10, 0, 0);
-    if (salaryDate > currentDate) break;
-    const dateStr = formatDate(salaryDate);
-    const ref = genRef();
-    const sortKey = salaryDate.getFullYear() * 10000 + (salaryDate.getMonth() + 1) * 100 + 1;
-    salaryTxs.push({
-      sortKey,
-      tx: {
-        id: `tx_salary_${m}_${salaryDate.getTime()}`,
-        valueDate: dateStr,
-        postDate: dateStr,
-        details: `BY TRANSFER-NEFT*SBIN*${ref}*${companyName}`,
-        refNo: ref,
-        debit: null,
-        credit: salaryAmount,
-        balance: 0, // recalculated below
-      },
-    });
+
+  // Determine the first day of the month of startDay
+  let salaryDate = new Date(startDay.getFullYear(), startDay.getMonth(), 1, 10, 0, 0);
+  while (salaryDate <= endDay) {
+    // Check if this 1st is within the range (>= startDay and <= endDay)
+    if (salaryDate >= startDay) {
+      const dateStr = formatDate(salaryDate);
+      const ref = genRef();
+      const sortKey = salaryDate.getFullYear() * 10000 + (salaryDate.getMonth() + 1) * 100 + 1;
+      salaryTxs.push({
+        sortKey,
+        tx: {
+          id: `tx_salary_${salaryDate.getTime()}`,
+          valueDate: dateStr,
+          postDate: dateStr,
+          details: `BY TRANSFER-NEFT*SBIN*${ref}*${companyName}`,
+          refNo: ref,
+          debit: null,
+          credit: salaryAmount,
+          balance: 0, // recalculated below
+        },
+      });
+    }
+    // Move to the 1st of the next month
+    salaryDate.setMonth(salaryDate.getMonth() + 1);
   }
 
   // ── Merge, sort, and recalculate balances ────────────────────────────────
@@ -898,4 +933,3 @@ export function generateSalariedStatementTransactions(
 ): Transaction[] {
   return generateRawSalariedTransactions(settings, info, localTime);
 }
-

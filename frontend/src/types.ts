@@ -29,11 +29,30 @@ export interface AccountInfo {
 
 export interface StatementSettings {
   bankStyle: 'SBI' | 'Kotak';
+
+  // Existing Quick Duration Mode
   duration: '1 Month' | '2 Months' | '3 Months' | '6 Months' | '12 Months';
+
+  // New Generation Mode
+  generationMode: 'duration' | 'custom';
+
+  // Custom Date Range (ISO Format: YYYY-MM-DD)
+  fromDate: string;
+  toDate: string;
+
   pageCount: '1 Page' | '2 Pages' | '3 Pages' | '5 Pages' | '10 Pages' | '20 Pages' | 'Custom';
+
   customTransactionsCount: number;
+
   transactionMode: 'Low' | 'Normal' | 'High';
+
   profile: 'Personal' | 'Business';
+
+  salaryMode: 'auto' | 'manual';
+
+  companyName: string;
+
+  monthlySalary: number;
 }
 
 export interface Transaction {

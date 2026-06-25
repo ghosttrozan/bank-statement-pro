@@ -81,35 +81,289 @@ function formatDetails(details: string | null | undefined, refNo?: string | null
 }
 
 function generatePrintHtmlKotak(record: any): string {
-  // Generic elegant Kotak fallback print HTML matching the basic styles of Kotak
-  const holderName = record.customerDetails?.accountHolderName || record.holderName || 'Valued Customer';
+  const txs = record.transactions || [];
+
+  // Resolve customer details
+  const customer = record.customerDetails ? {
+    accountHolderName: record.customerDetails.accountHolderName,
+    email: record.customerDetails.email,
+    address: record.customerDetails.address,
+    accountNumber: record.customerDetails.accountNumber,
+    cifNumber: record.customerDetails.cifNumber,
+    nomineeName: record.customerDetails.nomineeName || 'N/A',
+    accountOpenDate: record.customerDetails.accountOpenDate,
+  } : {
+    accountHolderName: record.holderName || 'Valued Customer',
+    email: record.config?.email || '',
+    address: record.config?.address || '',
+    accountNumber: record.accountNumber || '',
+    cifNumber: record.config?.cifNo || '',
+    nomineeName: 'N/A',
+    accountOpenDate: '',
+  };
+
+  const branch = record.branchDetails ? {
+    branchName: record.branchDetails.branchName,
+    branchAddress: record.branchDetails.branchAddress,
+    ifscCode: record.branchDetails.ifscCode,
+    branchCode: record.branchDetails.branchCode,
+    micrCode: record.branchDetails.micrCode,
+    ckycrNumber: record.branchDetails.ckycrNumber,
+    branchPhone: record.branchDetails.branchPhone,
+    branchEmail: record.branchDetails.branchEmail,
+  } : {
+    branchName: 'MAIN BRANCH',
+    branchAddress: '',
+    ifscCode: 'KKBK0000001',
+    branchCode: '0001',
+    micrCode: '',
+    ckycrNumber: '',
+    branchPhone: '',
+    branchEmail: '',
+  };
+
+  const accountInfo = record.accountInfo || { openingBalance: record.openingBalance || 0, interestRate: 3.5, accountType: 'Savings' };
+  const openingBalance = accountInfo.openingBalance;
+  const closingBalance = record.closingBalance || 0;
+  const totalCredits = record.totalCredits || 0;
+  const totalDebits = record.totalDebits || 0;
+  const drCount = txs.filter((tx: any) => tx.debit > 0).length;
+  const crCount = txs.filter((tx: any) => tx.credit > 0).length;
+
+  // Date range
+  let startDateStr = '--';
+  let endDateStr = '--';
+  if (txs.length > 0) {
+    startDateStr = txs[0].valueDate;
+    endDateStr = txs[txs.length - 1].valueDate;
+  }
+
+  // Paginate: first page 10 rows, subsequent 22 rows
+  const paginateKotakTxs = (transactions: any[]): any[][] => {
+    const pages: any[][] = [];
+    if (transactions.length === 0) return [[]];
+    pages.push(transactions.slice(0, 10));
+    let i = 10;
+    while (i < transactions.length) {
+      pages.push(transactions.slice(i, i + 22));
+      i += 22;
+    }
+    return pages;
+  };
+
+  const pages = paginateKotakTxs(txs);
+
+  const pagesHtml = pages.map((pageTxs, pIndex) => {
+    const pNum = pIndex + 1;
+    const isFirstPage = pNum === 1;
+    const isLastPage = pNum === pages.length;
+    let broughtFwd = openingBalance;
+    if (!isFirstPage && pIndex > 0) {
+      const prev = pages[pIndex - 1];
+      if (prev.length > 0) broughtFwd = prev[prev.length - 1].balance;
+    }
+
+    const rowsHtml = pageTxs.map((tx: any, txIdx: number) => {
+      const debitTxt = tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '';
+      const creditTxt = tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '';
+      const balTxt = tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+      const bg = txIdx % 2 === 0 ? '#ffffff' : '#fafafa';
+      return `
+        <tr style="border-bottom:1px solid #f3f4f6; background:${bg};">
+          <td style="padding:3.5px 5px; text-align:center; font-family:monospace; font-size:8.5px; white-space:nowrap; border-right:1px solid #e5e7eb; color:#374151;">${tx.valueDate}</td>
+          <td style="padding:3.5px 5px; text-align:left; font-size:9px; line-height:1.3; border-right:1px solid #e5e7eb; color:#111827; font-weight:500;">${(tx.details || '').toUpperCase()}</td>
+          <td style="padding:3.5px 5px; text-align:center; font-family:monospace; font-size:7.5px; color:#6b7280; border-right:1px solid #e5e7eb; word-break:break-all;">${tx.refNo || '--'}</td>
+          <td style="padding:3.5px 5px; text-align:center; font-family:monospace; font-size:8.5px; white-space:nowrap; border-right:1px solid #e5e7eb; color:#374151;">${tx.postDate}</td>
+          <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-size:9px; border-right:1px solid #e5e7eb; color:${tx.debit ? '#b91c1c' : '#9ca3af'}; font-weight:${tx.debit ? 600 : 400};">${debitTxt}</td>
+          <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-size:9px; border-right:1px solid #e5e7eb; color:${tx.credit ? '#15803d' : '#9ca3af'}; font-weight:${tx.credit ? 600 : 400};">${creditTxt}</td>
+          <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-size:9px; font-weight:700; color:#111827;">${balTxt}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const bfRow = !isFirstPage ? `
+      <tr style="background:#fef2f2; border-bottom:1px solid #fca5a5;">
+        <td style="padding:4px 5px; text-align:center; color:#9ca3af; font-style:italic; border-right:1px solid #e5e7eb; font-size:8.5px;">${pageTxs[0]?.valueDate || ''}</td>
+        <td style="padding:4px 5px; font-weight:600; color:#374151; border-right:1px solid #e5e7eb; font-size:9px;" colspan="2">Balance brought forward from page ${pIndex}</td>
+        <td style="padding:4px 5px; text-align:center; border-right:1px solid #e5e7eb;">--</td>
+        <td style="padding:4px 5px; text-align:right; border-right:1px solid #e5e7eb;">--</td>
+        <td style="padding:4px 5px; text-align:right; border-right:1px solid #e5e7eb;">--</td>
+        <td style="padding:4px 5px; text-align:right; font-weight:700; font-family:monospace; font-size:9px;">&#8377;${broughtFwd.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      </tr>
+    ` : '';
+
+    const firstPageHeader = isFirstPage ? `
+      <!-- Statement period bar -->
+      <div style="background:#f9f9f9; border-bottom:1px solid #e5e7eb; padding:5px 10mm; display:flex; justify-content:space-between; align-items:center; font-size:9.5px; color:#374151; box-sizing:border-box;">
+        <span>Statement Period: <strong>${startDateStr}</strong> to <strong>${endDateStr}</strong></span>
+        <span style="font-family:monospace; color:#6b7280;">Ref: KKBK-${(record.id || '').substring(5, 13).toUpperCase()}</span>
+      </div>
+
+      <!-- Two-column metadata -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; border-bottom:1px solid #e5e7eb; margin:0 10mm; box-sizing:border-box;">
+        <div style="padding:10px 12px 10px 0; border-right:1px solid #e5e7eb;">
+          <div style="font-size:8px; font-weight:700; color:#ED1C24; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Customer Details</div>
+          <div style="font-size:11px; font-weight:700; color:#111827; margin-bottom:3px;">${customer.accountHolderName}</div>
+          <div style="font-size:9.5px; color:#4b5563; line-height:1.5; white-space:pre-line; margin-bottom:4px;">${customer.address}</div>
+          <div style="font-size:9px; color:#6b7280;">Email: <span style="color:#111827;">${customer.email}</span></div>
+        </div>
+        <div style="padding:10px 0 10px 12px;">
+          <div style="font-size:8px; font-weight:700; color:#ED1C24; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Account Details</div>
+          <table style="font-size:9.5px; border:none; border-collapse:collapse; width:100%;">
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0; white-space:nowrap;">Account No.:</td><td style="color:#111827; font-weight:700; font-family:monospace; letter-spacing:0.05em;">${customer.accountNumber}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Account Type:</td><td style="color:#111827; font-weight:600;">${accountInfo.accountType || 'Savings'} Account</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">CIF No.:</td><td style="color:#111827; font-family:monospace;">${customer.cifNumber}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">IFSC Code:</td><td style="color:#111827; font-weight:600;">${branch.ifscCode}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Branch:</td><td style="color:#111827;">${branch.branchName}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">MICR Code:</td><td style="color:#111827; font-family:monospace;">${branch.micrCode}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Open Date:</td><td style="color:#111827;">${customer.accountOpenDate}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Nominee:</td><td style="color:#111827;">${customer.nomineeName}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Interest Rate:</td><td style="color:#111827; font-weight:600;">${accountInfo.interestRate?.toFixed(2) || '3.50'}% p.a.</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Currency:</td><td style="color:#111827;">INR</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Balance summary dark strip -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); background:#1c1c1c; margin:0 10mm; padding:6px 12px; box-sizing:border-box;">
+        <div style="text-align:center; border-right:1px solid #333; padding:4px 0;">
+          <div style="font-size:7.5px; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Opening Balance</div>
+          <div style="font-size:11px; font-weight:700; color:#ffffff; font-family:monospace; margin-top:2px;">&#8377;${openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div style="text-align:center; border-right:1px solid #333; padding:4px 0;">
+          <div style="font-size:7.5px; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Closing Balance</div>
+          <div style="font-size:11px; font-weight:700; color:#4ade80; font-family:monospace; margin-top:2px;">&#8377;${closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+        </div>
+        <div style="text-align:center; padding:4px 0;">
+          <div style="font-size:7.5px; color:#9ca3af; text-transform:uppercase; letter-spacing:0.05em;">Account Status</div>
+          <div style="font-size:11px; font-weight:700; color:#ED1C24; margin-top:2px; letter-spacing:0.06em;">ACTIVE</div>
+        </div>
+      </div>
+    ` : '';
+
+    const continuationHeader = !isFirstPage ? `
+      <div style="background:#ED1C24; padding:6px 10mm; display:flex; align-items:center; justify-content:space-between; font-family:Arial,Helvetica,sans-serif;">
+        <div style="display:flex; align-items:baseline; gap:5px;">
+          <span style="font-size:20px; font-weight:900; color:#fff; letter-spacing:-0.5px; font-style:italic;">kotak</span>
+          <span style="font-size:10px; color:rgba(255,255,255,0.8);">Mahindra Bank</span>
+        </div>
+        <div style="color:#fff; font-size:9.5px; font-family:monospace;">
+          ACC: ${customer.accountNumber} &nbsp;|&nbsp; Page ${pNum} of ${pages.length}
+        </div>
+      </div>
+    ` : '';
+
+    const summaryHtml = isLastPage ? `
+      <div style="padding:0 10mm; margin-top:12px; box-sizing:border-box;">
+        <div style="border:1px solid #e5e7eb; border-radius:4px; overflow:hidden;">
+          <div style="background:#ED1C24; color:#fff; padding:5px 10px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">
+            Account Statement Summary
+          </div>
+          <table style="width:100%; border-collapse:collapse; font-size:10px; text-align:center;">
+            <thead>
+              <tr style="background:#fef2f2; color:#374151; font-weight:700;">
+                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Opening Balance (&#8377;)</th>
+                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Total Debits (&#8377;)</th>
+                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Total Credits (&#8377;)</th>
+                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Dr Count</th>
+                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Cr Count</th>
+                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">Closing Balance (&#8377;)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="font-family:monospace; font-weight:600; color:#111827;">
+                <td style="padding:7px 8px; border-right:1px solid #e5e7eb;">${openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+                <td style="padding:7px 8px; border-right:1px solid #e5e7eb; color:#b91c1c;">${totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style="padding:7px 8px; border-right:1px solid #e5e7eb; color:#15803d;">${totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style="padding:7px 8px; border-right:1px solid #e5e7eb;">${drCount}</td>
+                <td style="padding:7px 8px; border-right:1px solid #e5e7eb;">${crCount}</td>
+                <td style="padding:7px 8px; font-weight:700; color:#ED1C24;">${closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px; font-size:8px; color:#6b7280; line-height:1.5;">
+          <div style="margin-bottom:3px;">&#x2022; This is a computer generated statement and does not require a signature.</div>
+          <div style="margin-bottom:3px;">&#x2022; Please do not share your ATM PIN, OTP, net banking credentials or card details with anyone. Kotak Bank will never ask for such information.</div>
+          <div>&#x2022; For any queries, please call Kotak Customer Care at 1860-266-2666 or write to service.kotak@kotak.com</div>
+        </div>
+      </div>
+    ` : '';
+
+    return `
+      <div class="doc-card" style="box-sizing:border-box; width:210mm; min-width:210mm; max-width:210mm; height:297mm; min-height:297mm; max-height:297mm; background:#fff; margin:0 auto 30px auto; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; font-family:Arial,Helvetica,sans-serif;">
+        <div style="display:flex; flex-direction:column; width:100%;">
+          ${isFirstPage ? `
+            <!-- Kotak Red Header -->
+            <div style="background:#ED1C24; padding:10px 10mm; display:flex; align-items:center; justify-content:space-between; box-sizing:border-box; width:100%;">
+              <div style="display:flex; align-items:baseline; gap:6px;">
+                <span style="font-size:34px; font-weight:900; color:#ffffff; letter-spacing:-1px; line-height:1; font-style:italic;">kotak</span>
+                <span style="font-size:13px; font-weight:400; color:rgba(255,255,255,0.85); letter-spacing:0.02em;">Mahindra Bank</span>
+              </div>
+              <div style="text-align:right; color:#ffffff;">
+                <div style="font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;">Account Statement</div>
+                <div style="font-size:9px; margin-top:2px; opacity:0.85;">As on ${getTodayDateStr()}</div>
+              </div>
+            </div>
+            ${firstPageHeader}
+          ` : continuationHeader}
+
+          <!-- Transaction Table -->
+          <div style="padding:8px 10mm 0 10mm; width:100%; box-sizing:border-box;">
+            <table style="width:100%; table-layout:fixed; border-collapse:collapse; border:1px solid #e5e7eb; font-family:Arial,Helvetica,sans-serif;">
+              <thead>
+                <tr style="background:#ED1C24; color:#ffffff; font-size:9.5px; font-weight:700;">
+                  <th style="width:11%; padding:5px; text-align:center; border-right:1px solid rgba(255,255,255,0.2);">Date</th>
+                  <th style="width:31%; padding:5px; text-align:left; border-right:1px solid rgba(255,255,255,0.2);">Description</th>
+                  <th style="width:15%; padding:5px; text-align:center; border-right:1px solid rgba(255,255,255,0.2); line-height:1.2;">Chq/Ref No.<br>Narration</th>
+                  <th style="width:11%; padding:5px; text-align:center; border-right:1px solid rgba(255,255,255,0.2);">Value Date</th>
+                  <th style="width:11%; padding:5px; text-align:right; border-right:1px solid rgba(255,255,255,0.2);">Withdrawal<br>Dr.(&#8377;)</th>
+                  <th style="width:11%; padding:5px; text-align:right; border-right:1px solid rgba(255,255,255,0.2);">Deposit<br>Cr.(&#8377;)</th>
+                  <th style="width:10%; padding:5px; text-align:right;">Balance<br>(&#8377;)</th>
+                </tr>
+              </thead>
+              <tbody style="background:#ffffff;">
+                ${bfRow}
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+          ${summaryHtml}
+        </div>
+
+        <!-- Kotak red footer -->
+        <div style="background:#ED1C24; color:#fff; font-size:8.5px; font-family:Arial,Helvetica,sans-serif; padding:5px 10mm; display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-style:italic; font-weight:700; letter-spacing:-0.3px;">kotak</span>
+          <span style="opacity:0.85;">This is a system-generated statement. | Kotak Mahindra Bank Ltd.</span>
+          <span style="font-family:monospace; background:rgba(255,255,255,0.15); padding:1px 8px; border-radius:3px;">Page ${pNum} of ${pages.length}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
   return `
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <title>Kotak Mahindra Bank Statement - ${holderName}</title>
+      <title>Kotak Mahindra Bank Statement - ${customer.accountHolderName}</title>
       <style>
-        body { font-family: Arial, Helvetica, sans-serif; background: #ffffff; margin: 0; padding: 15mm; }
-        .header { border-bottom: 2px solid #e11d48; padding-bottom: 15px; margin-bottom: 20px; }
-        .bank-title { color: #e11d48; font-size: 24px; font-weight: bold; }
-        .statement-title { font-size: 18px; margin-top: 10px; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #d1d5db; padding: 8px; font-size: 11px; text-align: left; }
-        th { background-color: #f3f4f6; }
+        @page { size: A4 portrait; margin: 0; }
+        html, body { background: #ffffff !important; color: #000 !important; padding: 0 !important; margin: 0 !important; font-family: Arial, Helvetica, sans-serif !important; width: 100%; }
+        .doc-card { page-break-after: always !important; break-after: page !important; }
+        .doc-card:last-of-type { page-break-after: avoid !important; break-after: avoid !important; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { box-sizing: border-box; }
       </style>
     </head>
-    <body>
-      <div class="header">
-        <div class="bank-title">Kotak Mahindra Bank</div>
-        <div class="statement-title">Statement of Account</div>
-      </div>
-      <div>Customer Name: ${holderName}</div>
-      <p>This is a simplified view of Kotak Mahindra Bank printable template.</p>
+    <body style="background:#ffffff; margin:0; padding:0;">
+      ${pagesHtml}
     </body>
     </html>
   `;
 }
+
 
 export function generatePrintHtml(record: any): string {
   // Determine date ranges and variables dynamically

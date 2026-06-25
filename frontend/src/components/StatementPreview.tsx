@@ -238,9 +238,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
             return (
               <div 
                 key={pageIndex}
-                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col justify-between shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after ${
-                  settings.bankStyle === 'SBI' ? 'p-0 pb-[6mm]' : 'p-[8mm] print:p-[8mm]'
-                }`}
+                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col justify-between shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
                 style={{ contentVisibility: 'auto', fontFamily: 'sans-serif' }}
               >
                 
@@ -492,79 +490,170 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     /* KOTAK MAHINDRA DESIGN THEME */
                     <div>
                       {isFirst ? (
-                        /* FIRST PAGE COMPLETE KOTAK METRICS HEADER */
-                        <div className="border-b-2 border-[#ef4444] pb-4">
-                          <div className="flex items-center justify-between">
-                            {/* SVG Kotak Vector Logo */}
-                            <div className="flex items-center gap-1">
-                              <div className="flex items-baseline space-x-1">
-                                <span className="text-3xl font-extrabold text-[#e11d48] lowercase tracking-tighter">kotak</span>
-                                <span className="text-xl font-bold text-[#1e1b4b] tracking-tight">Kotak Mahindra Bank</span>
-                              </div>
-                            </div>
-                            <div className="text-right text-[10px] text-[#6c7086] font-mono">
-                              <div>Process Identifier No: KKBK-{record.id.substring(5, 11).toUpperCase()}</div>
-                              <div>Generation ISO: {formattedDateNow()}</div>
-                            </div>
-                          </div>
+                        /* FIRST PAGE COMPLETE KOTAK HEADER */
+                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                          {/* Top red header bar */}
+                          <div style={{
+  padding: '1px 10mm',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  boxSizing: 'border-box',
+  width: '100%',
+}}>
+  {/* Left image: Kotak logo + Mahindra Bank (combined or separate) */}
+  <div>
+    <img
+      src="/kotak-logo1.png"   // replace with your actual image path
+      alt="Kotak Mahindra Bank"
+      style={{
+        height: '80px',               // adjust to match visual size of the text
+        width: 'auto',
+        display: 'block',
+      }}
+    />
+  </div>
 
-                          {/* Grid Customer and Branch info split */}
-                          <div className="grid grid-cols-2 gap-4 mt-5 text-[11px] text-zinc-800 leading-snug">
+  {/* Right image: "Account Statement" label + date (if you want a combined image) */}
+  <div>
+    <img
+      src="kotak-logo2.png"   // replace with your actual image path
+      alt="Account Statement"
+      style={{
+        height: 'auto',
+        maxHeight: '80px',            // adjust as needed
+        width: 'auto',
+        display: 'block',
+      }}
+    />
+  </div>
+</div>
+
+                          {/* Statement period bar */}
+                          <div style={{
+                            // background: '#f9f9f9',
+                            padding: '20px 18mm',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}>
+                            <span className='text-3xl font-semibold '>Account Statement <div style={{
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  fontSize: '11px',
+  // fontFamily: 'Arial, Helvetica, sans-serif',
+}}>
+  <span>
+    <strong style={{ fontSize: '9.5px', fontWeight: 'normal' }}>
+      {transactions[0]?.valueDate || '--'}
+    </strong>{' '}
+    -{' '}
+    <strong style={{ fontSize: '9.5px', fontWeight: 'normal' }}>
+      {transactions[transactions.length - 1]?.valueDate || '--'}
+    </strong>
+  </span>
+</div> </span>
                             
-                            {/* Customer details */}
-                            <div className="p-3 border-l-2 border-zinc-300 bg-zinc-50 rounded-r">
-                              <span className="text-[10px] text-rose-600 font-bold uppercase block tracking-wider mb-1">POSTAL MAILING DOSSIER</span>
-                              <div className="font-extrabold text-[#11111b] mb-1">{customerDetails.accountHolderName}</div>
-                              <div className="text-zinc-650 whitespace-pre-line leading-relaxed">{customerDetails.address}</div>
-                              <div className="mt-2 text-[10px] text-zinc-400 font-mono">Email: <span className="text-black">{customerDetails.email || 'N/A'}</span></div>
-                            </div>
+                            {/* <span style={{   color: '#6b7280' }}>Ref: KKBK-{record.id.substring(5, 13).toUpperCase()}</span> */}
+                          </div>
 
-                            {/* Acc Infobox & Branch details */}
-                            <div className="p-3 border-l-2 border-[#e11d48] bg-rose-50/20 rounded-r leading-relaxed">
-                              <span className="text-[10px] text-[#1e1b4b] font-bold uppercase block tracking-wider mb-0.5">ACCOUNTS BRANCH REGISTRY</span>
-                              <div className="font-bold text-zinc-900">{branchDetails.branchName}</div>
-                              <div className="text-zinc-500 text-[10px]">{branchDetails.branchAddress}</div>
-                              <div className="grid grid-cols-2 gap-x-2 mt-2 pt-2 border-t border-rose-100 font-mono text-[9px]">
-                                <div>IFSC CODE: <strong className="text-black">{branchDetails.ifscCode}</strong></div>
-                                <div>BRANCH CODE: <span className="text-black">{branchDetails.branchCode || 'N/A'}</span></div>
-                                <div>MICR CODE: <span className="text-black">{branchDetails.micrCode || 'N/A'}</span></div>
-                                <div>CKYCR NO: <span className="text-black">{branchDetails.ckycrNumber || 'N/A'}</span></div>
-                                <div>NOMINEE REG: <strong className="text-black uppercase">{customerDetails.nomineeName || 'N/A'}</strong></div>
-                                <div>OPEN DATE: <span className="text-black">{isoToIndianFormat(customerDetails.accountOpenDate)}</span></div>
+                          {/* Two-column: Customer & Account info */}
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0px', borderBottom: '1px solid #e5e7eb', margin: '0 10mm',  paddingTop:'20px' }}>
+                            {/* Left: Customer Info */}
+                            <div style={{ padding: '' }}>
+                              <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}></div>
+                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '3px', marginBottom: '40px' , marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br/> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx669</h5></div>
+                              <div className=''>
+                                <div style={{
+  fontSize: '10px',
+  lineHeight: 2,
+  whiteSpace: 'normal',           // allow wrapping
+  wordWrap: 'break-word',
+  maxWidth: '120px',              // adjust based on your font and words
+  marginBottom: '4px',
+  margin: '0 8mm',
+  fontWeight: '700',
+  // color: '#4b5563',               // set a proper colour
+}}>
+  {customerDetails.address}
+</div>
+
+{/* MICR & IFSC – same line, smaller font, with top margin */}
+<div style={{
+  gridColumn: '1 / -1',
+  marginTop: '20px',
+  marginLeft: '8mm',
+  fontSize: '12px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',        
+  fontWeight: '700'              // space between items
+}}>
+  <span style={{ color: '#6b7280' }}>MICR Code:</span>
+  <span style={{ color: '#111827',   fontSize: '14px' }}>{branchDetails.micrCode}</span>
+  <span style={{ color: '#6b7280' }}>IFSC Code:</span>
+  <span style={{ color: '#111827',   fontSize: '14px'  }}>{branchDetails.ifscCode}</span>
+</div>
+                              {/* <div style={{ fontSize: '9px', color: '#6b7280' }}>Email: <span style={{ color: '#111827' }}>{customerDetails.email}</span></div> */}
                               </div>
                             </div>
-
-                          </div>
-
-                          {/* Kotak Account metadata strip */}
-                          <div className="grid grid-cols-4 gap-2 text-center bg-[#1e1b4b] text-white p-2 rounded mt-3 text-[10px] font-mono leading-none">
-                            <div className="border-r border-slate-700 py-1">
-                              <span className="text-slate-400 text-[8px] block uppercase">ACCOUNT NO</span>
-                              <strong className="text-white text-xs tracking-widest">{customerDetails.accountNumber}</strong>
-                            </div>
-                            <div className="border-r border-slate-700 py-1">
-                              <span className="text-slate-400 text-[8px] block uppercase">PRODUCT SCHEME</span>
-                              <strong className="text-white text-[11px]">{accountInfo.accountType.toUpperCase()}</strong>
-                            </div>
-                            <div className="border-r border-slate-700 py-1">
-                              <span className="text-slate-400 text-[8px] block">INTEREST ACCRUAL</span>
-                              <strong className="text-white text-[11px]">{accountInfo.interestRate}% P.A</strong>
-                            </div>
-                            <div className="py-1">
-                              <span className="text-slate-400 text-[8px] block uppercase">SCHEDULER PERIOD</span>
-                              <strong className="text-rose-400 text-[11px]">{settings.duration.toUpperCase()}</strong>
+                            {/* Right: Account Info */}
+                            <div style={{ padding: '10px 0 10px 12px', marginLeft:'60px' }}>
+                              {/* <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Account Details</div> */}
+                              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 8px', fontSize: '12px' }}>
+                                <span style={{ color: '#6b7280' }}>Account No.:</span><span style={{ color: '#111827', fontWeight: 700,   letterSpacing: '0.05em' }}>{customerDetails.accountNumber}</span>
+                                <span style={{ color: '#6b7280' }}>Account Type:</span><span style={{ color: '#111827', fontWeight: 600 }}>{accountInfo.accountType} Account</span>
+                                <span style={{ color: '#6b7280' }}>CIF No.:</span><span style={{ color: '#111827', fontFamily: 'monospace' }}>{customerDetails.cifNumber}</span>
+                                <span style={{ color: '#6b7280' }}>Branch:</span><span style={{ color: '#111827' }}>{branchDetails.branchName}</span>
+                                <span style={{ color: '#6b7280' }}>Open Date:</span><span style={{ color: '#111827' }}>{isoToIndianFormat(customerDetails.accountOpenDate)}</span>
+                                <span style={{ color: '#6b7280' }}>Nominee:</span><span style={{ color: '#111827' }}>{customerDetails.nomineeName || 'N/A'}</span>
+                                <span style={{ color: '#6b7280' }}>Interest Rate:</span><span style={{ color: '#111827', fontWeight: 600 }}>{accountInfo.interestRate.toFixed(2)}% p.a.</span>
+                                <span style={{ color: '#6b7280' }}>Currency:</span><span style={{ color: '#111827' }}>INR</span>
+                              </div>
                             </div>
                           </div>
 
+                          {/* Balance Summary Strip */}
+                          {/* <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(3, 1fr)',
+                            background: '#1c1c1c',
+                            margin: '0 10mm',
+                            padding: '6px 12px',
+                            boxSizing: 'border-box',
+                          }}>
+                            <div style={{ textAlign: 'center', borderRight: '1px solid #333', padding: '4px 0' }}>
+                              <div style={{ fontSize: '7.5px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Opening Balance</div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff',   marginTop: '2px' }}>
+                                &#8377;{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'center', borderRight: '1px solid #333', padding: '4px 0' }}>
+                              <div style={{ fontSize: '7.5px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Closing Balance</div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#4ade80',   marginTop: '2px' }}>
+                                &#8377;{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'center', padding: '4px 0' }}>
+                              <div style={{ fontSize: '7.5px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account Status</div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ED1C24', marginTop: '2px', letterSpacing: '0.06em' }}>ACTIVE</div>
+                            </div>
+                          </div> */}
                         </div>
                       ) : (
-                        /* SEQUENTIAL PAGES CONCIERGE HEADER (KOTAK) */
-                        <div className="flex justify-between items-end border-b border-rose-200 pb-2 mb-4 text-[10px] font-mono text-zinc-500">
-                          <div className="flex items-center space-x-1 text-[#1e1b4b]">
-                            <span className="text-rose-600 font-extrabold text-sm lowercase leading-none">kotak</span>
-                            <span>| ACC: {customerDetails.accountNumber}</span>
+                        /* PAGE 2+ KOTAK CONTINUATION HEADER */
+                        <div className='' style={{
+                          // background: '#ED1C24',
+                          padding: '6px 10mm',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontFamily: 'Arial, Helvetica, sans-serif',
+                        }}>
+                          <div style={{ color: '#fff', fontSize: '16px' }}>
+                             {/* Account Transactions */}
                           </div>
-                          <div>Sheet Page {pageNum} of {allPages.length}</div>
                         </div>
                       )}
                     </div>
@@ -572,7 +661,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                   {/* STATEMENT TRANSACTIONS LIST TABLE */}
                   {chunkTransactions.length > 0 && (
-                    <div className={`${settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'mt-4'}`}>
+                    <div className={`${settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm]'}`}>
                       {settings.bankStyle === 'SBI' ? (
                         <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>
                           <thead>
@@ -618,47 +707,46 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           </tbody>
                         </table>
                       ) : (
-                        <table className="w-full text-left text-[11px] font-sans border-collapse">
+                        <table className="w-full text-left text-[10px] font-sans border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
                           <thead>
-                            <tr className="bg-slate-100 text-zinc-700 border-b-2 border-zinc-300 font-semibold font-mono">
-                              <th className="p-1 px-2 w-[85px]">Value Date</th>
-                              <th className="p-1 px-2 w-[85px]">Post Date</th>
-                              <th className="p-1 px-2">Transaction Details</th>
-                              <th className="p-1 px-2 w-[125px]">Ref / Chq No</th>
-                              <th className="p-1 px-2 w-[90px] text-right">Debit (Dr)</th>
-                              <th className="p-1 px-2 w-[90px] text-right">Credit (Cr)</th>
-                              <th className="p-1 px-2 w-[110px] text-right">Balance</th>
+                            <tr style={{ background: '#ED1C24', color: '#ffffff', fontSize: '9.5px', fontWeight: 700, userSelect: 'none' }}>
+                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Date</th>
+                              <th style={{ width: '31%', padding: '5px 5px', textAlign: 'left', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Description</th>
+                              <th style={{ width: '15%', padding: '5px 5px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.2)', lineHeight: 1.2 }}>Chq/Ref No.<br/>Narration</th>
+                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'center', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Value Date</th>
+                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'right', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Withdrawal<br/>Dr.(&#8377;)</th>
+                              <th style={{ width: '11%', padding: '5px 5px', textAlign: 'right', borderRight: '1px solid rgba(255,255,255,0.2)' }}>Deposit<br/>Cr.(&#8377;)</th>
+                              <th style={{ width: '10%', padding: '5px 5px', textAlign: 'right' }}>Balance<br/>(&#8377;)</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-zinc-200 text-zinc-800">
-                            {/* Brought forward line if not page 1 */}
+                          <tbody style={{ fontSize: '9px', color: '#111827' }}>
+                            {/* Brought forward row for subsequent pages */}
                             {!isFirst && (
-                              <tr className="bg-zinc-50 font-mono text-zinc-500 italic text-[10px]">
-                                <td className="p-1.5 px-2">{chunkTransactions[0].valueDate}</td>
-                                <td className="p-1.5 px-2">--</td>
-                                <td className="p-1.5 px-2" colSpan={2}>Brought Forward balance from sheet page {pageIndex}</td>
-                                <td className="p-1.5 px-2 text-right">--</td>
-                                <td className="p-1.5 px-2 text-right">--</td>
-                                <td className="p-1.5 px-2 text-right font-semibold text-zinc-700">
-                                  ₹{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                </td>
+                              <tr style={{ background: '#fef2f2', borderBottom: '1px solid #fca5a5' }}>
+                                <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af',  borderRight: '1px solid #e5e7eb' }}>{chunkTransactions[0]?.valueDate}</td>
+                                <td style={{ padding: '4px 5px', fontWeight: 600, color: '#374151', borderRight: '1px solid #e5e7eb' }} colSpan={2}>Balance brought forward from page {pageIndex}</td>
+                                <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af', borderRight: '1px solid #e5e7eb' }}>--</td>
+                                <td style={{ padding: '4px 5px', textAlign: 'right', borderRight: '1px solid #e5e7eb' }}>--</td>
+                                <td style={{ padding: '4px 5px', textAlign: 'right', borderRight: '1px solid #e5e7eb' }}>--</td>
+                                <td style={{ padding: '4px 5px', textAlign: 'right', fontWeight: 700, color: '#111827',  }}>&#8377;{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                               </tr>
                             )}
-
-                            {chunkTransactions.map((tx) => (
-                              <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors leading-relaxed">
-                                <td className="p-1.5 px-2 font-mono text-zinc-650 tracking-tighter whitespace-nowrap">{tx.valueDate}</td>
-                                <td className="p-1.5 px-2 font-mono text-zinc-400 tracking-tighter whitespace-nowrap">{tx.postDate}</td>
-                                <td className="p-1.5 px-2 break-all text-zinc-900 leading-snug font-medium tracking-tight pr-4">{tx.details}</td>
-                                <td className="p-1.5 px-2 font-mono text-zinc-600 text-[10px] tracking-tighter whitespace-nowrap">{tx.refNo}</td>
-                                <td className="p-1.5 px-2 text-right font-mono text-red-700 font-semibold">
-                                  {tx.debit ? `₹${tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : ''}
+                            {chunkTransactions.map((tx, txIdx) => (
+                              <tr key={tx.id} style={{ borderBottom: '1px solid #f3f4f6', background: txIdx % 2 === 0 ? '#ffffff' : '#fafafa' }}>
+                                <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', color: '#374151' }}>{tx.valueDate}</td>
+                                <td style={{ padding: '3.5px 5px', textAlign: 'left', lineHeight: 1.3, borderRight: '1px solid #e5e7eb', color: '#111827', fontWeight: 500 }}>
+                                  {tx.details.toUpperCase()}
                                 </td>
-                                <td className="p-1.5 px-2 text-right font-mono text-emerald-700 font-semibold">
-                                  {tx.credit ? `₹${tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : ''}
+                                <td style={{ padding: '3.5px 5px', textAlign: 'center',   fontSize: '8px', color: '#6b7280', borderRight: '1px solid #e5e7eb', wordBreak: 'break-all' }}>{tx.refNo || '--'}</td>
+                                <td style={{ padding: '3.5px 5px', textAlign: 'center',   fontSize: '8.5px', whiteSpace: 'nowrap', borderRight: '1px solid #e5e7eb', color: '#374151' }}>{tx.postDate}</td>
+                                <td style={{ padding: '3.5px 5px', textAlign: 'right',   borderRight: '1px solid #e5e7eb', color: tx.debit ? '#b91c1c' : '#9ca3af', fontWeight: tx.debit ? 600 : 400 }}>
+                                  {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
                                 </td>
-                                <td className="p-1.5 px-2 text-right font-mono text-zinc-900 font-bold">
-                                  ₹{tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                <td style={{ padding: '3.5px 5px', textAlign: 'right',   borderRight: '1px solid #e5e7eb', color: tx.credit ? '#15803d' : '#9ca3af', fontWeight: tx.credit ? 600 : 400 }}>
+                                  {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+                                </td>
+                                <td style={{ padding: '3.5px 5px', textAlign: 'right',   fontWeight: 700, color: '#111827' }}>
+                                  {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                 </td>
                               </tr>
                             ))}
@@ -719,43 +807,42 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   )}
 
                   {isLast && settings.bankStyle !== 'SBI' && (
-                    <div className="border hover:border-slate-300 p-4 rounded bg-slate-50/50 mt-6 grid grid-cols-2 gap-6 text-[11px] leading-relaxed select-none">
-                      
-                      {/* Calculated Aggregate ledger metrics */}
-                      <div>
-                        <span className="text-[10px] text-zinc-500 font-bold uppercase block tracking-wider mb-2">LEDGER BALANCES ANALYSIS</span>
-                        <div className="space-y-1 font-mono text-zinc-700">
-                          <div className="flex justify-between">
-                            <span>Balance Brought Forward:</span>
-                            <span className="text-zinc-900 font-medium">₹{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Total Debits ({drCount} events):</span>
-                            <span className="text-red-700">₹{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                          <div className="flex justify-between pb-1 border-b border-zinc-200">
-                            <span>Total Credits ({crCount} events):</span>
-                            <span className="text-emerald-700">+₹{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
-                          <div className="flex justify-between text-xs font-bold pt-1 text-zinc-950">
-                            <span>Final Closing Balance:</span>
-                            <span>₹{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                          </div>
+                    <div style={{ margin: '10px 0 0 0', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                      {/* Kotak Summary Table */}
+                      <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ background: '#ED1C24', color: '#fff', padding: '5px 10px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          Account Statement Summary
                         </div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                          <thead>
+                            <tr style={{ background: '#fef2f2', color: '#374151', fontWeight: 700 }}>
+                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Opening Balance (&#8377;)</th>
+                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Total Debits (&#8377;)</th>
+                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Total Credits (&#8377;)</th>
+                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Dr Count</th>
+                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Cr Count</th>
+                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Closing Balance (&#8377;)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr style={{   fontWeight: 600, color: '#111827', textAlign: 'center' }}>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb', color: '#b91c1c' }}>{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb', color: '#15803d' }}>{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{drCount}</td>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{crCount}</td>
+                              <td style={{ padding: '7px 8px', fontWeight: 700, color: '#ED1C24' }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
 
-                      {/* Official Disclaimer & Audit Watermark */}
-                      <div className="flex flex-col justify-between text-zinc-500 text-[10px] text-right border-l border-zinc-200 pl-6 leading-relaxed">
-                        <div>
-                          <strong className="text-zinc-800 uppercase block font-semibold mb-1">AUDIT SUMMARY & SEAL</strong>
-                          <p>This document verifies currency deposits, interest rates, and debits in reference to individual ledger accounts. This statement has been programmatically certified correct in accordance with container math buffers.</p>
-                        </div>
-                        <div className="font-mono text-slate-400 mt-2">
-                          <div className="italic">Signed Digitally / Secure Server Seal</div>
-                          <div>STATE_LABS INTEGRATION ENGINE</div>
-                        </div>
+                      {/* Disclaimer */}
+                      <div style={{ marginTop: '8px', fontSize: '8px', color: '#6b7280', lineHeight: 1.5 }}>
+                        <div style={{ marginBottom: '3px' }}>• This is a computer generated statement and does not require a signature.</div>
+                        <div style={{ marginBottom: '3px' }}>• Please do not share your ATM PIN, OTP, net banking credentials or card details with anyone. Kotak Bank will never ask for such information.</div>
+                        <div>• For any queries, please call Kotak Customer Care at 1860-266-2666 or write to service.kotak@kotak.com</div>
                       </div>
-
                     </div>
                   )}
 
@@ -766,14 +853,20 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     Page no. {pageNum}
                   </div>
                 ) : (
-                  /* MANDATORY STRICT REQUIREMENT: "Every page must end with a solid purple footer row. Color: #663391. The footer row should span all columns." */
-                  <div className="mt-4 pt-1">
-                    <div className="bg-[#663391] text-white text-[9px] font-mono p-2 py-2.5 rounded flex items-center justify-between uppercase tracking-wider leading-none select-none">
-                      <div className="font-semibold">Statement Labs System Proof • CONFIDENTIAL TRAINER MATRIX</div>
-                      <div className="flex items-center gap-3">
-                        <span>SECURITY COGNIZANT</span>
-                        <span className="bg-white/10 px-2 py-0.5 rounded font-bold text-white">PAGE {pageNum} OF {allPages.length}</span>
-                      </div>
+                  /* Kotak red footer bar */
+                  <div style={{ marginTop: '6px' }}>
+                    <div className='text-gray-600' style={{
+                      fontSize: '8.5px',
+                      fontFamily: 'Arial, Helvetica, sans-serif',
+                      padding: '5px 10mm',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      userSelect: 'none',
+                    }}>
+                      <span style={{ fontStyle: 'italic', fontWeight: 700, letterSpacing: '-0.3px' }}>kotak</span>
+                      {/* <span style={{ opacity: 0.85 }}>This is a system-generated statement. | Kotak Mahindra Bank Ltd.</span> */}
+                      <span style={{   background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '3px' }}>Page {pageNum} of {allPages.length}</span>
                     </div>
                   </div>
                 )}
