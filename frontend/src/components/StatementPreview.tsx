@@ -905,16 +905,16 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   )}
 
                   {isLast && settings.bankStyle !== 'SBI' && (
-                    <div style={{ margin: '10px 0 0 0', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                    <div style={{ margin: '40px 40px 40px 40px', fontFamily: 'Arial, Helvetica, sans-serif' }}>
                       {/* Kotak Summary Table */}
-                      <div style={{ border: '1px solid #e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ background: '#ED1C24', color: '#fff', padding: '5px 10px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      <div style={{ border: '1px solid #e5e7eb', overflow: 'hidden',}}>
+                        <div className='text-center' style={{ background: '#ED1C24', color: '#fff', padding: '5px 10px', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                           Account Statement Summary
                         </div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
-                          <thead>
-                            <tr style={{ background: '#fef2f2', color: '#374151', fontWeight: 700 }}>
-                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Opening Balance (&#8377;)</th>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead >
+                            <tr className='mt-8' style={{ background: '#A8A8A8', color: 'white',  }}>
+                              <th style={{ padding: '18px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Opening Balance (&#8377;)</th>
                               <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Total Debits (&#8377;)</th>
                               <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Total Credits (&#8377;)</th>
                               <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Dr Count</th>
@@ -925,11 +925,11 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           <tbody>
                             <tr style={{   fontWeight: 600, color: '#111827', textAlign: 'center' }}>
                               <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb', color: '#b91c1c' }}>{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb', color: '#15803d' }}>{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                               <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{drCount}</td>
                               <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{crCount}</td>
-                              <td style={{ padding: '7px 8px', fontWeight: 700, color: '#ED1C24' }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+                              <td style={{ padding: '7px 8px', fontWeight: 700, }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
                             </tr>
                           </tbody>
                         </table>
@@ -962,9 +962,9 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                       justifyContent: 'space-between',
                       userSelect: 'none',
                     }}>
-                      <span style={{ fontStyle: 'italic', fontWeight: 700, letterSpacing: '-0.3px' }}>kotak</span>
+                      <span className='text-gray-600' style={{ fontStyle: 'italic', fontSize:'12px' , letterSpacing: '-0.3px' }}>Statement Generated on {formattedDateNow()}</span>
                       {/* <span style={{ opacity: 0.85 }}>This is a system-generated statement. | Kotak Mahindra Bank Ltd.</span> */}
-                      <span style={{   background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '3px' }}>Page {pageNum} of {allPages.length}</span>
+                      <span className='text-gray-600' style={{   background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '3px', fontSize:'12px' }}>Page {pageNum} of {allPages.length}</span>
                     </div>
                   </div>
                 )}
