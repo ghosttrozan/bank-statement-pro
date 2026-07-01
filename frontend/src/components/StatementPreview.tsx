@@ -565,15 +565,15 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}></div>
                               <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '3px', marginBottom: '40px' , marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br/> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx669</h5></div>
                               <div className=''>
-                                <div style={{
-  fontSize: '10px',
-  lineHeight: 2,
+                                <div className='text-gray-900' style={{
+  fontSize: '12px',
+  lineHeight: 1.5,
   whiteSpace: 'normal',           // allow wrapping
   wordWrap: 'break-word',
   maxWidth: '120px',              // adjust based on your font and words
   marginBottom: '4px',
   margin: '0 8mm',
-  fontWeight: '700',
+  // fontWeight: '700',
   // color: '#4b5563',               // set a proper colour
 }}>
   {customerDetails.address}
@@ -601,15 +601,16 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             {/* Right: Account Info */}
                             <div style={{ padding: '10px 0 10px 12px', marginLeft:'60px' }}>
                               {/* <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Account Details</div> */}
-                              <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 8px', fontSize: '12px' }}>
-                                <span style={{ color: '#6b7280' }}>Account No.:</span><span style={{ color: '#111827', fontWeight: 700,   letterSpacing: '0.05em' }}>{customerDetails.accountNumber}</span>
-                                <span style={{ color: '#6b7280' }}>Account Type:</span><span style={{ color: '#111827', fontWeight: 600 }}>{accountInfo.accountType} Account</span>
-                                <span style={{ color: '#6b7280' }}>CIF No.:</span><span style={{ color: '#111827', fontFamily: 'monospace' }}>{customerDetails.cifNumber}</span>
-                                <span style={{ color: '#6b7280' }}>Branch:</span><span style={{ color: '#111827' }}>{branchDetails.branchName}</span>
-                                <span style={{ color: '#6b7280' }}>Open Date:</span><span style={{ color: '#111827' }}>{isoToIndianFormat(customerDetails.accountOpenDate)}</span>
-                                <span style={{ color: '#6b7280' }}>Nominee:</span><span style={{ color: '#111827' }}>{customerDetails.nomineeName || 'N/A'}</span>
-                                <span style={{ color: '#6b7280' }}>Interest Rate:</span><span style={{ color: '#111827', fontWeight: 600 }}>{accountInfo.interestRate.toFixed(2)}% p.a.</span>
-                                <span style={{ color: '#6b7280' }}>Currency:</span><span style={{ color: '#111827' }}>INR</span>
+                              <div style={{ display: '', gridTemplateColumns: 'auto 1fr', gap: '10px 8px', fontSize: '12px' }}>
+                                <span style={{ color: '#6b7280' }}>Account No.</span><span style={{ color: '#111827', fontWeight: 700,   letterSpacing: '0.05em' }}>{customerDetails.accountNumber}</span> <br/> <br/>
+                                <span style={{ color: '#6b7280' }}>Account Type</span><span style={{ color: '#111827', fontWeight: 700 }}>{accountInfo.accountType} Account</span> <br/> <br/>
+                                {/* <span style={{ color: '#6b7280' }}>CIF No.:</span><span style={{ color: '#111827', fontFamily: 'monospace' }}>{customerDetails.cifNumber}</span> */}
+                                <span style={{ color: '#6b7280' }}>Branch:</span><span style={{ color: '#111827', fontWeight: 700 }}>{branchDetails.branchName}</span> <br/> <br/>
+                                                                <span style={{ color: '#6b7280', }}>Branch Phone Number:</span><span style={{ color: '#111827', fontWeight: 700 }}>9713063909</span> <br/> <br/>
+                                <span style={{ color: '#6b7280' }}>Account Status </span><span style={{ color: '#111827', fontWeight: 700 }}>Active</span> <br/> <br/>
+                                <span style={{ color: '#6b7280' }}>Nominee Registered</span><span style={{ color: '#111827', fontWeight: 700 }}>Yes</span> <br/> <br/>
+                                {/* <span style={{ color: '#6b7280' }}>Interest Rate:</span><span style={{ color: '#111827', fontWeight: 600 }}>{accountInfo.interestRate.toFixed(2)}% p.a.</span> */}
+                                <span style={{ color: '#6b7280' }}>Currency:</span><span style={{ color: '#111827', fontWeight: 700 }}>NDIAN RUPEE</span>
                               </div>
                             </div>
                           </div>
