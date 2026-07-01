@@ -436,7 +436,7 @@ export default function GeneratorPage() {
   const handleBranchInputChange = (field: keyof BranchDetails, value: string) => {
     let finalValue = value;
     if (field === 'branchName' || field === 'ifscCode') {
-      finalValue = value.toUpperCase();
+      finalValue = value;
     }
     const nextBranch = { ...branch, [field]: finalValue };
     setBranch(nextBranch);
