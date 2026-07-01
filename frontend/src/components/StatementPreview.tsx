@@ -563,7 +563,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             {/* Left: Customer Info */}
                             <div style={{ padding: '' }}>
                               <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}></div>
-                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '3px', marginBottom: '40px' , marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br/> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx669</h5></div>
+                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '3px', marginBottom: '40px' , marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br/> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx{customerDetails.cifNumber?.slice(-3)}</h5></div>
                               <div className=''>
                                 <div className='text-gray-900' style={{
   fontSize: '12px',
@@ -604,7 +604,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <div style={{ display: '', gridTemplateColumns: 'auto 1fr', gap: '10px 8px', fontSize: '12px' }}>
                                 <span style={{ color: '#6b7280' }}>Account No.</span><span style={{ color: '#111827', fontWeight: 700,   letterSpacing: '0.05em' }}>{customerDetails.accountNumber}</span> <br/> <br/>
                                 <span style={{ color: '#6b7280' }}>Account Type</span><span style={{ color: '#111827', fontWeight: 700 }}>{accountInfo.accountType} Account</span> <br/> <br/>
-                                {/* <span style={{ color: '#6b7280' }}>CIF No.:</span><span style={{ color: '#111827', fontFamily: 'monospace' }}>{customerDetails.cifNumber}</span> */}
+                                {/* <span style={{ color: '#6b7280' }}>CIF No.:</span><span style={{ color: '#111827', fontFamily: 'monospace' }}></span> */}
                                 <span style={{ color: '#6b7280' }}>Branch:</span><span style={{ color: '#111827', fontWeight: 700 }}>{branchDetails.branchName}</span> <br/> <br/>
                                                                 <span style={{ color: '#6b7280', }}>Branch Phone Number:</span><span style={{ color: '#111827', fontWeight: 700 }}>9713063909</span> <br/> <br/>
                                 <span style={{ color: '#6b7280' }}>Account Status </span><span style={{ color: '#111827', fontWeight: 700 }}>Active</span> <br/> <br/>
@@ -836,10 +836,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
             </td>
             <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8px', color: '#6b7280', wordBreak: 'break-all' }}>{tx.refNo || '--'}</td>
             <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', color: '#374151' }}>{tx.postDate}</td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.debit ? '#b91c1c' : '#9ca3af', fontWeight: tx.debit ? 600 : 400 }}>
+            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.debit ? '#111827' : '#9ca3af', fontWeight: tx.debit ? 600 : 400 }}>
               {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
             </td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.credit ? '#15803d' : '#9ca3af', fontWeight: tx.credit ? 600 : 400 }}>
+            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.credit ? '#111827' : '#9ca3af', fontWeight: tx.credit ? 600 : 400 }}>
               {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
             </td>
             <td style={{ padding: '3.5px 5px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>
