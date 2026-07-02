@@ -599,20 +599,164 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               </div>
                             </div>
                             {/* Right: Account Info */}
-                            <div style={{ padding: '10px 0 10px 12px', marginLeft:'60px' }}>
-                              {/* <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Account Details</div> */}
-                              <div style={{ display: '', gridTemplateColumns: 'auto 1fr', gap: '10px 8px', fontSize: '12px' }}>
-                                <span style={{ color: '#6b7280' }}>Account No.</span><span style={{ color: '#111827', fontWeight: 700,   letterSpacing: '0.05em' }}>{customerDetails.accountNumber}</span> <br/> <br/>
-                                <span style={{ color: '#6b7280' }}>Account Type</span><span style={{ color: '#111827', fontWeight: 700 }}>{accountInfo.accountType} Account</span> <br/> <br/>
-                                {/* <span style={{ color: '#6b7280' }}>CIF No.:</span><span style={{ color: '#111827', fontFamily: 'monospace' }}></span> */}
-                                <span style={{ color: '#6b7280' }}>Branch:</span><span style={{ color: '#111827', fontWeight: 700 }}>{branchDetails.branchName}</span> <br/> <br/>
-                                                                <span style={{ color: '#6b7280', }}>Branch Phone Number:</span><span style={{ color: '#111827', fontWeight: 700 }}>9713063909</span> <br/> <br/>
-                                <span style={{ color: '#6b7280' }}>Account Status </span><span style={{ color: '#111827', fontWeight: 700 }}>Active</span> <br/> <br/>
-                                <span style={{ color: '#6b7280' }}>Nominee Registered</span><span style={{ color: '#111827', fontWeight: 700 }}>Yes</span> <br/> <br/>
-                                {/* <span style={{ color: '#6b7280' }}>Interest Rate:</span><span style={{ color: '#111827', fontWeight: 600 }}>{accountInfo.interestRate.toFixed(2)}% p.a.</span> */}
-                                <span style={{ color: '#6b7280' }}>Currency:</span><span style={{ color: '#111827', fontWeight: 700 }}>NDIAN RUPEE</span>
-                              </div>
-                            </div>
+                            <div
+  style={{
+    padding: "10px 0 10px 12px",
+    marginLeft: "60px",
+    fontFamily: "Arial, Helvetica, sans-serif",
+    fontSize: "15px",
+    lineHeight: "1.18",
+    color: "#111",
+  }}
+>
+  <div style={{ marginBottom: "5px" }}>
+    <span
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Account No.&nbsp;
+    </span>
+
+    <span
+    className="text-sm font-semibold"
+      style={{
+        color: "#111111",
+        fontWeight: 600,
+      }}
+    >
+      {customerDetails.accountNumber}
+    </span>
+  </div>
+
+  <div style={{ marginBottom: "5px" }}>
+    <span
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Account Type&nbsp;
+    </span>
+
+    <span
+    className="text-sm font-semibold"
+      style={{
+        color: "#111111",
+        fontWeight: 600,
+      }}
+    >
+      {accountInfo.accountType}
+    </span>
+  </div>
+
+  <div style={{ marginBottom: "5px" }}>
+    <span
+    
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Branch&nbsp;
+    </span>
+
+    <span
+     className="text-xs font-semibold"
+      style={{
+        color: "#111111",
+        fontWeight: 600,
+      }}
+    >
+      {branchDetails.branchName}
+    </span>
+  </div>
+
+  <div style={{ marginBottom: "20px" }}>
+    <span
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Branch Phone Number&nbsp;
+    </span>
+
+    <span
+     className="text-sm font-semibold"
+      style={{
+        color: "#111111",
+        fontWeight: 600,
+      }}
+    >
+      9713063909
+    </span>
+  </div>
+
+  <div style={{ marginBottom: "3px" }}>
+    <span
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Account Status&nbsp;
+    </span>
+
+    <span
+     className="text-sm font-semibold"
+      style={{
+        color: "#111111",
+        // fontWeight: 600,
+      }}
+    >
+      Active
+    </span>
+  </div>
+
+  <div style={{ marginBottom: "18px" }}>
+    <span
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Nominee Registered&nbsp;
+    </span>
+
+    <span
+     className="text-sm font-semibold"
+      style={{
+        color: "#111111",
+        // fontWeight: 600,
+      }}
+    >
+      Yes
+    </span>
+  </div>
+
+  <div>
+    <span
+      style={{
+        color: "#A2A2A2",
+        fontWeight: 400,
+      }}
+    >
+      Currency&nbsp;
+    </span>
+
+    <span
+    className="text-xs font-semibold"
+      style={{
+        color: "#111111",
+        // fontWeight: ,
+      }}
+    >
+      INDIAN RUPEE
+    </span>
+  </div>
+</div>
                           </div>
 
                           {/* Balance Summary Strip */}
