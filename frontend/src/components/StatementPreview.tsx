@@ -657,6 +657,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
       style={{
         color: "#A2A2A2",
         fontWeight: 400,
+        
       }}
     >
       Branch&nbsp;
