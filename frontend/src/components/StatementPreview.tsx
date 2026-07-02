@@ -587,13 +587,17 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   fontSize: '12px',
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',        
+  gap: '10px',        
   fontWeight: '700'              // space between items
 }}>
-  <span style={{ color: '#6b7280' }}>MICR Code</span>
-  <span style={{ color: '#111827',   fontSize: '14px' }}>{branchDetails.micrCode}</span>
-  <span style={{ color: '#6b7280' }}>IFSC Code</span>
-  <span style={{ color: '#111827',   fontSize: '14px'  }}>{branchDetails.ifscCode}</span>
+  <div>
+      <span style={{ color: '#A8A8A8' }}>MICR Code </span>
+  <span style={{ color: '#111827',   fontSize: '12px', fontWeight: '600' }}>{branchDetails.micrCode}</span>
+  </div>
+  <div>
+    <span style={{ color: '#A8A8A8' }}>IFSC Code </span>
+  <span style={{ color: '#111827',   fontSize: '12px', fontWeight: '600'  }}>{branchDetails.ifscCode}</span>
+  </div>
 </div>
                               {/* <div style={{ fontSize: '9px', color: '#6b7280' }}>Email: <span style={{ color: '#111827' }}>{customerDetails.email}</span></div> */}
                               </div>
