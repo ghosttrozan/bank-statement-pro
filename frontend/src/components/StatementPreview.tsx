@@ -10,6 +10,27 @@ interface StatementPreviewProps {
   onPrint?: () => Promise<boolean>;
 }
 
+function formatKotakDate(dateStr: string): string {
+  if (!dateStr) return '';
+  if (/^\d{2}\s[A-Za-z]{3}\s\d{4}$/.test(dateStr)) {
+    return dateStr;
+  }
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    const day = parts[0].padStart(2, '0');
+    if (/^\d+$/.test(parts[1])) {
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      if (monthIdx >= 0 && monthIdx < 12) {
+        return `${day} ${months[monthIdx]} ${parts[2]}`;
+      }
+    } else {
+      return `${day} ${parts[1]} ${parts[2]}`;
+    }
+  }
+  return dateStr;
+}
+
 // Custom programmatic division of transactions into exact physical pages
 function chunkTransactionsForA4(transactions: Transaction[], firstPageLimit = 12, subsequentPageLimit = 22) {
   const pages: Transaction[][] = [];
@@ -169,7 +190,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
   const pageChunks = settings.bankStyle === 'SBI' 
     ? chunkTransactionsForA4(transactions, 6, 21)
-    : chunkTransactionsForA4(transactions, 15, 28);
+    : chunkTransactionsForA4(transactions, 12, 20);
 
   const allPages = [...pageChunks, [] as Transaction[]];
 
@@ -546,11 +567,11 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 }}>
   <span>
     <strong style={{ fontSize: '9.5px', fontWeight: 'normal' }}>
-      {transactions[0]?.valueDate || '--'}
+      {formatKotakDate(transactions[0]?.valueDate) || '--'}
     </strong>{' '}
-    -{' '}
+    -   {' '}
     <strong style={{ fontSize: '9.5px', fontWeight: 'normal' }}>
-      {transactions[transactions.length - 1]?.valueDate || '--'}
+      {formatKotakDate(transactions[transactions.length - 1]?.valueDate) || '--'}
     </strong>
   </span>
 </div> </span>
@@ -563,7 +584,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             {/* Left: Customer Info */}
                             <div style={{ padding: '' }}>
                               <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}></div>
-                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '3px', marginBottom: '40px' , marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br/> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx{customerDetails.cifNumber?.slice(-3)}</h5></div>
+                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '40px' , marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br/> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx{customerDetails.cifNumber?.slice(-3)}</h5></div>
                               <div className=''>
                                 <div className='text-gray-900' style={{
   fontSize: '12px',
@@ -793,16 +814,28 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         </div>
                       ) : (
                         /* PAGE 2+ KOTAK CONTINUATION HEADER */
-                        <div className='' style={{
-                          // background: '#ED1C24',
-                          padding: '6px 10mm',
+                        <div style={{
+                          padding: '15px 10mm 10px 10mm',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
                           fontFamily: 'Arial, Helvetica, sans-serif',
+                          fontSize: '13px',
+                          lineHeight: '1.4',
+                          color: '#000000',
                         }}>
-                          <div style={{ color: '#fff', fontSize: '16px' }}>
-                             {/* Account Transactions */}
+                          <div style={{ fontWeight: 'normal', fontSize: '16px', textTransform: 'uppercase', marginBottom: '4px', color: '#111827' }}>
+                            {customerDetails.accountHolderName}
+                          </div>
+                          <div style={{ color: '#111827' }}>
+                            <span style={{ color: '#8c8c8c' }}>Account No. </span>
+                            <span style={{ fontWeight: 600 }}>{customerDetails.accountNumber}</span>
+                          </div>
+                          <div style={{ color: '#111827' }}>
+                            <span style={{ color: '#8c8c8c' }}>Account Statement </span>
+                            <span style={{ fontWeight: 600 }}>
+                              {formatKotakDate(transactions[0]?.valueDate)} - {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -879,44 +912,58 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     </div>
 
     {/* ── Table ── */}
-    <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: 'none' }}>
+    <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: 'none', borderTop: '1px solid #d1d5db', borderBottom: '1px solid #d1d5db' }}>
       <thead>
         <tr style={{
           backgroundColor: '#A8A8A8',
           height: '42px',
           userSelect: 'none',
-          borderBottom: '1px solid #DDDDDD',
         }}>
           <th style={{
-            width: '11%',
+            width: '6%',
             padding: '0 4px 0 12px',
             textAlign: 'left',
             verticalAlign: 'middle',
+            border: 'none',
             borderRight: '1px solid #ffffff',
             color: '#ffffff',
-            fontSize: '14px',
+            fontSize: '13px',
+            fontWeight: 400,
+            fontFamily: 'Arial, Helvetica, sans-serif',
+          }}>#</th>
+          <th style={{
+            width: '12%',
+            padding: '0 4px 0 12px',
+            textAlign: 'left',
+            verticalAlign: 'middle',
+            border: 'none',
+            borderRight: '1px solid #ffffff',
+            color: '#ffffff',
+            fontSize: '13px',
             fontWeight: 400,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}>Date</th>
           <th style={{
-            width: '31%',
+            width: '35%',
             padding: '0 4px 0 12px',
             textAlign: 'left',
             verticalAlign: 'middle',
+            border: 'none',
             borderRight: '1px solid #ffffff',
             color: '#ffffff',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 400,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}>Description</th>
           <th style={{
-            width: '13%',
+            width: '17%',
             padding: '0 4px 0 12px',
             textAlign: 'left',
             verticalAlign: 'middle',
+            border: 'none',
             borderRight: '1px solid #ffffff',
             color: '#ffffff',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 400,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}>Chq/Ref. No.</th>
@@ -925,77 +972,75 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
             padding: '0 4px 0 12px',
             textAlign: 'left',
             verticalAlign: 'middle',
+            border: 'none',
             borderRight: '1px solid #ffffff',
             color: '#ffffff',
-            fontSize: '14px',
-            fontWeight: 400,
-            fontFamily: 'Arial, Helvetica, sans-serif',
-          }}>Value Date</th>
-          <th style={{
-            width: '11%',
-            padding: '0 4px 0 12px',
-            textAlign: 'left',
-            verticalAlign: 'middle',
-            borderRight: '1px solid #ffffff',
-            color: '#ffffff',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 400,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}>Withdrawal (Dr.)</th>
           <th style={{
-            width: '11%',
+            width: '10%',
             padding: '0 4px 0 12px',
             textAlign: 'left',
             verticalAlign: 'middle',
+            border: 'none',
             borderRight: '1px solid #ffffff',
             color: '#ffffff',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 400,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}>Deposit (Cr.)</th>
           <th style={{
-            width: '13%',
+            width: '10%',
             padding: '0 4px 0 12px',
             textAlign: 'left',
             verticalAlign: 'middle',
+            border: 'none',
             color: '#ffffff',
-            fontSize: '14px',
+            fontSize: '13px',
             fontWeight: 400,
             fontFamily: 'Arial, Helvetica, sans-serif',
           }}>Balance</th>
         </tr>
       </thead>
-      <tbody style={{ fontSize: '9px', color: '#111827' }}>
+      <tbody style={{ fontSize: '10px', color: '#111827' }}>
         {/* Brought forward row for subsequent pages */}
         {!isFirst && (
-          <tr style={{ background: '#fef2f2', borderBottom: '1px solid #DDDDDD' }}>
-            <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af' }}>{chunkTransactions[0]?.valueDate}</td>
-            <td style={{ padding: '4px 5px', fontWeight: 600, color: '#374151' }} colSpan={2}>Balance brought forward from page {pageIndex}</td>
-            <td style={{ padding: '4px 5px', textAlign: 'center', color: '#9ca3af' }}>--</td>
-            <td style={{ padding: '4px 5px', textAlign: 'right', color: '#9ca3af' }}>--</td>
-            <td style={{ padding: '4px 5px', textAlign: 'right', color: '#9ca3af' }}>--</td>
-            <td style={{ padding: '4px 5px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>&#8377;{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+          <tr style={{ background: '#ffffff' }}>
+            <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}></td>
+            <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', whiteSpace: 'nowrap', borderBottom: '0.5px solid #d1d5db' }}>{formatKotakDate(chunkTransactions[0]?.valueDate)}</td>
+            <td style={{ padding: '6px 8px', fontWeight: 'normal', color: '#111827', borderBottom: '0.5px solid #d1d5db' }} colSpan={2}>Balance brought forward from page {pageIndex}</td>
+            <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}></td>
+            <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}></td>
+            <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}>{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
           </tr>
         )}
-        {chunkTransactions.map((tx, txIdx) => (
-          <tr key={tx.id} style={{ borderBottom: '3px solid #f3f4f6', background: txIdx % 2 === 0 ? '#ffffff' : '#ffffff' }}>
-            <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', color: '#374151' }}>{tx.valueDate}</td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'left', lineHeight: 1.3, color: '#111827', fontWeight: 500 }}>
-              {tx.details.toUpperCase()}
-            </td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8px', color: '#6b7280', wordBreak: 'break-all' }}>{tx.refNo || '--'}</td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'center', fontSize: '8.5px', whiteSpace: 'nowrap', color: '#374151' }}>{tx.postDate}</td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.debit ? '#111827' : '#9ca3af', fontWeight: tx.debit ? 600 : 400 }}>
-              {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
-            </td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'right', color: tx.credit ? '#111827' : '#9ca3af', fontWeight: tx.credit ? 600 : 400 }}>
-              {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
-            </td>
-            <td style={{ padding: '3.5px 5px', textAlign: 'right', fontWeight: 700, color: '#111827' }}>
-              {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </td>
-          </tr>
-        ))}
+        {chunkTransactions.map((tx) => {
+          const serialNo = transactions.indexOf(tx) + 1;
+          const borderBottomStyle = (serialNo % 3 === 2)
+            ? '1.2px solid #d1d5db'
+            : '0.5px solid #d1d5db';
+          return (
+            <tr key={tx.id} style={{ background: '#ffffff' }}>
+              <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', width: '6%', borderBottom: borderBottomStyle }}>{serialNo}</td>
+              <td style={{ padding: '6px 8px', textAlign: 'left', whiteSpace: 'nowrap', color: '#111827', width: '12%', borderBottom: borderBottomStyle }}>{formatKotakDate(tx.valueDate)}</td>
+              <td style={{ padding: '6px 8px', textAlign: 'left', lineHeight: 1.35, color: '#111827', width: '35%', wordWrap: 'break-word', whiteSpace: 'normal', borderBottom: borderBottomStyle }}>
+                {tx.details.toUpperCase()}
+              </td>
+              <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', width: '17%', wordWrap: 'break-word', whiteSpace: 'normal', borderBottom: borderBottomStyle }}>{tx.refNo || ''}</td>
+              <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', width: '10%', borderBottom: borderBottomStyle }}>
+                {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+              </td>
+              <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', width: '10%', borderBottom: borderBottomStyle }}>
+                {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+              </td>
+              <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', width: '10%', borderBottom: borderBottomStyle }}>
+                {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   </div>
@@ -1056,39 +1101,34 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   {isLast && settings.bankStyle !== 'SBI' && (
                     <div style={{ margin: '40px 40px 40px 40px', fontFamily: 'Arial, Helvetica, sans-serif' }}>
                       {/* Kotak Summary Table */}
-                      <div style={{ border: '1px solid #e5e7eb', overflow: 'hidden',}}>
-                        <div className='text-center' style={{ background: '#ED1C24', color: '#fff', padding: '5px 10px', fontSize: '18px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          Account Statement Summary
+                      <div style={{ border: '1px solid #d1d5db', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ background: '#ED1C24', color: '#ffffff', padding: '8px 12px', fontSize: '14px', fontWeight: 'normal', textAlign: 'center' }}>
+                          Account Summary
                         </div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                          <thead >
-                            <tr className='mt-8' style={{ background: '#A8A8A8', color: 'white',  }}>
-                              <th style={{ padding: '18px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Opening Balance (&#8377;)</th>
-                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Total Debits (&#8377;)</th>
-                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Total Credits (&#8377;)</th>
-                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Dr Count</th>
-                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb', textAlign: 'center' }}>Cr Count</th>
-                              <th style={{ padding: '6px 8px', borderBottom: '1px solid #e5e7eb', textAlign: 'center' }}>Closing Balance (&#8377;)</th>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', border: 'none' }}>
+                          <thead>
+                            <tr style={{ background: '#A8A8A8', color: '#ffffff', fontWeight: 'normal', height: '36px', userSelect: 'none' }}>
+                              <th style={{ width: '50%', padding: '0 12px', textAlign: 'left', verticalAlign: 'middle', border: 'none', borderRight: '1px solid #ffffff' }}>Particulars</th>
+                              <th style={{ width: '25%', padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none', borderRight: '1px solid #ffffff' }}>Opening Balance</th>
+                              <th style={{ width: '25%', padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>Closing Balance</th>
                             </tr>
                           </thead>
                           <tbody>
-                            <tr style={{   fontWeight: 600, color: '#111827', textAlign: 'center' }}>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{drCount}</td>
-                              <td style={{ padding: '7px 8px', borderRight: '1px solid #e5e7eb' }}>{crCount}</td>
-                              <td style={{ padding: '7px 8px', fontWeight: 700, }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+                            <tr style={{ background: '#ffffff', height: '36px', color: '#111827', borderBottom: '1px solid #d1d5db' }}>
+                              <td style={{ padding: '0 12px', textAlign: 'left', verticalAlign: 'middle', border: 'none' }}>Savings Account (SA):</td>
+                              <td style={{ padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              <td style={{ padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
 
                       {/* Disclaimer */}
-                      <div style={{ marginTop: '8px', fontSize: '8px', color: '#6b7280', lineHeight: 1.5 }}>
-                        <div style={{ marginBottom: '3px' }}>• This is a computer generated statement and does not require a signature.</div>
-                        <div style={{ marginBottom: '3px' }}>• Please do not share your ATM PIN, OTP, net banking credentials or card details with anyone. Kotak Bank will never ask for such information.</div>
-                        <div>• For any queries, please call Kotak Customer Care at 1860-266-2666 or write to service.kotak@kotak.com</div>
+                      <div style={{ marginTop: '40px', fontFamily: 'Arial, Helvetica, sans-serif', textAlign: 'center', color: '#111827', fontSize: '11px', lineHeight: '1.6', userSelect: 'none', width: '100%' }}>
+                        <div style={{ fontSize: '14px', marginBottom: '8px', color: '#000000' }}>End of Statement</div>
+                        <div>Any discrepancy in the statement should be brought to the notice of Kotak Mahindra Bank Ltd. within</div>
+                        <div style={{ marginBottom: '6px' }}>one month from the date of receipt of the statement.</div>
+                        <div>This is a system generated report and does not require signature and stamp.</div>
                       </div>
                     </div>
                   )}
