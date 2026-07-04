@@ -479,6 +479,10 @@ export function generatePrintHtml(record: any): string {
     ? (record.config?.interestRate || 2.70) 
     : record.accountInfo.interestRate;
 
+  const accountType = isCustomRecord
+    ? 'Savings'
+    : (record.accountInfo?.accountType || 'Savings');
+
   const openingBalance = isCustomRecord ? record.openingBalance : record.accountInfo.openingBalance;
   const closingBalance = isCustomRecord ? record.closingBalance : record.closingBalance;
   const totalCredits = isCustomRecord ? record.totalCredits : record.totalCredits;
@@ -727,7 +731,7 @@ export function generatePrintHtml(record: any): string {
 
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">CIF Number : &nbsp;${customer.cifNumber}</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Account Number : &nbsp;${customer.accountNumber}</div>
-                        <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Product : &nbsp;-</div>
+                        <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Product : &nbsp;${(accountType || '').toUpperCase()}</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">IFSC Code : &nbsp;${branch.ifscCode}</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Currency : &nbsp;INR</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Account Status : &nbsp;OPEN</div>
