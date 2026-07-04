@@ -24,7 +24,7 @@ export interface AccountInfo {
   interestRate: number;
   currency: 'INR' | 'USD' | 'EUR' | 'GBP';
   accountStatus: 'Active' | 'Dormant' | 'Frozen';
-  accountType: 'Savings' | 'Current';
+  accountType: string;
 }
 
 export interface StatementSettings {
@@ -34,11 +34,11 @@ export interface StatementSettings {
   duration: '1 Month' | '2 Months' | '3 Months' | '6 Months' | '12 Months';
 
   // New Generation Mode
-  generationMode: 'duration' | 'custom';
+  generationMode?: 'duration' | 'custom';
 
   // Custom Date Range (ISO Format: YYYY-MM-DD)
-  fromDate: string;
-  toDate: string;
+  fromDate?: string;
+  toDate?: string;
 
   pageCount: '1 Page' | '2 Pages' | '3 Pages' | '5 Pages' | '10 Pages' | '20 Pages' | 'Custom';
 
@@ -48,11 +48,11 @@ export interface StatementSettings {
 
   profile: 'Personal' | 'Business';
 
-  salaryMode: 'auto' | 'manual';
+  salaryMode?: 'auto' | 'manual';
 
-  companyName: string;
+  companyName?: string;
 
-  monthlySalary: number;
+  monthlySalary?: number;
 }
 
 export interface Transaction {
