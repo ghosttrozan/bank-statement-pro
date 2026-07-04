@@ -211,13 +211,13 @@ export default function GeneratorPage() {
 
   const [branch, setBranch] = useState<BranchDetails>(SBI_BRANCH_DEFAULTS);
 
-  const account: AccountInfo = {
+  const [account, setAccount] = useState<AccountInfo>({
     openingBalance: 90000.00,
     interestRate: 2.50,
     currency: 'INR',
     accountStatus: 'Active',
     accountType: 'Savings',
-  };
+  });
 
   // Base settings (will be augmented with generation mode, dates, and salary config)
   const baseSettings: StatementSettings = {
@@ -457,6 +457,31 @@ export default function GeneratorPage() {
         return {
           ...prev,
           branchDetails: nextBranch
+        };
+      });
+    }
+  };
+
+  const handleAccountInputChange = (field: keyof AccountInfo, value: any) => {
+    const nextAccount = { ...account, [field]: value };
+    setAccount(nextAccount);
+
+    // Update active record in-place without hitting database/regenerating random transactions list
+    if (activeRecord) {
+      setActiveRecord(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          accountInfo: nextAccount
+        };
+      });
+    }
+    if (baseRecord) {
+      setBaseRecord(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          accountInfo: nextAccount
         };
       });
     }
@@ -920,6 +945,17 @@ export default function GeneratorPage() {
               </div>
 
               <div>
+                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Account Type</label>
+                <input 
+                  type="text"
+                  value={account.accountType}
+                  onChange={e => handleAccountInputChange('accountType', e.target.value)}
+                  placeholder="e.g., SAVINGS BANK AC"
+                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans font-bold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                />
+              </div>
+
+              <div>
                 <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">CIF Number</label>
                 <input 
                   type="text"
@@ -984,6 +1020,16 @@ export default function GeneratorPage() {
                   type="text"
                   value={branch.ifscCode}
                   onChange={e => handleBranchInputChange('ifscCode', e.target.value)}
+                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-mono font-semibold tracking-wider focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">MICR Code</label>
+                <input 
+                  type="text"
+                  value={branch.micrCode}
+                  onChange={e => handleBranchInputChange('micrCode', e.target.value)}
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-mono font-semibold tracking-wider focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
                 />
               </div>
