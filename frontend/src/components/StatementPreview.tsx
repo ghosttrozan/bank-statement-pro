@@ -646,10 +646,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-sm font-medium"
+                                  className="text-sm font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   {customerDetails.accountNumber}
@@ -667,10 +667,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-sm font-medium"
+                                  className="text-sm font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   {accountInfo.accountType}
@@ -690,10 +690,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-xs font-medium"
+                                  className="text-xs font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   {branchDetails.branchName}
@@ -711,10 +711,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-sm font-medium"
+                                  className="text-sm font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   9713063909
@@ -732,10 +732,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-sm font-medium"
+                                  className="text-sm font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   Active
@@ -753,10 +753,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-sm font-medium"
+                                  className="text-sm font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   Yes
@@ -774,10 +774,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 </span>
 
                                 <span
-                                  className="text-xs font-medium"
+                                  className="text-xs font-bold"
                                   style={{
                                     color: "#111111",
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                   }}
                                 >
                                   INDIAN RUPEE
