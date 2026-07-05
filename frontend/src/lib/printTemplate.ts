@@ -236,15 +236,15 @@ function generatePrintHtmlKotak(record: any): string {
           <div style="font-size:8px; font-weight:700; color:#ED1C24; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Account Details</div>
           <table style="font-size:9.5px; border:none; border-collapse:collapse; width:100%;">
             <tr><td style="color:#6b7280; padding:1px 6px 1px 0; white-space:nowrap;">Account No.:</td><td style="color:#111827; font-weight:700; font-family:monospace; letter-spacing:0.05em;">${customer.accountNumber}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Account Type:</td><td style="color:#111827; font-weight:600;">${accountInfo.accountType || 'Savings'} Account</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">CIF No.:</td><td style="color:#111827; font-family:monospace;">${customer.cifNumber}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">IFSC Code:</td><td style="color:#111827; font-weight:600;">${branch.ifscCode}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Branch:</td><td style="color:#111827;">${branch.branchName}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">MICR Code:</td><td style="color:#111827; font-family:monospace;">${branch.micrCode}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Open Date:</td><td style="color:#111827;">${customer.accountOpenDate}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Nominee:</td><td style="color:#111827;">${customer.nomineeName}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Interest Rate:</td><td style="color:#111827; font-weight:600;">${accountInfo.interestRate?.toFixed(2) || '3.50'}% p.a.</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Currency:</td><td style="color:#111827;">INR</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Account Type:</td><td style="color:#111827; font-weight:700;">${accountInfo.accountType || 'Savings'} Account</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">CIF No.:</td><td style="color:#111827; font-weight:700; font-family:monospace;">${customer.cifNumber}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">IFSC Code:</td><td style="color:#111827; font-weight:700;">${branch.ifscCode}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Branch:</td><td style="color:#111827; font-weight:700;">${branch.branchName}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">MICR Code:</td><td style="color:#111827; font-weight:700; font-family:monospace;">${branch.micrCode}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Open Date:</td><td style="color:#111827; font-weight:700;">${customer.accountOpenDate}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Nominee:</td><td style="color:#111827; font-weight:700;">${customer.nomineeName}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Interest Rate:</td><td style="color:#111827; font-weight:700;">${accountInfo.interestRate?.toFixed(2) || '3.50'}% p.a.</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Currency:</td><td style="color:#111827; font-weight:700;">INR</td></tr>
           </table>
         </div>
       </div>
