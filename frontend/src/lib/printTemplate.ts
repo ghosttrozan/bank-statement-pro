@@ -80,6 +80,27 @@ function formatDetails(details: string | null | undefined, refNo?: string | null
   `;
 }
 
+function formatKotakDate(dateStr: string): string {
+  if (!dateStr) return '';
+  if (/^\d{2}\s[A-Za-z]{3}\s\d{4}$/.test(dateStr)) {
+    return dateStr;
+  }
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    const day = parts[0].padStart(2, '0');
+    if (/^\d+$/.test(parts[1])) {
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      if (monthIdx >= 0 && monthIdx < 12) {
+        return `${day} ${months[monthIdx]} ${parts[2]}`;
+      }
+    } else {
+      return `${day} ${parts[1]} ${parts[2]}`;
+    }
+  }
+  return dateStr;
+}
+
 function generatePrintHtmlKotak(record: any): string {
   const txs = record.transactions || [];
 
@@ -134,8 +155,8 @@ function generatePrintHtmlKotak(record: any): string {
   let startDateStr = '--';
   let endDateStr = '--';
   if (txs.length > 0) {
-    startDateStr = txs[0].valueDate;
-    endDateStr = txs[txs.length - 1].valueDate;
+    startDateStr = formatKotakDate(txs[0].valueDate);
+    endDateStr = formatKotakDate(txs[txs.length - 1].valueDate);
   }
 
   // Paginate: first page 10 rows, subsequent 22 rows
@@ -167,28 +188,32 @@ function generatePrintHtmlKotak(record: any): string {
       const debitTxt = tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '';
       const creditTxt = tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '';
       const balTxt = tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-      const bg = txIdx % 2 === 0 ? '#ffffff' : '#fafafa';
+      const serialNo = txs.indexOf(tx) + 1;
+      const borderStyle = (serialNo % 3 === 2)
+        ? 'border-bottom:1.2px solid #d1d5db;'
+        : 'border-bottom:0.5px solid #d1d5db;';
+
       return `
-        <tr style="border-bottom:1px solid #f3f4f6; background:${bg};">
-          <td style="padding:3.5px 5px; text-align:center; font-family:monospace; font-size:8.5px; white-space:nowrap; border-right:1px solid #e5e7eb; color:#374151;">${tx.valueDate}</td>
-          <td style="padding:3.5px 5px; text-align:left; font-size:9px; line-height:1.3; border-right:1px solid #e5e7eb; color:#111827; font-weight:500;">${(tx.details || '').toUpperCase()}</td>
-          <td style="padding:3.5px 5px; text-align:center; font-family:monospace; font-size:7.5px; color:#6b7280; border-right:1px solid #e5e7eb; word-break:break-all;">${tx.refNo || '--'}</td>
-          <td style="padding:3.5px 5px; text-align:center; font-family:monospace; font-size:8.5px; white-space:nowrap; border-right:1px solid #e5e7eb; color:#374151;">${tx.postDate}</td>
-          <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-size:9px; border-right:1px solid #e5e7eb; color:${tx.debit ? '#b91c1c' : '#9ca3af'}; font-weight:${tx.debit ? 600 : 400};">${debitTxt}</td>
-          <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-size:9px; border-right:1px solid #e5e7eb; color:${tx.credit ? '#15803d' : '#9ca3af'}; font-weight:${tx.credit ? 600 : 400};">${creditTxt}</td>
-          <td style="padding:3.5px 5px; text-align:right; font-family:monospace; font-size:9px; font-weight:700; color:#111827;">${balTxt}</td>
+        <tr style="background:#ffffff;">
+          <td style="padding:6px 8px; text-align:left; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; width:6%; ${borderStyle}">${serialNo}</td>
+          <td style="padding:6px 8px; text-align:left; font-family:Arial,Helvetica,sans-serif; font-size:10px; white-space:nowrap; color:#111827; width:12%; ${borderStyle}">${formatKotakDate(tx.valueDate)}</td>
+          <td style="padding:6px 8px; text-align:left; font-family:Arial,Helvetica,sans-serif; font-size:10px; line-height:1.35; color:#111827; width:35%; word-wrap:break-word; white-space:normal; ${borderStyle}">${(tx.details || '').toUpperCase()}</td>
+          <td style="padding:6px 8px; text-align:left; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; width:17%; word-wrap:break-word; white-space:normal; ${borderStyle}">${tx.refNo || ''}</td>
+          <td style="padding:6px 8px; text-align:right; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; width:10%; ${borderStyle}">${debitTxt}</td>
+          <td style="padding:6px 8px; text-align:right; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; width:10%; ${borderStyle}">${creditTxt}</td>
+          <td style="padding:6px 8px; text-align:right; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; width:10%; ${borderStyle}">${balTxt}</td>
         </tr>
       `;
     }).join('');
 
     const bfRow = !isFirstPage ? `
-      <tr style="background:#fef2f2; border-bottom:1px solid #fca5a5;">
-        <td style="padding:4px 5px; text-align:center; color:#9ca3af; font-style:italic; border-right:1px solid #e5e7eb; font-size:8.5px;">${pageTxs[0]?.valueDate || ''}</td>
-        <td style="padding:4px 5px; font-weight:600; color:#374151; border-right:1px solid #e5e7eb; font-size:9px;" colspan="2">Balance brought forward from page ${pIndex}</td>
-        <td style="padding:4px 5px; text-align:center; border-right:1px solid #e5e7eb;">--</td>
-        <td style="padding:4px 5px; text-align:right; border-right:1px solid #e5e7eb;">--</td>
-        <td style="padding:4px 5px; text-align:right; border-right:1px solid #e5e7eb;">--</td>
-        <td style="padding:4px 5px; text-align:right; font-weight:700; font-family:monospace; font-size:9px;">&#8377;${broughtFwd.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      <tr style="background:#ffffff;">
+        <td style="padding:6px 8px; text-align:left; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; border-bottom:0.5px solid #d1d5db;"></td>
+        <td style="padding:6px 8px; text-align:left; font-family:Arial,Helvetica,sans-serif; font-size:10px; white-space:nowrap; color:#111827; border-bottom:0.5px solid #d1d5db;">${formatKotakDate(pageTxs[0]?.valueDate || '')}</td>
+        <td style="padding:6px 8px; font-weight:normal; font-family:Arial,Helvetica,sans-serif; color:#111827; font-size:10px; border-bottom:0.5px solid #d1d5db;" colspan="2">Balance brought forward from page ${pIndex}</td>
+        <td style="padding:6px 8px; text-align:right; font-family:Arial,Helvetica,sans-serif; color:#111827; font-size:10px; border-bottom:0.5px solid #d1d5db;"></td>
+        <td style="padding:6px 8px; text-align:right; font-family:Arial,Helvetica,sans-serif; color:#111827; font-size:10px; border-bottom:0.5px solid #d1d5db;"></td>
+        <td style="padding:6px 8px; text-align:right; font-family:Arial,Helvetica,sans-serif; font-size:10px; color:#111827; border-bottom:0.5px solid #d1d5db;">${broughtFwd.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       </tr>
     ` : '';
 
@@ -211,15 +236,15 @@ function generatePrintHtmlKotak(record: any): string {
           <div style="font-size:8px; font-weight:700; color:#ED1C24; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">Account Details</div>
           <table style="font-size:9.5px; border:none; border-collapse:collapse; width:100%;">
             <tr><td style="color:#6b7280; padding:1px 6px 1px 0; white-space:nowrap;">Account No.:</td><td style="color:#111827; font-weight:700; font-family:monospace; letter-spacing:0.05em;">${customer.accountNumber}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Account Type:</td><td style="color:#111827; font-weight:600;">${accountInfo.accountType || 'Savings'} Account</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">CIF No.:</td><td style="color:#111827; font-family:monospace;">${customer.cifNumber}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">IFSC Code:</td><td style="color:#111827; font-weight:600;">${branch.ifscCode}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Branch:</td><td style="color:#111827;">${branch.branchName}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">MICR Code:</td><td style="color:#111827; font-family:monospace;">${branch.micrCode}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Open Date:</td><td style="color:#111827;">${customer.accountOpenDate}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Nominee:</td><td style="color:#111827;">${customer.nomineeName}</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Interest Rate:</td><td style="color:#111827; font-weight:600;">${accountInfo.interestRate?.toFixed(2) || '3.50'}% p.a.</td></tr>
-            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Currency:</td><td style="color:#111827;">INR</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Account Type:</td><td style="color:#111827; font-weight:700;">${accountInfo.accountType || 'Savings'} Account</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">CIF No.:</td><td style="color:#111827; font-weight:700; font-family:monospace;">${customer.cifNumber}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">IFSC Code:</td><td style="color:#111827; font-weight:700;">${branch.ifscCode}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Branch:</td><td style="color:#111827; font-weight:700;">${branch.branchName}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">MICR Code:</td><td style="color:#111827; font-weight:700; font-family:monospace;">${branch.micrCode}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Open Date:</td><td style="color:#111827; font-weight:700;">${customer.accountOpenDate}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Nominee:</td><td style="color:#111827; font-weight:700;">${customer.nomineeName}</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Interest Rate:</td><td style="color:#111827; font-weight:700;">${accountInfo.interestRate?.toFixed(2) || '3.50'}% p.a.</td></tr>
+            <tr><td style="color:#6b7280; padding:1px 6px 1px 0;">Currency:</td><td style="color:#111827; font-weight:700;">INR</td></tr>
           </table>
         </div>
       </div>
@@ -242,50 +267,51 @@ function generatePrintHtmlKotak(record: any): string {
     ` : '';
 
     const continuationHeader = !isFirstPage ? `
-      <div style="background:#ED1C24; padding:6px 10mm; display:flex; align-items:center; justify-content:space-between; font-family:Arial,Helvetica,sans-serif;">
-        <div style="display:flex; align-items:baseline; gap:5px;">
-          <span style="font-size:20px; font-weight:900; color:#fff; letter-spacing:-0.5px; font-style:italic;">kotak</span>
-          <span style="font-size:10px; color:rgba(255,255,255,0.8);">Mahindra Bank</span>
+      <div style="padding:15px 10mm 10px 10mm; display:flex; flex-direction:column; align-items:flex-start; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:1.4; color:#000000; box-sizing:border-box; width:100%;">
+        <div style="font-weight:normal; font-size:16px; text-transform:uppercase; margin-bottom:4px; color:#111827;">
+          ${customer.accountHolderName}
         </div>
-        <div style="color:#fff; font-size:9.5px; font-family:monospace;">
-          ACC: ${customer.accountNumber} &nbsp;|&nbsp; Page ${pNum} of ${pages.length}
+        <div style="color:#111827;">
+          <span style="color:#8c8c8c;">Account No. </span>
+          <span style="font-weight:600;">${customer.accountNumber}</span>
+        </div>
+        <div style="color:#111827;">
+          <span style="color:#8c8c8c;">Account Statement </span>
+          <span style="font-weight:600;">
+            ${formatKotakDate(txs[0]?.valueDate)} - ${formatKotakDate(txs[txs.length - 1]?.valueDate)}
+          </span>
         </div>
       </div>
     ` : '';
 
     const summaryHtml = isLastPage ? `
-      <div style="padding:0 10mm; margin-top:12px; box-sizing:border-box;">
-        <div style="border:1px solid #e5e7eb; border-radius:4px; overflow:hidden;">
-          <div style="background:#ED1C24; color:#fff; padding:5px 10px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">
-            Account Statement Summary
+      <div style="padding:0 10mm; margin-top:20px; box-sizing:border-box;">
+        <div style="border:1px solid #d1d5db; border-radius:4px; overflow:hidden; font-family:Arial,Helvetica,sans-serif;">
+          <div style="background:#ED1C24; color:#ffffff; padding:8px 12px; font-size:14px; font-weight:400; text-align:center;">
+            Account Summary
           </div>
-          <table style="width:100%; border-collapse:collapse; font-size:10px; text-align:center;">
+          <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left; border:none;">
             <thead>
-              <tr style="background:#fef2f2; color:#374151; font-weight:700;">
-                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Opening Balance (&#8377;)</th>
-                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Total Debits (&#8377;)</th>
-                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Total Credits (&#8377;)</th>
-                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Dr Count</th>
-                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb; border-right:1px solid #e5e7eb;">Cr Count</th>
-                <th style="padding:6px 8px; border-bottom:1px solid #e5e7eb;">Closing Balance (&#8377;)</th>
+              <tr style="background:#A8A8A8; color:#ffffff; font-weight:400; height:36px; user-select:none;">
+                <th style="width:50%; padding:0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Particulars</th>
+                <th style="width:25%; padding:0 12px; text-align:right; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Opening Balance</th>
+                <th style="width:25%; padding:0 12px; text-align:right; vertical-align:middle; border:none;">Closing Balance</th>
               </tr>
             </thead>
             <tbody>
-              <tr style="font-family:monospace; font-weight:600; color:#111827;">
-                <td style="padding:7px 8px; border-right:1px solid #e5e7eb;">${openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
-                <td style="padding:7px 8px; border-right:1px solid #e5e7eb; color:#b91c1c;">${totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                <td style="padding:7px 8px; border-right:1px solid #e5e7eb; color:#15803d;">${totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                <td style="padding:7px 8px; border-right:1px solid #e5e7eb;">${drCount}</td>
-                <td style="padding:7px 8px; border-right:1px solid #e5e7eb;">${crCount}</td>
-                <td style="padding:7px 8px; font-weight:700; color:#ED1C24;">${closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr</td>
+              <tr style="background:#ffffff; height:36px; color:#111827; border-bottom:1px solid #d1d5db;">
+                <td style="padding:0 12px; text-align:left; vertical-align:middle; border:none;">Savings Account (SA):</td>
+                <td style="padding:0 12px; text-align:right; vertical-align:middle; border:none;">${openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style="padding:0 12px; text-align:right; vertical-align:middle; border:none;">${closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div style="margin-top:8px; font-size:8px; color:#6b7280; line-height:1.5;">
-          <div style="margin-bottom:3px;">&#x2022; This is a computer generated statement and does not require a signature.</div>
-          <div style="margin-bottom:3px;">&#x2022; Please do not share your ATM PIN, OTP, net banking credentials or card details with anyone. Kotak Bank will never ask for such information.</div>
-          <div>&#x2022; For any queries, please call Kotak Customer Care at 1860-266-2666 or write to service.kotak@kotak.com</div>
+        <div style="margin-top:40px; font-family:Arial,Helvetica,sans-serif; text-align:center; color:#111827; font-size:11px; line-height:1.6; user-select:none; width:100%;">
+          <div style="font-size:14px; margin-bottom:8px; color:#000000;">End of Statement</div>
+          <div>Any discrepancy in the statement should be brought to the notice of Kotak Mahindra Bank Ltd. within</div>
+          <div style="margin-bottom:6px;">one month from the date of receipt of the statement.</div>
+          <div>This is a system generated report and does not require signature and stamp.</div>
         </div>
       </div>
     ` : '';
@@ -310,16 +336,16 @@ function generatePrintHtmlKotak(record: any): string {
 
           <!-- Transaction Table -->
           <div style="padding:8px 10mm 0 10mm; width:100%; box-sizing:border-box;">
-            <table style="width:100%; table-layout:fixed; border-collapse:collapse; border:1px solid #e5e7eb; font-family:Arial,Helvetica,sans-serif;">
+            <table style="width:100%; table-layout:fixed; border-collapse:collapse; border:none; font-family:Arial,Helvetica,sans-serif; border-top:1px solid #d1d5db; border-bottom:1px solid #d1d5db;">
               <thead>
-                <tr style="background:#ED1C24; color:#ffffff; font-size:9.5px; font-weight:700;">
-                  <th style="width:11%; padding:5px; text-align:center; border-right:1px solid rgba(255,255,255,0.2);">Date</th>
-                  <th style="width:31%; padding:5px; text-align:left; border-right:1px solid rgba(255,255,255,0.2);">Description</th>
-                  <th style="width:15%; padding:5px; text-align:center; border-right:1px solid rgba(255,255,255,0.2); line-height:1.2;">Chq/Ref No.<br>Narration</th>
-                  <th style="width:11%; padding:5px; text-align:center; border-right:1px solid rgba(255,255,255,0.2);">Value Date</th>
-                  <th style="width:11%; padding:5px; text-align:right; border-right:1px solid rgba(255,255,255,0.2);">Withdrawal<br>Dr.(&#8377;)</th>
-                  <th style="width:11%; padding:5px; text-align:right; border-right:1px solid rgba(255,255,255,0.2);">Deposit<br>Cr.(&#8377;)</th>
-                  <th style="width:10%; padding:5px; text-align:right;">Balance<br>(&#8377;)</th>
+                <tr style="background:#A8A8A8; color:#ffffff; font-size:13px; font-weight:400; height:42px; user-select:none;">
+                  <th style="width:6%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">#</th>
+                  <th style="width:12%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Date</th>
+                  <th style="width:35%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Description</th>
+                  <th style="width:17%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Chq/Ref. No.</th>
+                  <th style="width:10%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Withdrawal (Dr.)</th>
+                  <th style="width:10%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none; border-right:1px solid #ffffff;">Deposit (Cr.)</th>
+                  <th style="width:10%; padding:0 4px 0 12px; text-align:left; vertical-align:middle; border:none;">Balance</th>
                 </tr>
               </thead>
               <tbody style="background:#ffffff;">
@@ -452,6 +478,10 @@ export function generatePrintHtml(record: any): string {
   const interestRate = isCustomRecord 
     ? (record.config?.interestRate || 2.70) 
     : record.accountInfo.interestRate;
+
+  const accountType = isCustomRecord
+    ? 'Savings'
+    : (record.accountInfo?.accountType || 'Savings');
 
   const openingBalance = isCustomRecord ? record.openingBalance : record.accountInfo.openingBalance;
   const closingBalance = isCustomRecord ? record.closingBalance : record.closingBalance;
@@ -701,7 +731,7 @@ export function generatePrintHtml(record: any): string {
 
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">CIF Number : &nbsp;${customer.cifNumber}</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Account Number : &nbsp;${customer.accountNumber}</div>
-                        <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Product : &nbsp;-</div>
+                        <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Product : &nbsp;${(accountType || '').toUpperCase()}</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">IFSC Code : &nbsp;${branch.ifscCode}</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Currency : &nbsp;INR</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Account Status : &nbsp;OPEN</div>

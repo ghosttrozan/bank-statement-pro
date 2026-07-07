@@ -5,7 +5,7 @@ import { IUser } from '../models/User';
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'change_me_access';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'change_me_refresh';
-const ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
+const ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '24h';
 const REFRESH_EXPIRY_DAYS = 30;
 
 export interface AccessTokenPayload {
