@@ -193,7 +193,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     : settings.bankStyle === 'BOI'
     ? chunkTransactionsForA4(transactions, 13, 28)
     : settings.bankStyle === 'PNB'
-    ? chunkTransactionsForA4(transactions, 11, 22)
+    ? chunkTransactionsForA4(transactions, 19, 30)
     : chunkTransactionsForA4(transactions, 12, 21);
 
   const allPages = [...pageChunks, [] as Transaction[]];
@@ -1062,24 +1062,24 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
                           <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10px' }}>
                             <thead>
-                              <tr style={{ backgroundColor: '#d9d9d9', color: '#000000', fontWeight: 'bold', height: '30px' }}>
-                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'center', border: '1px solid #000' }}>Transaction<br />Date</th>
-                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'center', border: '1px solid #000' }}>Cheque<br />Number</th>
-                                <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Withdrawal</th>
-                                <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Deposit</th>
-                                <th style={{ width: '16%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Balance</th>
-                                <th style={{ width: '34%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Narration</th>
+                              <tr style={{ backgroundColor: '#d9d9d9', color: '#000000', fontWeight: 'bold', height: '28px' }}>
+                                <th style={{ width: '12%', padding: '3px 5px', textAlign: 'center', border: '1px solid #000' }}>Transaction<br />Date</th>
+                                <th style={{ width: '10%', padding: '3px 5px', textAlign: 'center', border: '1px solid #000' }}>Cheque<br />Number</th>
+                                <th style={{ width: '14%', padding: '3px 5px', textAlign: 'right', border: '1px solid #000' }}>Withdrawal</th>
+                                <th style={{ width: '14%', padding: '3px 5px', textAlign: 'right', border: '1px solid #000' }}>Deposit</th>
+                                <th style={{ width: '16%', padding: '3px 5px', textAlign: 'right', border: '1px solid #000' }}>Balance</th>
+                                <th style={{ width: '34%', padding: '3px 5px', textAlign: 'left', border: '1px solid #000' }}>Narration</th>
                               </tr>
                             </thead>
                             <tbody style={{ backgroundColor: '#ffffff', color: '#000000' }}>
                               {chunkTransactions.map((tx) => (
                                 <tr key={tx.id} style={{ borderBottom: '1px solid #000' }}>
-                                  <td style={{ padding: '5px 6px', textAlign: 'center', fontSize: '10px', color: '#000', width: '12%', border: '1px solid #000', whiteSpace: 'nowrap' }}>{tx.valueDate.replace(/-/g, '/')}</td>
-                                  <td style={{ padding: '5px 6px', textAlign: 'center', fontSize: '10px', color: '#000', width: '10%', border: '1px solid #000' }}></td>
-                                  <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#000', width: '14%', border: '1px solid #000' }}>{tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                                  <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#000', width: '14%', border: '1px solid #000' }}>{tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                                  <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#000', width: '16%', border: '1px solid #000', whiteSpace: 'nowrap' }}>{tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr.</td>
-                                  <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', color: '#000', width: '34%', border: '1px solid #000', wordBreak: 'break-word', textTransform: 'uppercase' }}>{tx.details}</td>
+                                  <td style={{ padding: '3px 5px', textAlign: 'center', fontSize: '10px', color: '#000', width: '12%', border: '1px solid #000', whiteSpace: 'nowrap', lineHeight: 1.25, verticalAlign: 'middle' }}>{tx.valueDate.replace(/-/g, '/')}</td>
+                                  <td style={{ padding: '3px 5px', textAlign: 'center', fontSize: '10px', color: '#000', width: '10%', border: '1px solid #000', lineHeight: 1.25, verticalAlign: 'middle' }}></td>
+                                  <td style={{ padding: '3px 5px', textAlign: 'right', fontSize: '10px', color: '#000', width: '14%', border: '1px solid #000', lineHeight: 1.25, verticalAlign: 'middle' }}>{tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                  <td style={{ padding: '3px 5px', textAlign: 'right', fontSize: '10px', color: '#000', width: '14%', border: '1px solid #000', lineHeight: 1.25, verticalAlign: 'middle' }}>{tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                  <td style={{ padding: '3px 5px', textAlign: 'right', fontSize: '10px', color: '#000', width: '16%', border: '1px solid #000', whiteSpace: 'nowrap', lineHeight: 1.25, verticalAlign: 'middle' }}>{tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr.</td>
+                                  <td style={{ padding: '3px 5px', textAlign: 'left', fontSize: '10px', color: '#000', width: '34%', border: '1px solid #000', wordBreak: 'break-word', textTransform: 'uppercase', lineHeight: 1.25, verticalAlign: 'middle' }}>{tx.details}</td>
                                 </tr>
                               ))}
                             </tbody>

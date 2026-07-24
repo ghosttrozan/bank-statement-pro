@@ -391,40 +391,6 @@ function generatePrintHtmlKotak(record: any): string {
 }
 
 
-export function generatePrintHtml(record: any): string {
-  // Determine date ranges and variables dynamically
-  let startDateStr = '01-12-2025';
-  let endDateStr = '31-05-2026';
-  let acctOpenDate = '09/05/2022';
-
-  const txs = record.transactions || [];
-
-  if (txs && txs.length > 0) {
-    const parseDate = (dStr: string) => {
-      const parts = dStr.split(/[-/]/);
-      if (parts.length === 3) {
-        const d = parseInt(parts[0], 10);
-        const m = parseInt(parts[1], 10) - 1;
-        const y = parseInt(parts[2], 10);
-        return new Date(y, m, d);
-      }
-      return new Date();
-    };
-
-    const sortedTx = [...txs].sort((a, b) => {
-      return parseDate(a.valueDate).getTime() - parseDate(b.valueDate).getTime();
-    });
-
-    if (sortedTx.length > 0) {
-      startDateStr = sortedTx[0].valueDate.replace(/\//g, '-');
-      endDateStr = sortedTx[sortedTx.length - 1].valueDate.replace(/\//g, '-');
-      const sDate = parseDate(sortedTx[0].valueDate);
-      const openDate = new Date(sDate.getTime() - 4 * 365 * 24 * 60 * 60 * 1000);
-      const pad = (n: number) => String(n).padStart(2, '0');
-      acctOpenDate = `${pad(openDate.getDate())}/${pad(openDate.getMonth() + 1)}/${openDate.getFullYear()}`;
-    }
-  }
-
 function generatePrintHtmlBoi(record: any): string {
   const txs = record.transactions || [];
   const customer = record.customerDetails ? {
@@ -683,12 +649,12 @@ function generatePrintHtmlPnb(record: any): string {
 
       return `
         <tr style="background:#ffffff; border-bottom:1px solid #000;">
-          <td style="padding:5px 6px; text-align:center; font-size:10px; color:#000; width:12%; border:1px solid #000; white-space:nowrap;">${tx.valueDate.replace(/-/g, '/')}</td>
-          <td style="padding:5px 6px; text-align:center; font-size:10px; color:#000; width:10%; border:1px solid #000;"></td>
-          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#000; width:14%; border:1px solid #000;">${withdrawalTxt}</td>
-          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#000; width:14%; border:1px solid #000;">${depositTxt}</td>
-          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#000; width:16%; border:1px solid #000; white-space:nowrap;">${balTxt}</td>
-          <td style="padding:5px 6px; text-align:left; font-size:10px; color:#000; width:34%; border:1px solid #000; word-break:break-word;">${(tx.details || '').toUpperCase()}</td>
+          <td style="padding:3px 5px; text-align:center; font-size:10px; color:#000; width:12%; border:1px solid #000; white-space:nowrap; line-height:1.25; vertical-align:middle;">${tx.valueDate.replace(/-/g, '/')}</td>
+          <td style="padding:3px 5px; text-align:center; font-size:10px; color:#000; width:10%; border:1px solid #000; line-height:1.25; vertical-align:middle;"></td>
+          <td style="padding:3px 5px; text-align:right; font-size:10px; color:#000; width:14%; border:1px solid #000; line-height:1.25; vertical-align:middle;">${withdrawalTxt}</td>
+          <td style="padding:3px 5px; text-align:right; font-size:10px; color:#000; width:14%; border:1px solid #000; line-height:1.25; vertical-align:middle;">${depositTxt}</td>
+          <td style="padding:3px 5px; text-align:right; font-size:10px; color:#000; width:16%; border:1px solid #000; white-space:nowrap; line-height:1.25; vertical-align:middle;">${balTxt}</td>
+          <td style="padding:3px 5px; text-align:left; font-size:10px; color:#000; width:34%; border:1px solid #000; word-break:break-word; line-height:1.25; vertical-align:middle;">${(tx.details || '').toUpperCase()}</td>
         </tr>
       `;
     }).join('');
@@ -708,8 +674,8 @@ function generatePrintHtmlPnb(record: any): string {
           <div style="font-weight:bold; margin-bottom:4px; font-size:11px;">Branch Details</div>
           <div style="display:flex;"><span style="width:130px;">Branch Name:</span><span>${branch.branchName}</span></div>
           <div style="display:flex;"><span style="width:130px;">Bank Address:</span><span>${branch.branchAddress}</span></div>
-          <div style="display:flex;"><span style="width:130px;">City:</span><span>${branch.city || 'SHAJAPUR'}</span></div>
-          <div style="display:flex;"><span style="width:130px;">Pin:</span><span>${branch.pinCode || '466038'}</span></div>
+          <div style="display:flex;"><span style="width:130px;">City:</span><span>${(branch as any).city || 'SHAJAPUR'}</span></div>
+          <div style="display:flex;"><span style="width:130px;">Pin:</span><span>${(branch as any).pinCode || '466038'}</span></div>
           <div style="display:flex;"><span style="width:130px;">IFSC Code:</span><span>${branch.ifscCode}</span></div>
           <div style="display:flex;"><span style="width:130px;">MICR Code :</span><span>${branch.micrCode}</span></div>
         </div>
@@ -721,8 +687,8 @@ function generatePrintHtmlPnb(record: any): string {
           <div>Joint Account Holder 2:</div>
           <div>Joint Account Holder 3:</div>
           <div style="display:flex; margin-top:6px;"><span style="width:150px;">Customer Address:</span><span>${customer.address.replace(/\n/g, ' ')}</span></div>
-          <div style="display:flex;"><span style="width:150px;">City:</span><span>${customer.city || 'SHAJAPUR'}</span></div>
-          <div style="display:flex;"><span style="width:150px;">Pin:</span><span>${customer.pinCode || '466038'}</span></div>
+          <div style="display:flex;"><span style="width:150px;">City:</span><span>${(customer as any).city || 'SHAJAPUR'}</span></div>
+          <div style="display:flex;"><span style="width:150px;">Pin:</span><span>${(customer as any).pinCode || '466038'}</span></div>
           <div style="display:flex;"><span style="width:150px;">Nominee :</span><span>${customer.nomineeName}</span></div>
         </div>
 
@@ -756,13 +722,13 @@ function generatePrintHtmlPnb(record: any): string {
           <div style="padding:0 10mm; width:100%; box-sizing:border-box;">
             <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:10px;">
               <thead>
-                <tr style="background:#d9d9d9; color:#000000; font-weight:bold; height:30px;">
-                  <th style="width:12%; padding:4px 6px; text-align:center; border:1px solid #000;">Transaction<br/>Date</th>
-                  <th style="width:10%; padding:4px 6px; text-align:center; border:1px solid #000;">Cheque<br/>Number</th>
-                  <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000;">Withdrawal</th>
-                  <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000;">Deposit</th>
-                  <th style="width:16%; padding:4px 6px; text-align:right; border:1px solid #000;">Balance</th>
-                  <th style="width:34%; padding:4px 6px; text-align:left; border:1px solid #000;">Narration</th>
+                <tr style="background:#d9d9d9; color:#000000; font-weight:bold; height:28px;">
+                  <th style="width:12%; padding:3px 5px; text-align:center; border:1px solid #000;">Transaction<br/>Date</th>
+                  <th style="width:10%; padding:3px 5px; text-align:center; border:1px solid #000;">Cheque<br/>Number</th>
+                  <th style="width:14%; padding:3px 5px; text-align:right; border:1px solid #000;">Withdrawal</th>
+                  <th style="width:14%; padding:3px 5px; text-align:right; border:1px solid #000;">Deposit</th>
+                  <th style="width:16%; padding:3px 5px; text-align:right; border:1px solid #000;">Balance</th>
+                  <th style="width:34%; padding:3px 5px; text-align:left; border:1px solid #000;">Narration</th>
                 </tr>
               </thead>
               <tbody>
@@ -819,6 +785,9 @@ export function generatePrintHtml(record: any): string {
   if (isPnb) {
     return generatePrintHtmlPnb(record);
   }
+
+  const txs = record.transactions || [];
+  const acctOpenDate = record.config?.accountOpenDate || record.customerDetails?.accountOpenDate || '01-01-2020';
 
   // Resolve config and details
   const isCustomRecord = !record.customerDetails;
