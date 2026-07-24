@@ -193,7 +193,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     : settings.bankStyle === 'BOI'
     ? chunkTransactionsForA4(transactions, 13, 28)
     : settings.bankStyle === 'PNB'
-    ? chunkTransactionsForA4(transactions, 19, 30)
+    ? chunkTransactionsForA4(transactions, 15, 30)
     : chunkTransactionsForA4(transactions, 12, 21);
 
   const allPages = [...pageChunks, [] as Transaction[]];
@@ -627,14 +627,14 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                           <div style={{ padding: '0 10mm', fontSize: '10.5px', lineHeight: '1.45', color: '#000', marginBottom: '14px' }}>
                             <div style={{ fontWeight: '', marginBottom: '4px', fontSize: '13px' }}>Customer Details</div>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Account Name :</span><span>{customerDetails.accountHolderName}</span></div>
-                            <div>Joint Account Holder 1:</div>
-                            <div>Joint Account Holder 2:</div>
-                            <div>Joint Account Holder 3:</div>
-                            <div style={{ display: 'flex', marginTop: '6px' }}><span style={{ width: '150px' }}>Customer Address:</span><span>{customerDetails.address?.replace(/\n/g, ' ')}</span></div>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>City:</span><span>{customerDetails.city || 'SHAJAPUR'}</span></div>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Pin:</span><span>{customerDetails.pinCode || '466038'}</span></div>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Nominee :</span><span>{customerDetails.nomineeName || 'NIRMALA'}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Account Name :</span><span>{customerDetails.accountHolderName}</span></div><br/>
+                            <div>Joint Account Holder 1:</div> <br/>
+                            <div>Joint Account Holder 2:</div> <br/>
+                            <div>Joint Account Holder 3:</div> <br/>
+                            <div style={{ display: 'flex', marginTop: '6px' }}><span style={{ width: '150px' }}>Customer Address:</span><span>{customerDetails.address?.replace(/\n/g, ' ')}</span></div><br/>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>City:</span><span>{customerDetails.city || 'SHAJAPUR'}</span></div><br/>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Pin:</span><span>{customerDetails.pinCode || '466038'}</span></div><br/>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Nominee :</span><span>{customerDetails.nomineeName || 'NIRMALA'}</span></div><br/>
                           </div>
 
                           {/* Statement Period */}
