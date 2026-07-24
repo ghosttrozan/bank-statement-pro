@@ -190,6 +190,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
   const pageChunks = settings.bankStyle === 'SBI'
     ? chunkTransactionsForA4(transactions, 6, 21)
+    : settings.bankStyle === 'BOI'
+    ? chunkTransactionsForA4(transactions, 13, 28)
+    : settings.bankStyle === 'PNB'
+    ? chunkTransactionsForA4(transactions, 11, 22)
     : chunkTransactionsForA4(transactions, 12, 21);
 
   const allPages = [...pageChunks, [] as Transaction[]];
@@ -505,6 +509,143 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                       ) : (
                         /* PAGE 2+ REPEATED HEADER EMPTY DIV */
                         <div style={{ height: '0px' }}></div>
+                      )}
+                    </div>
+                  ) : settings.bankStyle === 'BOI' ? (
+                    /* BOI DESIGN THEME */
+                    <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, sans-serif', color: '#000000' }}>
+                      {isFirst ? (
+                        <div>
+                          {/* Logo Top Right */}
+                          <div className="flex justify-end mb-2">
+                            <img
+                              src="/boi-logo.png"
+                              alt="Bank of India"
+                              style={{ height: '100px', width: 'auto' }}
+                            />
+                          </div>
+
+                          {/* Title Centered */}
+                          <div className="text-center my-4">
+                            <h1 className="text-2xl font-bold text-black m-0">Detailed Statement</h1>
+                          </div>
+
+                          {/* Date Right Aligned */}
+                          <div className="text-right text-xs font-bold text-black mb-2">
+                            Date: {(() => {
+                              const d = new Date();
+                              return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                            })()}
+                          </div>
+
+                          {/* Account Metadata Box Table */}
+                          <table className="w-full border-collapse border border-black text-xs mb-4" style={{ color: '#000' }}>
+                            <tbody>
+                              <tr>
+                                <td className="p-1.5 border border-black w-1/2 align-top">
+                                  <span className="inline-block w-40 font-normal">Account holder name:</span>
+                                  <span className="font-normal">{customerDetails.accountHolderName}</span>
+                                </td>
+                                <td className="p-1.5 border border-black w-1/2 align-top">
+                                  <span className="inline-block w-44 font-normal">Account holder address:</span>
+                                  <span className="font-normal">{customerDetails.address?.replace(/\n/g, ' ')}</span>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td className="p-1.5 border border-black align-top">
+                                  <span className="inline-block w-40 font-normal">Customer ID:</span>
+                                  <span className="font-normal">{customerDetails.cifNumber}</span>
+                                </td>
+                                <td className="p-1.5 border border-black align-top">
+                                  <span className="inline-block w-44 font-normal">IFSC:</span>
+                                  <span className="font-normal">{branchDetails.ifscCode}</span>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td className="p-1.5 border border-black align-top">
+                                  <span className="inline-block w-40 font-normal">Account number:</span>
+                                  <span className="font-normal">{customerDetails.accountNumber}</span>
+                                </td>
+                                <td className="p-1.5 border border-black align-top">
+                                  <span className="inline-block w-44 font-normal">Branch Name:</span>
+                                  <span className="font-normal">{branchDetails.branchName}</span>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+                          {/* Transaction Date Filter Block */}
+                          <div className="text-xs leading-relaxed text-black mb-4 space-y-1">
+                            <div className="flex">
+                              <span className="w-40 font-bold">Transaction Date</span>
+                              <span><strong>from:</strong> {transactions[0]?.valueDate?.replace(/\//g, '-') || '01-12-2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> {transactions[transactions.length - 1]?.valueDate?.replace(/\//g, '-') || '31-05-2026'}</span>
+                            </div>
+                            <div className="flex">
+                              <span className="w-40 font-bold">Amount</span>
+                              <span><strong>from:</strong> - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> -</span>
+                            </div>
+                            <div className="flex">
+                              <span className="w-40 font-bold">Cheque</span>
+                              <span><strong>from:</strong> - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> -</span>
+                            </div>
+                            <div className="mt-1"><strong>Transaction type: All</strong></div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
+                    </div>
+                  ) : settings.bankStyle === 'PNB' ? (
+                    /* PNB DESIGN THEME */
+                    <div className="w-full" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      {isFirst ? (
+                        <div>
+                          {/* Banner: fixed height strip at top */}
+                          <div style={{ width: '100%', margin: 0, padding: 0 }}>
+                            <img
+                              src="/image copy.png"
+                              alt="Punjab National Bank"
+                              style={{ width: '100%', height: '50px', objectFit: 'cover', objectPosition: 'center', display: 'block', margin: 0, padding: 0 }}
+                            />
+                          </div>
+
+                          {/* Account Statement title */}
+                          <div style={{ textAlign: 'center', margin: '10px 0 8px 0', fontSize: '13px', fontWeight: '', color: '#000' }}>
+                            Account Statement For Account:{customerDetails.accountNumber}
+                          </div>
+
+                          {/* Vertical stacked details */}
+                          <div style={{ padding: '0 10mm', fontSize: '10.5px', lineHeight: '1.45', color: '#000', marginBottom: '12px' }}>
+                            <div style={{ fontWeight: '', marginBottom: '4px', fontSize: '13px' }}>Branch Details</div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Branch Name:</span><span>{branchDetails.branchName}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Bank Address:</span><span>{branchDetails.branchAddress}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>City:</span><span>{branchDetails.city || 'SHAJAPUR'}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>Pin:</span><span>{branchDetails.pinCode || '466038'}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>IFSC Code:</span><span>{branchDetails.ifscCode}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '130px' }}>MICR Code :</span><span>{branchDetails.micrCode}</span></div>
+                          </div>
+
+                          <div style={{ padding: '0 10mm', fontSize: '10.5px', lineHeight: '1.45', color: '#000', marginBottom: '14px' }}>
+                            <div style={{ fontWeight: '', marginBottom: '4px', fontSize: '13px' }}>Customer Details</div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Account Name :</span><span>{customerDetails.accountHolderName}</span></div>
+                            <div>Joint Account Holder 1:</div>
+                            <div>Joint Account Holder 2:</div>
+                            <div>Joint Account Holder 3:</div>
+                            <div style={{ display: 'flex', marginTop: '6px' }}><span style={{ width: '150px' }}>Customer Address:</span><span>{customerDetails.address?.replace(/\n/g, ' ')}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>City:</span><span>{customerDetails.city || 'SHAJAPUR'}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Pin:</span><span>{customerDetails.pinCode || '466038'}</span></div>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Nominee :</span><span>{customerDetails.nomineeName || 'NIRMALA'}</span></div>
+                          </div>
+
+                          {/* Statement Period */}
+                          <div style={{ padding: '0 10mm', fontSize: '11px', fontWeight: '', marginBottom: '14px', color: '#000' }}>
+                            Statement Period : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {transactions[0]?.valueDate?.replace(/-/g, '/') || '02/12/2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; to &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {transactions[transactions.length - 1]?.valueDate?.replace(/-/g, '/') || '10/06/2026'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ textAlign: 'center', fontSize: '13px', fontWeight: '', padding: '8px 0', marginBottom: '8px', color: '#000' }}>
+                          Account Statement For Account:{customerDetails.accountNumber}
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -885,6 +1026,65 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             </tr>
                           </tbody>
                         </table>
+                      ) : settings.bankStyle === 'BOI' ? (
+                        /* ─── BOI TABLE ─────────────────────────────────────────── */
+                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                          <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10.5px' }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#ffffff', color: '#000000', fontWeight: 'bold', height: '32px' }}>
+                                <th style={{ width: '6%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Sr No</th>
+                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Date</th>
+                                <th style={{ width: '44%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Remarks</th>
+                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Debit</th>
+                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Credit</th>
+                                <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Balance</th>
+                              </tr>
+                            </thead>
+                            <tbody style={{ backgroundColor: '#ffffff', color: '#111827' }}>
+                              {chunkTransactions.map((tx) => {
+                                const serialNo = transactions.indexOf(tx) + 1;
+                                return (
+                                  <tr key={tx.id} style={{ borderBottom: '1px solid #000' }}>
+                                    <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', color: '#111827', width: '6%', border: '1px solid #000' }}>{serialNo}</td>
+                                    <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', whiteSpace: 'nowrap', color: '#111827', width: '12%', border: '1px solid #000' }}>{tx.valueDate.replace(/\//g, '-')}</td>
+                                    <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', lineHeight: 1.3, color: '#111827', width: '44%', wordBreak: 'break-word', border: '1px solid #000', textTransform: 'uppercase' }}>{tx.details}</td>
+                                    <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#111827', width: '12%', border: '1px solid #000' }}>{tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                    <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#111827', width: '12%', border: '1px solid #000' }}>{tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                    <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#111827', width: '14%', border: '1px solid #000', whiteSpace: 'nowrap' }}>₹ {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : settings.bankStyle === 'PNB' ? (
+                        /* ─── PNB TABLE ─────────────────────────────────────────── */
+                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                          <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10px' }}>
+                            <thead>
+                              <tr style={{ backgroundColor: '#d9d9d9', color: '#000000', fontWeight: 'bold', height: '30px' }}>
+                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'center', border: '1px solid #000' }}>Transaction<br />Date</th>
+                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'center', border: '1px solid #000' }}>Cheque<br />Number</th>
+                                <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Withdrawal</th>
+                                <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Deposit</th>
+                                <th style={{ width: '16%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Balance</th>
+                                <th style={{ width: '34%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Narration</th>
+                              </tr>
+                            </thead>
+                            <tbody style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+                              {chunkTransactions.map((tx) => (
+                                <tr key={tx.id} style={{ borderBottom: '1px solid #000' }}>
+                                  <td style={{ padding: '5px 6px', textAlign: 'center', fontSize: '10px', color: '#000', width: '12%', border: '1px solid #000', whiteSpace: 'nowrap' }}>{tx.valueDate.replace(/-/g, '/')}</td>
+                                  <td style={{ padding: '5px 6px', textAlign: 'center', fontSize: '10px', color: '#000', width: '10%', border: '1px solid #000' }}></td>
+                                  <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#000', width: '14%', border: '1px solid #000' }}>{tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                  <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#000', width: '14%', border: '1px solid #000' }}>{tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                  <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#000', width: '16%', border: '1px solid #000', whiteSpace: 'nowrap' }}>{tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })} Cr.</td>
+                                  <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', color: '#000', width: '34%', border: '1px solid #000', wordBreak: 'break-word', textTransform: 'uppercase' }}>{tx.details}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       ) : (
                         /* ─── KOTAK TABLE – updated header UI ──────────────────── */
                         <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
@@ -1099,7 +1299,26 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     </div>
                   )}
 
-                  {isLast && settings.bankStyle !== 'SBI' && (
+                  {isLast && settings.bankStyle === 'BOI' && (
+                    <div className="px-[8mm] mt-4 text-xs text-slate-900 leading-relaxed font-sans select-none">
+                      <strong>NOTE:</strong><br />
+                      Any discrepancy in the account statement should be notified to the bank within period of 30 days of generation of statement. It will be treated that the entries/contents of this statement are checked and found correct by you, if no such complaint is made within the period stated above. Please do not share your ATM, Card details, PIN, OTP and Passwords with anyone else. Bank never asks for such details.
+                    </div>
+                  )}
+
+                  {isLast && settings.bankStyle === 'PNB' && (
+                    <div className="px-[8mm] text-[9px] leading-tight text-black border-t border-black pt-2 mt-3 font-sans select-none">
+                      <div>Unless constituent notifies the bank immediately of any discrepancy found by him in his statement of Account, it will be taken that he has found the account correct.</div>
+                      <div>*COMPUTER GENERATED ENTERIES SHOWN IN THE STATEMENT OF ACCOUNT DO NOT REQUIRE ANY AUTHENTICATION / INITIAL FROM THE BANK OFFICIAL.PLEASE DO NOT ACCEPT ANY MANUAL ENTRY IN YOUR COMPUTER GENERATED STATEMENT OF ACCOUNT</div>
+                      <div>* PLEASE ENSURE THAT ALL THE CHEQUE LEAVES IN YOUR CUSTODY ARE DULY BRANDED WITH YOUR 16 DIGITS ACCOUNT NUMBER</div>
+                      <div>* CUSTOMERS ARE REQUESTED IN THEIR OWN INTEREST NOT TO ISSUE CHEQUES WITHOUT ADEQUATE CLEAR FUNDS /ARRANGEMENTS. SUCH CHEQUES CAN BE RETURNED WITHOUT MAKING ANY FURTHER REFERENCE TO THEM.</div>
+                      <div>* PLEASE MAINTAIN MINIMUM AVERAGE BALANCE,TO AVOID LEVY OF CHARGES.</div>
+                      <div className="mt-1 font-bold">Abbreviations are as under:</div>
+                      <div>BR: Branch Name , Csh: Cash , Clg: Clearing , ISO: Inter Sol(##) | QAB:Quarterly Average Balances , LF Chg: Ledger Folio Charges , Intt: Interest , Chrg: Charges | Ret:Returning , Chq: Cheque , SI: Standing Instruction , Stk Stmt: Stock Statement , Trf: Transfer , POSP:POINT OF SALE</div>
+                    </div>
+                  )}
+
+                  {isLast && settings.bankStyle === 'Kotak' && (
                     <div style={{ margin: '40px 40px 40px 40px', fontFamily: 'Arial, Helvetica, sans-serif' }}>
                       {/* Kotak Summary Table */}
                       <div style={{ border: '1px solid #d1d5db', borderRadius: '4px', overflow: 'hidden' }}>
@@ -1140,8 +1359,12 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   <div style={{ textAlign: 'center', fontFamily: 'sans-serif', fontSize: '11px', fontWeight: 400, color: '#4b5563', paddingBottom: '10px', userSelect: 'none' }}>
                     Page no. {pageNum}
                   </div>
+                ) : settings.bankStyle === 'PNB' ? (
+                  <div style={{ textAlign: 'right', fontFamily: 'sans-serif', fontSize: '10px', fontWeight: 400, color: '#000000', paddingRight: '10mm', paddingBottom: '10px', userSelect: 'none' }}>
+                    Page No - {pageNum}
+                  </div>
                 ) : (
-                  /* Kotak red footer bar */
+                  /* Kotak / BOI bottom bar */
                   <div style={{ marginTop: '6px' }}>
                     <div className='text-gray-600' style={{
                       fontSize: '8.5px',

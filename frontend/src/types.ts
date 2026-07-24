@@ -28,7 +28,7 @@ export interface AccountInfo {
 }
 
 export interface StatementSettings {
-  bankStyle: 'SBI' | 'Kotak';
+  bankStyle: 'SBI' | 'Kotak' | 'BOI' | 'PNB';
 
   // Existing Quick Duration Mode
   duration: '1 Month' | '2 Months' | '3 Months' | '6 Months' | '12 Months';

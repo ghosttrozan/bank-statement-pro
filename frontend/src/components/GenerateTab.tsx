@@ -495,6 +495,8 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
                 >
                   <option value="SBI">State Bank of India (Official SBI Blue Layout)</option>
                   <option value="Kotak">Kotak Mahindra Bank (Red/Navy 811 Style Layout)</option>
+                  <option value="BOI">Bank of India (Detailed Statement Blue Star Layout)</option>
+                  <option value="PNB">Punjab National Bank (Red/Yellow Corporate Layout)</option>
                 </select>
               </div>
               <div>
@@ -597,7 +599,12 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
                 </div>
                 <div className="flex justify-between py-2.5 text-slate-500">
                   <span>Design Corporate Pattern:</span>
-                  <span className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase font-mono ${settings.bankStyle === 'SBI' ? 'bg-sky-50 text-sky-700 border border-sky-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
+                  <span className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase font-mono ${
+                    settings.bankStyle === 'SBI' ? 'bg-sky-50 text-sky-700 border border-sky-100' :
+                    settings.bankStyle === 'Kotak' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                    settings.bankStyle === 'BOI' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                    'bg-amber-50 text-amber-800 border border-amber-200'
+                  }`}>
                     {settings.bankStyle} Design Format
                   </span>
                 </div>

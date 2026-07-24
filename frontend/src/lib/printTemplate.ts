@@ -425,10 +425,399 @@ export function generatePrintHtml(record: any): string {
     }
   }
 
-  // Handle support check for bank style Kotak
+function generatePrintHtmlBoi(record: any): string {
+  const txs = record.transactions || [];
+  const customer = record.customerDetails ? {
+    accountHolderName: record.customerDetails.accountHolderName,
+    email: record.customerDetails.email,
+    address: record.customerDetails.address,
+    accountNumber: record.customerDetails.accountNumber,
+    cifNumber: record.customerDetails.cifNumber,
+    nomineeName: record.customerDetails.nomineeName || 'N/A',
+    accountOpenDate: record.customerDetails.accountOpenDate,
+  } : {
+    accountHolderName: record.holderName || 'MOHIT VISHVKARMA',
+    email: record.config?.email || '',
+    address: record.config?.address || 'H N 12 KEVDA WALA BAGH BHOPAL 462008',
+    accountNumber: record.accountNumber || '901718210015178',
+    cifNumber: record.config?.cifNo || '201358131',
+    nomineeName: 'N/A',
+    accountOpenDate: '',
+  };
+
+  const branch = record.branchDetails ? {
+    branchName: record.branchDetails.branchName,
+    branchAddress: record.branchDetails.branchAddress,
+    ifscCode: record.branchDetails.ifscCode,
+  } : {
+    branchName: 'ASHTA',
+    branchAddress: 'MAIN ROAD ASHTA, SEHORE, MADHYA PRADESH - 466116',
+    ifscCode: 'BKID0009017',
+  };
+
+  let startDateStr = '01-12-2025';
+  let endDateStr = '31-05-2026';
+  if (txs.length > 0) {
+    startDateStr = txs[0].valueDate.replace(/\//g, '-');
+    endDateStr = txs[txs.length - 1].valueDate.replace(/\//g, '-');
+  }
+
+  const paginateBoiTxs = (transactions: any[]): any[][] => {
+    const pages: any[][] = [];
+    if (transactions.length === 0) return [[]];
+    pages.push(transactions.slice(0, 15));
+    let i = 15;
+    while (i < transactions.length) {
+      pages.push(transactions.slice(i, i + 22));
+      i += 22;
+    }
+    return pages;
+  };
+
+  const pages = paginateBoiTxs(txs);
+
+  const pagesHtml = pages.map((pageTxs, pIndex) => {
+    const pNum = pIndex + 1;
+    const isFirstPage = pNum === 1;
+    const isLastPage = pNum === pages.length;
+
+    const rowsHtml = pageTxs.map((tx: any) => {
+      const serialNo = txs.indexOf(tx) + 1;
+      const debitTxt = tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+      const creditTxt = tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+      const balTxt = `₹ ${tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      return `
+        <tr style="background:#ffffff; border-bottom:0.5px solid #000;">
+          <td style="padding:5px 6px; text-align:left; font-size:10px; color:#111827; width:6%; border:1px solid #000;">${serialNo}</td>
+          <td style="padding:5px 6px; text-align:left; font-size:10px; white-space:nowrap; color:#111827; width:12%; border:1px solid #000;">${tx.valueDate.replace(/\//g, '-')}</td>
+          <td style="padding:5px 6px; text-align:left; font-size:10px; line-height:1.3; color:#111827; width:44%; word-break:break-word; border:1px solid #000;">${(tx.details || '').toUpperCase()}</td>
+          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#111827; width:12%; border:1px solid #000;">${debitTxt}</td>
+          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#111827; width:12%; border:1px solid #000;">${creditTxt}</td>
+          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#111827; width:14%; border:1px solid #000; white-space:nowrap;">${balTxt}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const firstPageHeader = isFirstPage ? `
+      <div style="padding:15px 10mm 10px 10mm; font-family:Arial, sans-serif; color:#000;">
+        <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+          <img src="/boi-logo.png" alt="Bank of India" style="height:55px; width:auto;" />
+        </div>
+
+        <div style="text-align:center; margin:15px 0 20px 0;">
+          <h1 style="font-size:22px; font-weight:bold; color:#000000; margin:0;">Detailed Statement</h1>
+        </div>
+
+        <div style="text-align:right; font-size:11px; font-weight:bold; color:#000000; margin-bottom:8px;">
+          Date: ${getTodayDateStr()}
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:11px; margin-bottom:15px; color:#000;">
+          <tr>
+            <td style="padding:6px 8px; border:1px solid #000; width:50%; vertical-align:top;">
+              <span style="display:inline-block; width:145px;">Account holder name:</span>
+              <span>${customer.accountHolderName}</span>
+            </td>
+            <td style="padding:6px 8px; border:1px solid #000; width:50%; vertical-align:top;">
+              <span style="display:inline-block; width:155px;">Account holder address:</span>
+              <span>${customer.address.replace(/\n/g, ' ')}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; border:1px solid #000; vertical-align:top;">
+              <span style="display:inline-block; width:145px;">Customer ID:</span>
+              <span>${customer.cifNumber}</span>
+            </td>
+            <td style="padding:6px 8px; border:1px solid #000; vertical-align:top;">
+              <span style="display:inline-block; width:155px;">IFSC:</span>
+              <span>${branch.ifscCode}</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:6px 8px; border:1px solid #000; vertical-align:top;">
+              <span style="display:inline-block; width:145px;">Account number:</span>
+              <span>${customer.accountNumber}</span>
+            </td>
+            <td style="padding:6px 8px; border:1px solid #000; vertical-align:top;">
+              <span style="display:inline-block; width:155px;">Branch Name:</span>
+              <span>${branch.branchName}</span>
+            </td>
+          </tr>
+        </table>
+
+        <div style="font-size:11px; line-height:1.7; color:#000; margin-bottom:15px;">
+          <div style="display:flex;"><span style="width:145px; font-weight:bold;">Transaction Date</span><span><strong>from:</strong> ${startDateStr} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> ${endDateStr}</span></div>
+          <div style="display:flex;"><span style="width:145px; font-weight:bold;">Amount</span><span><strong>from:</strong> - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> -</span></div>
+          <div style="display:flex;"><span style="width:145px; font-weight:bold;">Cheque</span><span><strong>from:</strong> - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> -</span></div>
+          <div style="margin-top:2px;"><strong>Transaction type: All</strong></div>
+        </div>
+      </div>
+    ` : `
+      <div style="padding:15px 10mm 10px 10mm; display:flex; justify-content:space-between; font-family:Arial, sans-serif; font-size:11px; border-bottom:1px solid #ccc; margin-bottom:10px;">
+        <span><strong>Detailed Statement:</strong> ${customer.accountHolderName} (Acc: ${customer.accountNumber})</span>
+        <span>Page ${pNum}</span>
+      </div>
+    `;
+
+    const lastPageNote = isLastPage ? `
+      <div style="padding:15px 10mm 0 10mm; font-family:Arial, sans-serif; font-size:10.5px; line-height:1.5; color:#111827;">
+        <strong>NOTE:</strong><br/>
+        Any discrepancy in the account statement should be notified to the bank within period of 30 days of generation of statement. It will be treated that the entries/contents of this statement are checked and found correct by you, if no such complaint is made within the period stated above. Please do not share your ATM, Card details, PIN, OTP and Passwords with anyone else. Bank never asks for such details.
+      </div>
+    ` : '';
+
+    return `
+      <div class="doc-card" style="box-sizing:border-box; width:210mm; min-width:210mm; max-width:210mm; height:297mm; min-height:297mm; max-height:297mm; background:#fff; margin:0 auto 30px auto; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; font-family:Arial, Helvetica, sans-serif;">
+        <div style="display:flex; flex-direction:column; width:100%;">
+          ${firstPageHeader}
+
+          <div style="padding:0 10mm; width:100%; box-sizing:border-box;">
+            <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:10.5px;">
+              <thead>
+                <tr style="background:#ffffff; color:#000000; font-weight:bold; height:32px;">
+                  <th style="width:6%; padding:4px 6px; text-align:left; border:1px solid #000;">Sr No</th>
+                  <th style="width:12%; padding:4px 6px; text-align:left; border:1px solid #000;">Date</th>
+                  <th style="width:44%; padding:4px 6px; text-align:left; border:1px solid #000;">Remarks</th>
+                  <th style="width:12%; padding:4px 6px; text-align:right; border:1px solid #000;">Debit</th>
+                  <th style="width:12%; padding:4px 6px; text-align:right; border:1px solid #000;">Credit</th>
+                  <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000;">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+          ${lastPageNote}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Bank of India Statement - ${customer.accountHolderName}</title>
+      <style>
+        @page { size: A4 portrait; margin: 0; }
+        html, body { background: #ffffff !important; color: #000 !important; padding: 0 !important; margin: 0 !important; font-family: Arial, Helvetica, sans-serif !important; width: 100%; }
+        .doc-card { page-break-after: always !important; break-after: page !important; }
+        .doc-card:last-of-type { page-break-after: avoid !important; break-after: avoid !important; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { box-sizing: border-box; }
+      </style>
+    </head>
+    <body style="background:#ffffff; margin:0; padding:0;">
+      ${pagesHtml}
+    </body>
+    </html>
+  `;
+}
+
+function generatePrintHtmlPnb(record: any): string {
+  const txs = record.transactions || [];
+  const customer = record.customerDetails ? {
+    accountHolderName: record.customerDetails.accountHolderName,
+    email: record.customerDetails.email,
+    address: record.customerDetails.address,
+    accountNumber: record.customerDetails.accountNumber,
+    cifNumber: record.customerDetails.cifNumber,
+    nomineeName: record.customerDetails.nomineeName || 'NIRMALA',
+    accountOpenDate: record.customerDetails.accountOpenDate,
+  } : {
+    accountHolderName: record.holderName || 'RAMLAL',
+    email: record.config?.email || '',
+    address: record.config?.address || 'UPER KHEDA GRAM GANGAPUR SHAJAPUR',
+    accountNumber: record.accountNumber || '7800000100061825',
+    cifNumber: record.config?.cifNo || '912534891',
+    nomineeName: 'NIRMALA',
+    accountOpenDate: '',
+  };
+
+  const branch = record.branchDetails ? {
+    branchName: record.branchDetails.branchName,
+    branchAddress: record.branchDetails.branchAddress,
+    ifscCode: record.branchDetails.ifscCode,
+    micrCode: record.branchDetails.micrCode,
+  } : {
+    branchName: 'SHAJAPUR',
+    branchAddress: 'AJAY SHARE TAKTEO SHAJAPUR',
+    ifscCode: 'PUNB0780000',
+    micrCode: '465024505',
+  };
+
+  let startDateStr = '02/12/2025';
+  let endDateStr = '10/06/2026';
+  if (txs.length > 0) {
+    startDateStr = txs[0].valueDate.replace(/-/g, '/');
+    endDateStr = txs[txs.length - 1].valueDate.replace(/-/g, '/');
+  }
+
+  const paginatePnbTxs = (transactions: any[]): any[][] => {
+    const pages: any[][] = [];
+    if (transactions.length === 0) return [[]];
+    pages.push(transactions.slice(0, 11));
+    let i = 11;
+    while (i < transactions.length) {
+      pages.push(transactions.slice(i, i + 22));
+      i += 22;
+    }
+    return pages;
+  };
+
+  const pages = paginatePnbTxs(txs);
+
+  const pagesHtml = pages.map((pageTxs, pIndex) => {
+    const pNum = pIndex + 1;
+    const isFirstPage = pNum === 1;
+    const isLastPage = pNum === pages.length;
+
+    const rowsHtml = pageTxs.map((tx: any) => {
+      const withdrawalTxt = tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+      const depositTxt = tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+      const balTxt = `${tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Cr.`;
+
+      return `
+        <tr style="background:#ffffff; border-bottom:1px solid #000;">
+          <td style="padding:5px 6px; text-align:center; font-size:10px; color:#000; width:12%; border:1px solid #000; white-space:nowrap;">${tx.valueDate.replace(/-/g, '/')}</td>
+          <td style="padding:5px 6px; text-align:center; font-size:10px; color:#000; width:10%; border:1px solid #000;"></td>
+          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#000; width:14%; border:1px solid #000;">${withdrawalTxt}</td>
+          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#000; width:14%; border:1px solid #000;">${depositTxt}</td>
+          <td style="padding:5px 6px; text-align:right; font-size:10px; color:#000; width:16%; border:1px solid #000; white-space:nowrap;">${balTxt}</td>
+          <td style="padding:5px 6px; text-align:left; font-size:10px; color:#000; width:34%; border:1px solid #000; word-break:break-word;">${(tx.details || '').toUpperCase()}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const firstPageHeader = isFirstPage ? `
+      <div>
+        <div style="width:100%; margin:0; padding:0;">
+          <img src="/pnb-header.png" alt="Punjab National Bank" style="width:100%; height:50px; object-fit:cover; object-position:center; display:block; margin:0; padding:0;" />
+        </div>
+
+        <div style="text-align:center; margin:10px 0 8px 0; font-size:13px; font-weight:bold; color:#000;">
+          Account Statement For Account:${customer.accountNumber}
+        </div>
+
+        {/* Vertical stacked details */}
+        <div style="padding:0 10mm; font-size:10.5px; line-height:1.45; color:#000; margin-bottom:12px;">
+          <div style="font-weight:bold; margin-bottom:4px; font-size:11px;">Branch Details</div>
+          <div style="display:flex;"><span style="width:130px;">Branch Name:</span><span>${branch.branchName}</span></div>
+          <div style="display:flex;"><span style="width:130px;">Bank Address:</span><span>${branch.branchAddress}</span></div>
+          <div style="display:flex;"><span style="width:130px;">City:</span><span>${branch.city || 'SHAJAPUR'}</span></div>
+          <div style="display:flex;"><span style="width:130px;">Pin:</span><span>${branch.pinCode || '466038'}</span></div>
+          <div style="display:flex;"><span style="width:130px;">IFSC Code:</span><span>${branch.ifscCode}</span></div>
+          <div style="display:flex;"><span style="width:130px;">MICR Code :</span><span>${branch.micrCode}</span></div>
+        </div>
+
+        <div style="padding:0 10mm; font-size:10.5px; line-height:1.45; color:#000; margin-bottom:14px;">
+          <div style="font-weight:bold; margin-bottom:4px; font-size:11px;">Customer Details</div>
+          <div style="display:flex;"><span style="width:150px;">Account Name :</span><span>${customer.accountHolderName}</span></div>
+          <div>Joint Account Holder 1:</div>
+          <div>Joint Account Holder 2:</div>
+          <div>Joint Account Holder 3:</div>
+          <div style="display:flex; margin-top:6px;"><span style="width:150px;">Customer Address:</span><span>${customer.address.replace(/\n/g, ' ')}</span></div>
+          <div style="display:flex;"><span style="width:150px;">City:</span><span>${customer.city || 'SHAJAPUR'}</span></div>
+          <div style="display:flex;"><span style="width:150px;">Pin:</span><span>${customer.pinCode || '466038'}</span></div>
+          <div style="display:flex;"><span style="width:150px;">Nominee :</span><span>${customer.nomineeName}</span></div>
+        </div>
+
+        <div style="padding:0 10mm; font-size:11px; font-weight:bold; margin-bottom:14px; color:#000;">
+          Statement Period : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${startDateStr} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; to &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${endDateStr}
+        </div>
+      </div>
+    ` : `
+      <div style="text-align:center; font-size:11px; font-weight:bold; padding:8px 0; border-bottom:1px solid #000; margin-bottom:8px; color:#000;">
+        Account Statement For Account:${customer.accountNumber}
+      </div>
+    `;
+
+    const pnbFooterNotes = isLastPage ? `
+      <div style="padding:10px 10mm; font-size:8.5px; line-height:1.4; color:#000; border-top:1px solid #000; margin-top:10px;">
+        <div>Unless constituent notifies the bank immediately of any discrepancy found by him in his statement of Account, it will be taken that he has found the account correct.</div>
+        <div>*COMPUTER GENERATED ENTERIES SHOWN IN THE STATEMENT OF ACCOUNT DO NOT REQUIRE ANY AUTHENTICATION / INITIAL FROM THE BANK OFFICIAL.PLEASE DO NOT ACCEPT ANY MANUAL ENTRY IN YOUR COMPUTER GENERATED STATEMENT OF ACCOUNT</div>
+        <div>* PLEASE ENSURE THAT ALL THE CHEQUE LEAVES IN YOUR CUSTODY ARE DULY BRANDED WITH YOUR 16 DIGITS ACCOUNT NUMBER</div>
+        <div>* CUSTOMERS ARE REQUESTED IN THEIR OWN INTEREST NOT TO ISSUE CHEQUES WITHOUT ADEQUATE CLEAR FUNDS /ARRANGEMENTS. SUCH CHEQUES CAN BE RETURNED WITHOUT MAKING ANY FURTHER REFERENCE TO THEM.</div>
+        <div>* PLEASE MAINTAIN MINIMUM AVERAGE BALANCE,TO AVOID LEVY OF CHARGES.</div>
+        <div style="margin-top:4px; font-weight:bold;">Abbreviations are as under:</div>
+        <div>BR: Branch Name , Csh: Cash , Clg: Clearing , ISO: Inter Sol(##) | QAB:Quarterly Average Balances , LF Chg: Ledger Folio Charges , Intt: Interest , Chrg: Charges | Ret:Returning , Chq: Cheque , SI: Standing Instruction , Stk Stmt: Stock Statement , Trf: Transfer , POSP:POINT OF SALE</div>
+      </div>
+    ` : '';
+
+    return `
+      <div class="doc-card" style="box-sizing:border-box; width:210mm; min-width:210mm; max-width:210mm; height:297mm; min-height:297mm; max-height:297mm; background:#fff; margin:0 auto 30px auto; position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; font-family:Arial, Helvetica, sans-serif;">
+        <div style="display:flex; flex-direction:column; width:100%;">
+          ${firstPageHeader}
+
+          <div style="padding:0 10mm; width:100%; box-sizing:border-box;">
+            <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:10px;">
+              <thead>
+                <tr style="background:#d9d9d9; color:#000000; font-weight:bold; height:30px;">
+                  <th style="width:12%; padding:4px 6px; text-align:center; border:1px solid #000;">Transaction<br/>Date</th>
+                  <th style="width:10%; padding:4px 6px; text-align:center; border:1px solid #000;">Cheque<br/>Number</th>
+                  <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000;">Withdrawal</th>
+                  <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000;">Deposit</th>
+                  <th style="width:16%; padding:4px 6px; text-align:right; border:1px solid #000;">Balance</th>
+                  <th style="width:34%; padding:4px 6px; text-align:left; border:1px solid #000;">Narration</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+
+          ${pnbFooterNotes}
+        </div>
+
+        <div style="padding:5px 10mm 10px 10mm; text-align:right; font-size:10px; color:#000;">
+          Page No - ${pNum}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>Punjab National Bank Statement - ${customer.accountHolderName}</title>
+      <style>
+        @page { size: A4 portrait; margin: 0; }
+        html, body { background: #ffffff !important; color: #000 !important; padding: 0 !important; margin: 0 !important; font-family: Arial, Helvetica, sans-serif !important; width: 100%; }
+        .doc-card { page-break-after: always !important; break-after: page !important; }
+        .doc-card:last-of-type { page-break-after: avoid !important; break-after: avoid !important; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { box-sizing: border-box; }
+      </style>
+    </head>
+    <body style="background:#ffffff; margin:0; padding:0;">
+      ${pagesHtml}
+    </body>
+    </html>
+  `;
+}
+
+export function generatePrintHtml(record: any): string {
+  // Handle bank style dispatching
   const isKotak = record.style === 'Kotak' || record.settings?.bankStyle === 'Kotak';
   if (isKotak) {
     return generatePrintHtmlKotak(record);
+  }
+
+  const isBoi = record.style === 'BOI' || record.settings?.bankStyle === 'BOI';
+  if (isBoi) {
+    return generatePrintHtmlBoi(record);
+  }
+
+  const isPnb = record.style === 'PNB' || record.settings?.bankStyle === 'PNB';
+  if (isPnb) {
+    return generatePrintHtmlPnb(record);
   }
 
   // Resolve config and details

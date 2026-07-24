@@ -159,6 +159,28 @@ const KOTAK_BRANCH_DEFAULTS: BranchDetails = {
   ckycrNumber: '70021900823421',
 };
 
+const BOI_BRANCH_DEFAULTS: BranchDetails = {
+  branchName: 'Ashta',
+  branchAddress: 'H N 12 KEVDA WALA BAGH BHOPAL 462008',
+  branchCode: '009017',
+  branchEmail: 'ashta.bhopal@bankofindia.co.in',
+  branchPhone: '+91-7562-242017',
+  ifscCode: 'BKID0009017',
+  micrCode: '466013002',
+  ckycrNumber: '60018200391823',
+};
+
+const PNB_BRANCH_DEFAULTS: BranchDetails = {
+  branchName: 'SHAJAPUR',
+  branchAddress: 'AJAY SHARE TAKTEO SHAJAPUR 466038',
+  branchCode: '078000',
+  branchEmail: 'bo7800@pnb.co.in',
+  branchPhone: '+91-7364-222038',
+  ifscCode: 'PUNB0780000',
+  micrCode: '465024505',
+  ckycrNumber: '40057100381924',
+};
+
 // Helper to format a date object to DD-MMM-YYYY (e.g., 01 Apr 2025)
 function formatDateDisplay(date: Date): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -189,7 +211,7 @@ export default function GeneratorPage() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('duration');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
-  const [bankStyle, setBankStyle] = useState<'SBI' | 'Kotak'>('SBI');
+  const [bankStyle, setBankStyle] = useState<'SBI' | 'Kotak' | 'BOI' | 'PNB'>('SBI');
 
   // ─── New salary configuration states ──────────────────────────────────────
   const [salaryMode, setSalaryMode] = useState<SalaryMode>('auto');
@@ -230,9 +252,12 @@ export default function GeneratorPage() {
   };
 
   // When bank switches, auto-update branch defaults and patch the live record
-  const handleBankStyleChange = (style: 'SBI' | 'Kotak') => {
+  const handleBankStyleChange = (style: 'SBI' | 'Kotak' | 'BOI' | 'PNB') => {
     setBankStyle(style);
-    const newBranch = style === 'SBI' ? SBI_BRANCH_DEFAULTS : KOTAK_BRANCH_DEFAULTS;
+    let newBranch = SBI_BRANCH_DEFAULTS;
+    if (style === 'Kotak') newBranch = KOTAK_BRANCH_DEFAULTS;
+    else if (style === 'BOI') newBranch = BOI_BRANCH_DEFAULTS;
+    else if (style === 'PNB') newBranch = PNB_BRANCH_DEFAULTS;
     setBranch(newBranch);
 
     // Patch active/base records in-place so preview switches immediately
@@ -537,21 +562,31 @@ export default function GeneratorPage() {
     setCompanyName(upper);
   };
 
+  // Helper to format bank names
+  const getBankFullName = (style: 'SBI' | 'Kotak' | 'BOI' | 'PNB') => {
+    switch (style) {
+      case 'SBI': return 'State Bank of India';
+      case 'Kotak': return 'Kotak Mahindra Bank';
+      case 'BOI': return 'Bank of India';
+      case 'PNB': return 'Punjab National Bank';
+    }
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans print:bg-white print:text-black print:h-auto print:overflow-visible">
       {/* Non-printable Header */}
       <header className="bg-slate-900 text-white py-4 px-6 shadow-md border-b border-slate-800 select-none print:hidden flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-inner ${
-            bankStyle === 'SBI' ? 'bg-indigo-600' : 'bg-rose-600'
+            bankStyle === 'SBI' ? 'bg-indigo-600' : bankStyle === 'Kotak' ? 'bg-rose-600' : bankStyle === 'BOI' ? 'bg-sky-700' : 'bg-red-700'
           }`}>
             <Landmark size={22} className="text-white" />
           </div>
           <div>
             <h1 className="font-extrabold text-lg tracking-tight leading-none flex items-center gap-1.5">
-              {bankStyle === 'SBI' ? 'State Bank of India' : 'Kotak Mahindra Bank'}{' '}
+              {getBankFullName(bankStyle)}{' '}
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                bankStyle === 'SBI' ? 'text-indigo-300' : 'text-rose-300'
+                bankStyle === 'SBI' ? 'text-indigo-300' : bankStyle === 'Kotak' ? 'text-rose-300' : bankStyle === 'BOI' ? 'text-sky-300' : 'text-amber-300'
               }`}>Statistical Generator</span>
             </h1>
             <span className="text-[10.5px] text-slate-400 font-semibold block mt-0.5">HIGH-FIDELITY TRANSACTION ENGINE</span>
@@ -599,11 +634,11 @@ export default function GeneratorPage() {
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
               <ChevronsUpDown size={14} className="text-indigo-600" /> Bank Format
             </h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               {/* SBI Option */}
               <button
                 onClick={() => handleBankStyleChange('SBI')}
-                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
                   bankStyle === 'SBI'
                     ? 'border-indigo-500 bg-indigo-50 shadow-sm shadow-indigo-100'
                     : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
@@ -612,23 +647,23 @@ export default function GeneratorPage() {
                 {bankStyle === 'SBI' && (
                   <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-500" />
                 )}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-black transition-colors ${
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
                   bankStyle === 'SBI'
                     ? 'bg-indigo-500 text-white'
                     : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
                 }`}>SBI</div>
                 <div className="text-center">
-                  <div className={`text-xs font-extrabold uppercase tracking-wide ${
+                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
                     bankStyle === 'SBI' ? 'text-indigo-700' : 'text-slate-600'
                   }`}>SBI</div>
-                  <div className="text-[9px] text-slate-400 mt-0.5 leading-tight">State Bank<br/>of India</div>
+                  <div className="text-[8.5px] text-slate-400 leading-tight">State Bank</div>
                 </div>
               </button>
 
               {/* Kotak Option */}
               <button
                 onClick={() => handleBankStyleChange('Kotak')}
-                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
                   bankStyle === 'Kotak'
                     ? 'border-rose-500 bg-rose-50 shadow-sm shadow-rose-100'
                     : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
@@ -637,27 +672,82 @@ export default function GeneratorPage() {
                 {bankStyle === 'Kotak' && (
                   <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
                 )}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-colors ${
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black transition-colors ${
                   bankStyle === 'Kotak'
                     ? 'bg-rose-500 text-white'
                     : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
                 }`}>KKBK</div>
                 <div className="text-center">
-                  <div className={`text-xs font-extrabold uppercase tracking-wide ${
+                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
                     bankStyle === 'Kotak' ? 'text-rose-700' : 'text-slate-600'
                   }`}>Kotak</div>
-                  <div className="text-[9px] text-slate-400 mt-0.5 leading-tight">Kotak Mahindra<br/>Bank</div>
+                  <div className="text-[8.5px] text-slate-400 leading-tight">Kotak Mahindra</div>
+                </div>
+              </button>
+
+              {/* BOI Option */}
+              <button
+                onClick={() => handleBankStyleChange('BOI')}
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                  bankStyle === 'BOI'
+                    ? 'border-sky-600 bg-sky-50 shadow-sm shadow-sky-100'
+                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                {bankStyle === 'BOI' && (
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-sky-600" />
+                )}
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
+                  bankStyle === 'BOI'
+                    ? 'bg-sky-600 text-white'
+                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
+                }`}>BKID</div>
+                <div className="text-center">
+                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
+                    bankStyle === 'BOI' ? 'text-sky-700' : 'text-slate-600'
+                  }`}>BOI</div>
+                  <div className="text-[8.5px] text-slate-400 leading-tight">Bank of India</div>
+                </div>
+              </button>
+
+              {/* PNB Option */}
+              <button
+                onClick={() => handleBankStyleChange('PNB')}
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                  bankStyle === 'PNB'
+                    ? 'border-amber-500 bg-amber-50 shadow-sm shadow-amber-100'
+                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                {bankStyle === 'PNB' && (
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500" />
+                )}
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black transition-colors ${
+                  bankStyle === 'PNB'
+                    ? 'bg-red-700 text-amber-300 border border-amber-400'
+                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
+                }`}>PUNB</div>
+                <div className="text-center">
+                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
+                    bankStyle === 'PNB' ? 'text-amber-800' : 'text-slate-600'
+                  }`}>PNB</div>
+                  <div className="text-[8.5px] text-slate-400 leading-tight">Punjab National</div>
                 </div>
               </button>
             </div>
             <div className={`mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium transition-colors ${
               bankStyle === 'SBI'
                 ? 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-                : 'bg-rose-50 text-rose-700 border border-rose-100'
+                : bankStyle === 'Kotak'
+                ? 'bg-rose-50 text-rose-700 border border-rose-100'
+                : bankStyle === 'BOI'
+                ? 'bg-sky-50 text-sky-800 border border-sky-100'
+                : 'bg-amber-50 text-amber-900 border border-amber-200'
             }`}>
-              {bankStyle === 'SBI'
-                ? '🏦 SBI format — official blue/purple A4 layout with SBI branding and branch metadata.'
-                : '🔴 Kotak format — authentic red/white Kotak Mahindra 811 style statement layout.'}
+              {bankStyle === 'SBI' && '🏦 SBI format — official blue/purple A4 layout with SBI branding and branch metadata.'}
+              {bankStyle === 'Kotak' && '🔴 Kotak format — authentic red/white Kotak Mahindra 811 style statement layout.'}
+              {bankStyle === 'BOI' && '🔷 BOI format — official Bank of India detailed statement layout with customer ID & IFSC box.'}
+              {bankStyle === 'PNB' && '🟡 PNB format — official Punjab National Bank red & yellow header statement layout.'}
             </div>
           </div>
 
@@ -1055,7 +1145,7 @@ export default function GeneratorPage() {
             <div className="grid grid-cols-2 gap-3 text-zinc-700 text-[11px] leading-relaxed">
               <div className="bg-white rounded-xl p-2.5 border border-slate-200/40">
                 <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">BANK</span>
-                <span className="font-extrabold text-slate-900">{bankStyle === 'SBI' ? 'State Bank of India' : 'Kotak Mahindra Bank'}</span>
+                <span className="font-extrabold text-slate-900">{getBankFullName(bankStyle)}</span>
               </div>
               <div className="bg-white rounded-xl p-2.5 border border-slate-200/40">
                 <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">BRANCH</span>

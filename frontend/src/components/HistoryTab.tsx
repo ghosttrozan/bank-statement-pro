@@ -136,7 +136,10 @@ export default function HistoryTab({ statements, onSelect, onDeleteRecord, onDup
                     <td className="p-3.5">
                       <div className="flex items-center gap-1.5">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] uppercase font-bold ${
-                          stmt.settings.bankStyle === 'SBI' ? 'bg-sky-50 text-sky-700 border border-sky-100' : 'bg-rose-50 text-rose-700 border border-rose-100'
+                          stmt.settings.bankStyle === 'SBI' ? 'bg-sky-50 text-sky-700 border border-sky-100' :
+                          stmt.settings.bankStyle === 'Kotak' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                          stmt.settings.bankStyle === 'BOI' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                          'bg-amber-50 text-amber-800 border border-amber-200'
                         }`}>
                           {stmt.settings.bankStyle} Style
                         </span>

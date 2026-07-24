@@ -34,7 +34,7 @@ export function logToSystem(channel: SystemLog['channel'], level: SystemLog['lev
 // Initial Standard Mock Presets for easy user generation
 export const CUSTOMER_PRESETS: {
   name: string;
-  bank: 'SBI' | 'Kotak';
+  bank: 'SBI' | 'Kotak' | 'BOI' | 'PNB';
   customer: CustomerDetails;
   branch: BranchDetails;
   info: AccountInfo;
@@ -152,6 +152,82 @@ export const CUSTOMER_PRESETS: {
       customTransactionsCount: 92,
       transactionMode: 'High',
       profile: 'Business'
+    }
+  },
+  {
+    name: "Mohit Vishvkarma (Bank of India)",
+    bank: "BOI",
+    customer: {
+      accountHolderName: "MOHIT VISHVKARMA",
+      email: "mohit.vishvkarma@gmail.com",
+      address: "H N 12 KEVDA WALA BAGH BHOPAL 462008",
+      accountNumber: "901718210015178",
+      cifNumber: "201358131",
+      accountOpenDate: "2018-06-15",
+      nomineeName: "SAVITA VISHVKARMA"
+    },
+    branch: {
+      branchName: "ASHTA",
+      branchAddress: "MAIN ROAD ASHTA, SEHORE, MADHYA PRADESH - 466116",
+      branchCode: "009017",
+      branchEmail: "ashta.bhopal@bankofindia.co.in",
+      branchPhone: "+91-7562-242017",
+      ifscCode: "BKID0009017",
+      micrCode: "466013002",
+      ckycrNumber: "60018200391823"
+    },
+    info: {
+      openingBalance: 100000.00,
+      interestRate: 2.75,
+      currency: 'INR',
+      accountStatus: 'Active',
+      accountType: 'Savings'
+    },
+    settings: {
+      bankStyle: 'BOI',
+      duration: '6 Months',
+      pageCount: '3 Pages',
+      customTransactionsCount: 60,
+      transactionMode: 'Normal',
+      profile: 'Personal'
+    }
+  },
+  {
+    name: "Ramlal (Punjab National Bank)",
+    bank: "PNB",
+    customer: {
+      accountHolderName: "RAMLAL",
+      email: "ramlal.shajapur@gmail.com",
+      address: "UPER KHEDA GRAM GANGAPUR SHAJAPUR 466038",
+      accountNumber: "7800000100061825",
+      cifNumber: "912534891",
+      accountOpenDate: "2016-02-10",
+      nomineeName: "NIRMALA"
+    },
+    branch: {
+      branchName: "SHAJAPUR",
+      branchAddress: "AJAY SHARE TAKTEO SHAJAPUR MADHYA PRADESH - 466038",
+      branchCode: "078000",
+      branchEmail: "bo7800@pnb.co.in",
+      branchPhone: "+91-7364-222038",
+      ifscCode: "PUNB0780000",
+      micrCode: "465024505",
+      ckycrNumber: "40057100381924"
+    },
+    info: {
+      openingBalance: 100000.00,
+      interestRate: 2.70,
+      currency: 'INR',
+      accountStatus: 'Active',
+      accountType: 'Savings'
+    },
+    settings: {
+      bankStyle: 'PNB',
+      duration: '6 Months',
+      pageCount: '3 Pages',
+      customTransactionsCount: 60,
+      transactionMode: 'Normal',
+      profile: 'Personal'
     }
   }
 ];
