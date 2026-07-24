@@ -5,3 +5,5 @@ services:
     rootDir: backend
     buildCommand: npm ci && npm run build
     startCommand: npm run start
+
+      
