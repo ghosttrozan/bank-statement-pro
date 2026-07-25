@@ -191,12 +191,14 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const pageChunks = settings.bankStyle === 'SBI'
     ? chunkTransactionsForA4(transactions, 6, 21)
     : settings.bankStyle === 'BOI'
-    ? chunkTransactionsForA4(transactions, 16, 28)
-    : settings.bankStyle === 'PNB'
-    ? chunkTransactionsForA4(transactions, 15, 30)
-    : chunkTransactionsForA4(transactions, 12, 21);
+      ? chunkTransactionsForA4(transactions, 16, 30)
+      : settings.bankStyle === 'PNB'
+        ? chunkTransactionsForA4(transactions, 15, 30)
+        : chunkTransactionsForA4(transactions, 12, 21);
 
-  const allPages = [...pageChunks, [] as Transaction[]];
+  const allPages = settings.bankStyle === 'BOI'
+    ? pageChunks
+    : [...pageChunks, [] as Transaction[]];
 
   useEffect(() => {
     logToSystem('SYSTEM', 'INFO', `Preview initialized for record: "${customerDetails.accountHolderName}". Loaded ${allPages.length} compiled pages.`);
@@ -516,7 +518,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     </div>
                   ) : settings.bankStyle === 'BOI' ? (
                     /* BOI DESIGN THEME */
-                    <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, sans-serif', color: '#000000' }}>
+                    <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, sans-serif', color: '#000000', paddingTop: '15px' }}>
                       {isFirst ? (
                         <div>
                           {/* Logo Top Right */}
@@ -581,7 +583,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           <div className="text-xs leading-relaxed text-black mb-4 space-y-1">
                             <div className="flex">
                               <span className="w-40 font-bold">Transaction Date</span>
-                              <span><strong>from:</strong> {transactions[0]?.valueDate?.replace(/\//g, '-') || '01-12-2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> {transactions[transactions.length - 1]?.valueDate?.replace(/\//g, '-') || '31-05-2026'}</span>
+                              <span><strong>from: {transactions[0]?.valueDate?.replace(/\//g, '-') || '01-12-2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </strong> <strong>to: {transactions[transactions.length - 1]?.valueDate?.replace(/\//g, '-') || '31-05-2026'}</strong></span>
                             </div>
                             <div className="flex">
                               <span className="w-40 font-bold">Amount</span>
@@ -596,6 +598,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         </div>
                       ) : (
                         <div></div>
+                        // <div style={{ padding: '15px 0 10px 0', display: 'flex', justifyContent: 'space-between', fontFamily: 'Arial, sans-serif', fontSize: '11px', borderBottom: '1px solid #ccc', marginBottom: '10px' }}>
+                        //   <span><strong>Detailed Statement:</strong> {customerDetails.accountHolderName} (Acc: {customerDetails.accountNumber})</span>
+                        //   <span>Page {pageNum}</span>
+                        // </div>
                       )}
                     </div>
                   ) : settings.bankStyle === 'PNB' ? (
@@ -630,14 +636,14 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                           <div style={{ padding: '0 10mm', fontSize: '10.5px', lineHeight: '1.45', color: '#000', marginBottom: '14px' }}>
                             <div style={{ fontWeight: '', marginBottom: '4px', fontSize: '13px' }}>Customer Details</div>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Account Name :</span><span>{customerDetails.accountHolderName}</span></div><br/>
-                            <div>Joint Account Holder 1:</div> <br/>
-                            <div>Joint Account Holder 2:</div> <br/>
-                            <div>Joint Account Holder 3:</div> <br/>
-                            <div style={{ display: 'flex', marginTop: '6px' }}><span style={{ width: '150px' }}>Customer Address:</span><span>{customerDetails.address?.replace(/\n/g, ' ')}</span></div><br/>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>City:</span><span>{customerDetails.city || 'SHAJAPUR'}</span></div><br/>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Pin:</span><span>{customerDetails.pinCode || '466038'}</span></div><br/>
-                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Nominee :</span><span>{customerDetails.nomineeName || 'NIRMALA'}</span></div><br/>
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Account Name :</span><span>{customerDetails.accountHolderName}</span></div><br />
+                            <div>Joint Account Holder 1:</div> <br />
+                            <div>Joint Account Holder 2:</div> <br />
+                            <div>Joint Account Holder 3:</div> <br />
+                            <div style={{ display: 'flex', marginTop: '6px' }}><span style={{ width: '150px' }}>Customer Address:</span><span>{customerDetails.address?.replace(/\n/g, ' ')}</span></div><br />
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>City:</span><span>{customerDetails.city || 'SHAJAPUR'}</span></div><br />
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Pin:</span><span>{customerDetails.pinCode || '466038'}</span></div><br />
+                            <div style={{ display: 'flex' }}><span style={{ width: '150px' }}>Nominee :</span><span>{customerDetails.nomineeName || 'NIRMALA'}</span></div><br />
                           </div>
 
                           {/* Statement Period */}
@@ -989,7 +995,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                   {/* STATEMENT TRANSACTIONS LIST TABLE */}
                   {chunkTransactions.length > 0 && (
-                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[8mm] flex flex-1 flex-col justify-center' : settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm] mt-2'}`}>
+                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[10mm] mt-2' : settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm] mt-2'}`}>
                       {settings.bankStyle === 'SBI' ? (
                         /* ─── SBI TABLE (unchanged) ──────────────────────────────── */
                         <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>
@@ -1031,18 +1037,20 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         </table>
                       ) : settings.bankStyle === 'BOI' ? (
                         /* ─── BOI TABLE ─────────────────────────────────────────── */
-                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', padding: '20px 0' }}>
+                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', padding: '10px 0' }}>
                           <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10.5px' }}>
-                            <thead>
-                              <tr style={{ backgroundColor: '#ffffff', color: '#000000', fontWeight: 'bold', height: '32px' }}>
-                                <th style={{ width: '6%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Sr No</th>
-                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Date</th>
-                                <th style={{ width: '44%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000' }}>Remarks</th>
-                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Debit</th>
-                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Credit</th>
-                                <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000' }}>Balance</th>
-                              </tr>
-                            </thead>
+                            {isFirst && (
+                              <thead>
+                                <tr style={{ backgroundColor: '#ffffff', color: '#000000', fontWeight: 'normal', height: '32px' }}>
+                                  <th style={{ width: '6%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000', fontWeight: 'normal' }}>Sr No</th>
+                                  <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000', fontWeight: 'normal' }}>Date</th>
+                                  <th style={{ width: '44%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000', fontWeight: 'normal' }}>Remarks</th>
+                                  <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000', fontWeight: 'normal' }}>Debit</th>
+                                  <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000', fontWeight: 'normal' }}>Credit</th>
+                                  <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000', fontWeight: 'normal' }}>Balance</th>
+                                </tr>
+                              </thead>
+                            )}
                             <tbody style={{ backgroundColor: '#ffffff', color: '#111827' }}>
                               {chunkTransactions.map((tx) => {
                                 const serialNo = transactions.indexOf(tx) + 1;
@@ -1059,6 +1067,12 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               })}
                             </tbody>
                           </table>
+                          {isLast && (
+                            <div className="mt-4 text-xs text-slate-900 leading-relaxed font-sans select-none">
+                              <strong>NOTE:</strong><br />
+                              Any discrepancy in the account statement should be notified to the bank within period of 30 days of generation of statement. It will be treated that the entries/contents of this statement are checked and found correct by you, if no such complaint is made within the period stated above. Please do not share your ATM, Card details, PIN, OTP and Passwords with anyone else. Bank never asks for such details.
+                            </div>
+                          )}
                         </div>
                       ) : settings.bankStyle === 'PNB' ? (
                         /* ─── PNB TABLE ─────────────────────────────────────────── */
@@ -1302,12 +1316,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     </div>
                   )}
 
-                  {isLast && settings.bankStyle === 'BOI' && (
-                    <div className="px-[8mm] mt-4 text-xs text-slate-900 leading-relaxed font-sans select-none">
-                      <strong>NOTE:</strong><br />
-                      Any discrepancy in the account statement should be notified to the bank within period of 30 days of generation of statement. It will be treated that the entries/contents of this statement are checked and found correct by you, if no such complaint is made within the period stated above. Please do not share your ATM, Card details, PIN, OTP and Passwords with anyone else. Bank never asks for such details.
-                    </div>
-                  )}
+
 
                   {isLast && settings.bankStyle === 'PNB' && (
                     <div className="px-[8mm] text-[9px] leading-tight text-black border-t border-black pt-2 mt-3 font-sans select-none">

@@ -540,16 +540,18 @@ function generatePrintHtmlBoi(record: any): string {
 
           <div style="padding:20px 10mm; width:100%; box-sizing:border-box;">
             <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:10.5px;">
-              <thead>
-                <tr style="background:#ffffff; color:#000000; font-weight:bold; height:32px;">
-                  <th style="width:6%; padding:4px 6px; text-align:left; border:1px solid #000;">Sr No</th>
-                  <th style="width:12%; padding:4px 6px; text-align:left; border:1px solid #000;">Date</th>
-                  <th style="width:44%; padding:4px 6px; text-align:left; border:1px solid #000;">Remarks</th>
-                  <th style="width:12%; padding:4px 6px; text-align:right; border:1px solid #000;">Debit</th>
-                  <th style="width:12%; padding:4px 6px; text-align:right; border:1px solid #000;">Credit</th>
-                  <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000;">Balance</th>
-                </tr>
-              </thead>
+              ${isFirstPage ? `
+                <thead>
+                  <tr style="background:#ffffff; color:#000000; font-weight:normal; height:32px;">
+                    <th style="width:6%; padding:4px 6px; text-align:left; border:1px solid #000; font-weight:normal;">Sr No</th>
+                    <th style="width:12%; padding:4px 6px; text-align:left; border:1px solid #000; font-weight:normal;">Date</th>
+                    <th style="width:44%; padding:4px 6px; text-align:left; border:1px solid #000; font-weight:normal;">Remarks</th>
+                    <th style="width:12%; padding:4px 6px; text-align:right; border:1px solid #000; font-weight:normal;">Debit</th>
+                    <th style="width:12%; padding:4px 6px; text-align:right; border:1px solid #000; font-weight:normal;">Credit</th>
+                    <th style="width:14%; padding:4px 6px; text-align:right; border:1px solid #000; font-weight:normal;">Balance</th>
+                  </tr>
+                </thead>
+              ` : ''}
               <tbody>
                 ${rowsHtml}
               </tbody>
