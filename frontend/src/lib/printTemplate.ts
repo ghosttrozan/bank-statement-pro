@@ -538,7 +538,7 @@ function generatePrintHtmlBoi(record: any): string {
         <div style="display:flex; flex-direction:column; width:100%;">
           ${firstPageHeader}
 
-          <div style="padding:0 10mm; width:100%; box-sizing:border-box;">
+          <div style="padding:20px 10mm; width:100%; box-sizing:border-box;">
             <table style="width:100%; border-collapse:collapse; border:1px solid #000; font-size:10.5px;">
               <thead>
                 <tr style="background:#ffffff; color:#000000; font-weight:bold; height:32px;">

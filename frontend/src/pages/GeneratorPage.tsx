@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, ChevronsUpDown } from 'lucide-react';
+import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, ChevronsUpDown, Award, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components, Types & Hooks
 import StatementPreview from '../components/StatementPreview';
-import { generateStatementTransactions, generateSalariedStatementTransactions, formatDate } from '../lib/transactionEngine';
+import { generateStatementTransactions, generateSalariedStatementTransactions, formatDate, rateStatement, StatementRating, generateRefNo } from '../lib/transactionEngine';
 import { StatementRecord, CustomerDetails, BranchDetails, AccountInfo, StatementSettings, Transaction } from '../types';
 import { logToSystem } from '../lib/dbBridge';
 import { useAuth } from '../hooks/useAuth';
@@ -91,6 +91,7 @@ function applyDuration(record: StatementRecord, duration: StatementDuration): St
         id: `tx_prev_${i}_${d.getTime()}`,
         valueDate: dateStr,
         postDate: dateStr,
+        refNo: generateRefNo(tx.details.includes('UPI') ? 'UPI' : 'IMPS'),
         debit: tx.debit ? vary(tx.debit) : null,
         credit: tx.credit ? vary(tx.credit) : null,
         balance: 0,
@@ -276,6 +277,12 @@ export default function GeneratorPage() {
 
   const [activeRecord, setActiveRecord] = useState<StatementRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showRatingDetails, setShowRatingDetails] = useState(false);
+
+  // Compute perfection rating score (0-100%) for current active record
+  const rating: StatementRating | null = activeRecord
+    ? rateStatement(activeRecord.transactions, activeRecord.settings, activeRecord.accountInfo)
+    : null;
 
   // Initialize default custom dates on mount
   useEffect(() => {
@@ -491,25 +498,32 @@ export default function GeneratorPage() {
     const nextAccount = { ...account, [field]: value };
     setAccount(nextAccount);
 
-    // Update active record in-place without hitting database/regenerating random transactions list
-    if (activeRecord) {
-      setActiveRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          accountInfo: nextAccount
-        };
-      });
-    }
-    if (baseRecord) {
-      setBaseRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          accountInfo: nextAccount
-        };
-      });
-    }
+    // Update active record in-place & recalculate running balances if openingBalance changed
+    const updateRecord = (prev: StatementRecord | null): StatementRecord | null => {
+      if (!prev) return null;
+      let updatedTxs = prev.transactions;
+      let newClosing = prev.closingBalance;
+
+      if (field === 'openingBalance' && typeof value === 'number') {
+        let running = value;
+        updatedTxs = prev.transactions.map(tx => {
+          if (tx.credit) running += tx.credit;
+          if (tx.debit) running -= tx.debit;
+          return { ...tx, balance: running };
+        });
+        newClosing = updatedTxs.length > 0 ? updatedTxs[updatedTxs.length - 1].balance : value;
+      }
+
+      return {
+        ...prev,
+        accountInfo: nextAccount,
+        transactions: updatedTxs,
+        closingBalance: newClosing,
+      };
+    };
+
+    setActiveRecord(updateRecord);
+    setBaseRecord(updateRecord);
   };
 
   const handleTriggerRegenerate = () => {
@@ -1084,6 +1098,28 @@ export default function GeneratorPage() {
                   className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
                 />
               </div>
+
+              <div>
+                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Opening Balance</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={account.openingBalance}
+                    onChange={e => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val) && val >= 0) {
+                        handleAccountInputChange('openingBalance', val);
+                      }
+                    }}
+                    placeholder="90000"
+                    className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 pl-8 pr-3 py-2 rounded-xl text-xs font-mono font-semibold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                  />
+                </div>
+                <p className="text-[9.5px] text-slate-400 mt-1">Default: ₹90,000 — Statement opening balance</p>
+              </div>
             </div>
           </div>
 
@@ -1168,14 +1204,80 @@ export default function GeneratorPage() {
                   )}
                 </span>
               </div>
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40 col-span-2">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">OPENING BALANCE</span>
-                <span className="font-extrabold text-emerald-600 font-mono text-xs">
-                  ₹{activeRecord ? activeRecord.accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '90,000.00'} CR
-                </span>
-              </div>
             </div>
           </div>
+
+          {/* ── Statement Quality & Authenticity Perfection Rating Card ── */}
+          {rating && (
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3.5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                  <Award size={16} className="text-emerald-500" /> Quality & Realism Rating
+                </h2>
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  rating.grade === 'A+' ? 'bg-emerald-100 text-emerald-800' :
+                  rating.grade === 'A'  ? 'bg-indigo-100 text-indigo-800' :
+                  rating.grade === 'B'  ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                }`}>
+                  Grade {rating.grade}
+                </span>
+              </div>
+
+              {/* Main score gauge */}
+              <div className="bg-slate-900 text-white rounded-xl p-4 flex items-center justify-between shadow-inner">
+                <div>
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Perfection Score</div>
+                  <div className="text-xs font-semibold text-emerald-400 mt-0.5 flex items-center gap-1">
+                    <CheckCircle2 size={13} /> {rating.statusText}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-3xl font-black tracking-tight text-white">{rating.overallScore}%</span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-700 ${
+                    rating.overallScore >= 90 ? 'bg-emerald-500' :
+                    rating.overallScore >= 80 ? 'bg-indigo-500' :
+                    rating.overallScore >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+                  }`}
+                  style={{ width: `${rating.overallScore}%` }}
+                />
+              </div>
+
+              {/* Expandable breakdown toggle */}
+              <button
+                onClick={() => setShowRatingDetails(!showRatingDetails)}
+                className="w-full text-left text-[11px] font-bold text-slate-500 hover:text-indigo-600 flex items-center justify-between pt-1 cursor-pointer transition-colors"
+              >
+                <span>Verify 6 Authenticity Checks</span>
+                {showRatingDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              {/* Detailed breakdown list */}
+              {showRatingDetails && (
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  {rating.breakdown.map((item, idx) => (
+                    <div key={idx} className="bg-slate-50 p-2.5 rounded-xl text-[10.5px]">
+                      <div className="flex items-center justify-between font-bold text-slate-700">
+                        <span className="flex items-center gap-1.5">
+                          {item.pass ? <CheckCircle2 size={12} className="text-emerald-500" /> : <AlertTriangle size={12} className="text-amber-500" />}
+                          {item.label}
+                        </span>
+                        <span className={item.pass ? 'text-emerald-700 font-mono' : 'text-amber-700 font-mono'}>
+                          {item.score}/{item.maxScore} pts
+                        </span>
+                      </div>
+                      <p className="text-[9.5px] text-slate-400 mt-1 leading-tight">{item.note}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Action Trigger */}
           <button

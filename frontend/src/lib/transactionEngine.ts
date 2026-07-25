@@ -264,9 +264,12 @@ function generateRawStatementTransactions(
     ? settings.customTransactionsCount 
     : getPageToTxCount(settings.pageCount));
 
-  const jan1TxCount = randRange(5, 10);
-  const todayTxCount = randRange(5, 15);
-  const adjustedTargetTxCount = Math.max(targetTxCount, jan1TxCount + todayTxCount + 10);
+  // Cap first/last day counts so they never exceed the user's target
+  const maxEdgeTx = Math.max(3, Math.floor(targetTxCount * 0.15));
+  const jan1TxCount = randRange(Math.min(3, maxEdgeTx), maxEdgeTx);
+  const todayTxCount = randRange(Math.min(3, maxEdgeTx), maxEdgeTx);
+  // Never exceed user's requested count
+  const adjustedTargetTxCount = Math.max(jan1TxCount + todayTxCount + 2, targetTxCount);
 
   const numActiveDaysInBetween = Math.min(totalDays - 1, Math.max(5, Math.round((adjustedTargetTxCount - jan1TxCount - todayTxCount) / 2.5)));
   const activeDayIndices = new Set<number>();
@@ -282,12 +285,15 @@ function generateRawStatementTransactions(
   const inBetweenConfigs: { date: Date; txCount: number }[] = sortedInBetweenIndices.map(idx => {
     const activeDate = new Date(startDay.getTime());
     activeDate.setDate(startDay.getDate() + idx);
-    return { date: activeDate, txCount: 1 };
+    // Use realistic weighted random count (1–8 tx/day) instead of hardcoded 1
+    return { date: activeDate, txCount: getRandomActiveDayTxCount() };
   });
 
-  // Distribute remaining transactions to in-between days
-  let remainingTx = adjustedTargetTxCount - jan1TxCount - todayTxCount - numActiveDaysInBetween;
-  while (remainingTx > 0) {
+  // Distribute any remaining transactions to random in-between days
+  let remainingTx = adjustedTargetTxCount - jan1TxCount - todayTxCount
+    - inBetweenConfigs.reduce((sum, c) => sum + c.txCount, 0);
+  let safetyLimit = 10000;
+  while (remainingTx > 0 && safetyLimit-- > 0) {
     const idx = randRange(0, inBetweenConfigs.length - 1);
     if (inBetweenConfigs[idx].txCount < 8) {
       inBetweenConfigs[idx].txCount++;
@@ -463,7 +469,7 @@ function generateRawStatementTransactions(
           valueDate: dateStr,
           postDate: dateStr,
           details: 'BY INTEREST CREDIT',
-          refNo: 'INTEREST',
+          refNo: generateRefNo('INTEREST'),
           debit: null,
           credit: interestAmount,
           balance: runningBalance
@@ -715,9 +721,12 @@ function generateRawSalariedTransactions(
   const totalDays = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)));
 
   // ── Build all transactions ───────────────────────────────────────────────
-  const jan1TxCount = randRange(5, 10);
-  const todayTxCount = randRange(5, 15);
-  const adjustedTargetTxCount = Math.max(targetTxCount, jan1TxCount + todayTxCount + 15);
+  // Cap first/last day counts so they never exceed the user's target
+  const maxEdgeTx = Math.max(3, Math.floor(targetTxCount * 0.15));
+  const jan1TxCount = randRange(Math.min(3, maxEdgeTx), maxEdgeTx);
+  const todayTxCount = randRange(Math.min(3, maxEdgeTx), maxEdgeTx);
+  // Never exceed user's requested count
+  const adjustedTargetTxCount = Math.max(jan1TxCount + todayTxCount + 2, targetTxCount);
 
   let runningBal = info.openingBalance;
 
@@ -734,12 +743,13 @@ function generateRawSalariedTransactions(
   const firstDayTxs: Transaction[] = firstDayTimes.map((txTime, k) => {
     const isCredit = Math.random() < 0.15;
     const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
-    const amount = Math.round(tmpl.amount());
+    let amount = Math.round(tmpl.amount());
     if (isCredit) {
       runningBal += amount;
     } else {
+      // Cap debit so balance never drops below ₹2,000
       if (runningBal - amount < 2000) {
-        runningBal = Math.max(2050, runningBal); // safeguard
+        amount = Math.max(1, Math.floor(runningBal - 2000));
       }
       runningBal -= amount;
     }
@@ -845,12 +855,13 @@ function generateRawSalariedTransactions(
   const lastDayTxs: Transaction[] = lastDayTimes.map((txTime, k) => {
     const isCredit = Math.random() < 0.15;
     const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
-    const amount = Math.round(tmpl.amount());
+    let amount = Math.round(tmpl.amount());
     if (isCredit) {
       runningBal += amount;
     } else {
+      // Cap debit so balance never drops below ₹2,000
       if (runningBal - amount < 2000) {
-        runningBal = Math.max(2050, runningBal);
+        amount = Math.max(1, Math.floor(runningBal - 2000));
       }
       runningBal -= amount;
     }
@@ -931,5 +942,180 @@ export function generateSalariedStatementTransactions(
   info: AccountInfo,
   localTime: string
 ): Transaction[] {
-  return generateRawSalariedTransactions(settings, info, localTime);
+  // Salaried accounts: realistic closing balance between ₹5,000 and ₹2,00,000
+  const MIN_BALANCE = 5000;
+  const MAX_BALANCE = 200000;
+
+  let bestAttempt: Transaction[] = [];
+  let bestDiff = Infinity;
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const transactions = generateRawSalariedTransactions(settings, info, localTime);
+    if (transactions.length === 0) continue;
+
+    const finalBalance = transactions[transactions.length - 1].balance;
+
+    // Return immediately if within ideal bounds
+    if (finalBalance >= MIN_BALANCE && finalBalance <= MAX_BALANCE) {
+      return transactions;
+    }
+
+    // Track the attempt closest to the target range centre (₹1,02,500)
+    const targetMid = (MIN_BALANCE + MAX_BALANCE) / 2;
+    const diff = Math.abs(finalBalance - targetMid);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      bestAttempt = transactions;
+    }
+  }
+
+  // Fallback: return the closest attempt found
+  return bestAttempt.length > 0
+    ? bestAttempt
+    : generateRawSalariedTransactions(settings, info, localTime);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATEMENT AUTHENTICITY & PERFECTION RATING SYSTEM (0 - 100%)
+// Evaluates quality without altering transaction generation
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RatingFactor {
+  label: string;
+  score: number;
+  maxScore: number;
+  pass: boolean;
+  note: string;
+}
+
+export interface StatementRating {
+  overallScore: number; // 0 - 100 %
+  grade: 'A+' | 'A' | 'B' | 'C' | 'D';
+  statusText: string;
+  breakdown: RatingFactor[];
+}
+
+export function rateStatement(
+  transactions: Transaction[],
+  settings: StatementSettings,
+  info: AccountInfo
+): StatementRating {
+  if (!transactions || transactions.length === 0) {
+    return {
+      overallScore: 0,
+      grade: 'D',
+      statusText: 'No transactions generated',
+      breakdown: []
+    };
+  }
+
+  const breakdown: RatingFactor[] = [];
+
+  // 1. Math Integrity Check (Max 25 Pts)
+  let mathPass = true;
+  let running = info.openingBalance;
+  for (const tx of transactions) {
+    if (tx.credit) running += tx.credit;
+    if (tx.debit) running -= tx.debit;
+    if (Math.abs(running - tx.balance) > 0.01) {
+      mathPass = false;
+      break;
+    }
+  }
+  breakdown.push({
+    label: 'Arithmetic & Ledger Math',
+    score: mathPass ? 25 : 0,
+    maxScore: 25,
+    pass: mathPass,
+    note: mathPass ? 'Perfect running balance math verified.' : 'Mismatch in running balance calculation.'
+  });
+
+  // 2. Non-Negative Balance Check (Max 25 Pts)
+  const minBal = Math.min(...transactions.map(t => t.balance));
+  const nonNegativePass = minBal >= 0;
+  const healthyBalPass = minBal >= 1000;
+  const balScore = healthyBalPass ? 25 : nonNegativePass ? 18 : 0;
+  breakdown.push({
+    label: 'Balance Safety & Solvency',
+    score: balScore,
+    maxScore: 25,
+    pass: nonNegativePass,
+    note: nonNegativePass
+      ? (healthyBalPass ? 'Maintained healthy positive balance throughout.' : 'Balance stayed positive but dipped close to zero.')
+      : 'Account balance dipped into negative!'
+  });
+
+  // 3. Unique Reference Numbers (Max 15 Pts)
+  const refSet = new Set<string>();
+  let dupCount = 0;
+  for (const tx of transactions) {
+    if (refSet.has(tx.refNo)) dupCount++;
+    else refSet.add(tx.refNo);
+  }
+  const refPass = dupCount === 0;
+  const refScore = refPass ? 15 : Math.max(0, 15 - dupCount * 3);
+  breakdown.push({
+    label: 'Reference Number Uniqueness',
+    score: refScore,
+    maxScore: 15,
+    pass: refPass,
+    note: refPass ? 'All transaction reference numbers are 100% unique.' : `${dupCount} duplicate reference number(s) detected.`
+  });
+
+  // 4. Healthy Credit/Debit Mix (Max 15 Pts)
+  const crCount = transactions.filter(t => t.credit && t.credit > 0).length;
+  const drCount = transactions.filter(t => t.debit && t.debit > 0).length;
+  const crRatio = crCount / transactions.length;
+  const mixPass = crRatio >= 0.05 && crRatio <= 0.60;
+  const mixScore = mixPass ? 15 : 8;
+  breakdown.push({
+    label: 'CR/DR Distribution Ratio',
+    score: mixScore,
+    maxScore: 15,
+    pass: mixPass,
+    note: `${crCount} Credits / ${drCount} Debits (${Math.round(crRatio * 100)}% Credits).`
+  });
+
+  // 5. Target Transaction Count Alignment (Max 10 Pts)
+  const targetCount = settings.pageCount === 'Custom'
+    ? settings.customTransactionsCount
+    : getPageToTxCount(settings.pageCount);
+  const diffPct = Math.abs(transactions.length - targetCount) / Math.max(1, targetCount);
+  const countPass = diffPct <= 0.20;
+  const countScore = diffPct <= 0.10 ? 10 : diffPct <= 0.25 ? 7 : 4;
+  breakdown.push({
+    label: 'Target Volume Match',
+    score: countScore,
+    maxScore: 10,
+    pass: countPass,
+    note: `Generated ${transactions.length} rows (Target: ~${targetCount}).`
+  });
+
+  // 6. Formatting & String Cleanliness (Max 10 Pts)
+  const cleanPass = transactions.every(t => t.details && !t.details.includes('undefined') && !t.details.includes('NaN'));
+  breakdown.push({
+    label: 'Detail String Cleanliness',
+    score: cleanPass ? 10 : 0,
+    maxScore: 10,
+    pass: cleanPass,
+    note: cleanPass ? 'Clean formatting without broken tokens.' : 'Syntax issues found in transaction narration.'
+  });
+
+  // Calculate Overall Score
+  const totalScore = breakdown.reduce((sum, item) => sum + item.score, 0);
+  const overallScore = Math.min(100, Math.max(0, Math.round(totalScore)));
+
+  let grade: 'A+' | 'A' | 'B' | 'C' | 'D' = 'D';
+  let statusText = 'Low Realism';
+  if (overallScore >= 95) { grade = 'A+'; statusText = 'Flawless Authenticity'; }
+  else if (overallScore >= 88) { grade = 'A'; statusText = 'High Quality Statement'; }
+  else if (overallScore >= 75) { grade = 'B'; statusText = 'Good Realism'; }
+  else if (overallScore >= 60) { grade = 'C'; statusText = 'Acceptable Quality'; }
+
+  return {
+    overallScore,
+    grade,
+    statusText,
+    breakdown
+  };
+}

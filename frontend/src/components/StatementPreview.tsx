@@ -191,7 +191,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const pageChunks = settings.bankStyle === 'SBI'
     ? chunkTransactionsForA4(transactions, 6, 21)
     : settings.bankStyle === 'BOI'
-    ? chunkTransactionsForA4(transactions, 13, 28)
+    ? chunkTransactionsForA4(transactions, 16, 28)
     : settings.bankStyle === 'PNB'
     ? chunkTransactionsForA4(transactions, 15, 30)
     : chunkTransactionsForA4(transactions, 12, 21);
@@ -254,20 +254,23 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
             // Brought Forward value is previous page's last transaction balance (or opening balance for Page 1)
             let broughtForwardVal = accountInfo.openingBalance;
             if (!isFirst && pageIndex > 0) {
-              const prevChunk = allPages[pageIndex - 1];
-              if (prevChunk && prevChunk.length > 0) {
-                broughtForwardVal = prevChunk[prevChunk.length - 1].balance;
+              for (let p = pageIndex - 1; p >= 0; p--) {
+                const chunk = allPages[p];
+                if (chunk && chunk.length > 0) {
+                  broughtForwardVal = chunk[chunk.length - 1].balance;
+                  break;
+                }
               }
             }
 
             return (
               <div
                 key={pageIndex}
-                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col justify-between shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
+                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col ${settings.bankStyle === 'BOI' ? 'justify-start' : 'justify-between'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
                 style={{ contentVisibility: 'auto', fontFamily: 'sans-serif' }}
               >
 
-                <div className="space-y-4 print:space-y-0 print:mt-0 print:pt-0" style={{ marginTop: 0, paddingTop: 0 }}>
+                <div className={`${settings.bankStyle === 'BOI' ? 'flex flex-col h-full' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: settings.bankStyle === 'BOI' ? 1 : undefined }}>
 
                   {/* BRAND TEMPLATE HEADER */}
                   {settings.bankStyle === 'SBI' ? (
@@ -419,7 +422,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                       <path d="M22 10h-6a2 2 0 000 4h6" />
                                     </svg>
                                   }>
-                                    <MetadataRow label="Clear Balance" value="90,000.00CR" />
+                                    <MetadataRow label="Clear Balance" value={`${(closingBalance ?? accountInfo.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR`} />
                                     <MetadataRow label="Uncleared Amount" value="0.00" />
                                     <MetadataRow label="+MOD Bal" value="0.00" />
                                     <MetadataRow label="Lien" value="0.0" />
@@ -526,8 +529,8 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           </div>
 
                           {/* Title Centered */}
-                          <div className="text-center my-4">
-                            <h1 className="text-2xl font-bold text-black m-0">Detailed Statement</h1>
+                          <div className="text-center my-2 mb-10">
+                            <h1 className="text-xl font-bold text-black m-0">Detailed Statement</h1>
                           </div>
 
                           {/* Date Right Aligned */}
@@ -536,37 +539,37 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               const d = new Date();
                               return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
                             })()}
-                          </div>
+                          </div> <br />
 
                           {/* Account Metadata Box Table */}
                           <table className="w-full border-collapse border border-black text-xs mb-4" style={{ color: '#000' }}>
                             <tbody>
                               <tr>
-                                <td className="p-1.5 border border-black w-1/2 align-top">
+                                <td className="p-1.5 pt-2.5  w-1/2 align-top">
                                   <span className="inline-block w-40 font-normal">Account holder name:</span>
                                   <span className="font-normal">{customerDetails.accountHolderName}</span>
                                 </td>
-                                <td className="p-1.5 border border-black w-1/2 align-top">
+                                <td className="p-1.5 pt-2.5 w-1/2 align-top">
                                   <span className="inline-block w-44 font-normal">Account holder address:</span>
                                   <span className="font-normal">{customerDetails.address?.replace(/\n/g, ' ')}</span>
                                 </td>
                               </tr>
                               <tr>
-                                <td className="p-1.5 border border-black align-top">
+                                <td className="p-1.5  align-top">
                                   <span className="inline-block w-40 font-normal">Customer ID:</span>
                                   <span className="font-normal">{customerDetails.cifNumber}</span>
                                 </td>
-                                <td className="p-1.5 border border-black align-top">
+                                <td className="p-1.5 align-top">
                                   <span className="inline-block w-44 font-normal">IFSC:</span>
                                   <span className="font-normal">{branchDetails.ifscCode}</span>
                                 </td>
                               </tr>
                               <tr>
-                                <td className="p-1.5 border border-black align-top">
+                                <td className="p-1.5  align-top">
                                   <span className="inline-block w-40 font-normal">Account number:</span>
                                   <span className="font-normal">{customerDetails.accountNumber}</span>
                                 </td>
-                                <td className="p-1.5 border border-black align-top">
+                                <td className="p-1.5 align-top">
                                   <span className="inline-block w-44 font-normal">Branch Name:</span>
                                   <span className="font-normal">{branchDetails.branchName}</span>
                                 </td>
@@ -986,7 +989,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                   {/* STATEMENT TRANSACTIONS LIST TABLE */}
                   {chunkTransactions.length > 0 && (
-                    <div className={`${settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm] mt-2'}`}>
+                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[8mm] flex flex-1 flex-col justify-center' : settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm] mt-2'}`}>
                       {settings.bankStyle === 'SBI' ? (
                         /* ─── SBI TABLE (unchanged) ──────────────────────────────── */
                         <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>
@@ -1028,7 +1031,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         </table>
                       ) : settings.bankStyle === 'BOI' ? (
                         /* ─── BOI TABLE ─────────────────────────────────────────── */
-                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', padding: '20px 0' }}>
                           <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10.5px' }}>
                             <thead>
                               <tr style={{ backgroundColor: '#ffffff', color: '#000000', fontWeight: 'bold', height: '32px' }}>
@@ -1365,21 +1368,22 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   </div>
                 ) : (
                   /* Kotak / BOI bottom bar */
-                  <div style={{ marginTop: '6px' }}>
-                    <div className='text-gray-600' style={{
-                      fontSize: '8.5px',
-                      fontFamily: 'Arial, Helvetica, sans-serif',
-                      padding: '5px 10mm',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      userSelect: 'none',
-                    }}>
-                      <span className='text-gray-600' style={{ fontStyle: 'italic', fontSize: '12px', letterSpacing: '-0.3px' }}>Statement Generated on {formattedDateNow()}</span>
-                      {/* <span style={{ opacity: 0.85 }}>This is a system-generated statement. | Kotak Mahindra Bank Ltd.</span> */}
-                      <span className='text-gray-600' style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '3px', fontSize: '12px' }}>Page {pageNum} of {allPages.length}</span>
-                    </div>
-                  </div>
+                  // <div style={{ marginTop: '6px' }}>
+                  //   <div className='text-gray-600' style={{
+                  //     fontSize: '8.5px',
+                  //     fontFamily: 'Arial, Helvetica, sans-serif',
+                  //     padding: '5px 10mm',
+                  //     display: 'flex',
+                  //     alignItems: 'center',
+                  //     justifyContent: 'space-between',
+                  //     userSelect: 'none',
+                  //   }}>
+                  //     <span className='text-gray-600' style={{ fontStyle: 'italic', fontSize: '12px', letterSpacing: '-0.3px' }}>Statement Generated on {formattedDateNow()}</span>
+                  //     {/* <span style={{ opacity: 0.85 }}>This is a system-generated statement. | Kotak Mahindra Bank Ltd.</span> */}
+                  //     <span className='text-gray-600' style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '3px', fontSize: '12px' }}>Page {pageNum} of {allPages.length}</span>
+                  //   </div>
+                  // </div>
+                  <div></div>
                 )}
 
               </div>
