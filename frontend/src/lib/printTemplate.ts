@@ -1030,7 +1030,7 @@ export function generatePrintHtml(record: any): string {
                       <div style="border-right:1.2px solid #6B2FB3; height:100%; min-height:140px;"></div>
                       <div style="display:flex; flex-direction:column; gap:4px;">
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Date Of Statement : &nbsp;${endDateStr}</div>
-                        <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Clear Balance : &nbsp;$90000.00CR</div>
+                        <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Clear Balance : &nbsp;${openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Uncleared Amount : &nbsp;0.00</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">+MOD Bal : &nbsp;0.00</div>
                         <div style="font-size:15px; font-weight:400; line-height:18px; color:#111827;">Lien : &nbsp;0.00</div>

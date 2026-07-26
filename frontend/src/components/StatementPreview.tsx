@@ -424,7 +424,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                       <path d="M22 10h-6a2 2 0 000 4h6" />
                                     </svg>
                                   }>
-                                    <MetadataRow label="Clear Balance" value={`${(closingBalance ?? accountInfo.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR`} />
+                                    <MetadataRow label="Clear Balance" value={`${accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR`} />
                                     <MetadataRow label="Uncleared Amount" value="0.00" />
                                     <MetadataRow label="+MOD Bal" value="0.00" />
                                     <MetadataRow label="Lien" value="0.0" />
