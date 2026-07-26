@@ -79,6 +79,18 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
         finalVal = String(value).toUpperCase().replace(/\s/g, '');
       }
       setBranch(prev => ({ ...prev, [field]: finalVal }));
+      if (field === 'ifscCode') {
+        const cleanIFSC = finalVal.toUpperCase();
+        if (cleanIFSC.startsWith('PUNB')) {
+          setSettings(prev => ({ ...prev, bankStyle: 'PNB' }));
+        } else if (cleanIFSC.startsWith('BKID')) {
+          setSettings(prev => ({ ...prev, bankStyle: 'BOI' }));
+        } else if (cleanIFSC.startsWith('KKBK')) {
+          setSettings(prev => ({ ...prev, bankStyle: 'Kotak' }));
+        } else if (cleanIFSC.startsWith('SBIN')) {
+          setSettings(prev => ({ ...prev, bankStyle: 'SBI' }));
+        }
+      }
     } else if (step === 3) {
       setAccount(prev => ({ ...prev, [field]: value }));
     } else if (step === 4) {

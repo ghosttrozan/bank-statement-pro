@@ -201,8 +201,22 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     : [...pageChunks, [] as Transaction[]];
 
   useEffect(() => {
-    logToSystem('SYSTEM', 'INFO', `Preview initialized for record: "${customerDetails.accountHolderName}". Loaded ${allPages.length} compiled pages.`);
-  }, [record]);
+    const bankFullName = settings.bankStyle === 'PNB' 
+      ? 'Punjab National Bank' 
+      : settings.bankStyle === 'BOI' 
+        ? 'Bank of India' 
+        : settings.bankStyle === 'Kotak' 
+          ? 'Kotak Mahindra Bank' 
+          : 'State Bank of India';
+
+    const originalTitle = document.title;
+    document.title = `${bankFullName} Statement - Acc ${customerDetails.accountNumber} - ${customerDetails.accountHolderName}`;
+    logToSystem('SYSTEM', 'INFO', `Preview initialized for record: "${customerDetails.accountHolderName}". Bank: ${bankFullName} (${settings.bankStyle}). Loaded ${allPages.length} compiled pages.`);
+    
+    return () => {
+      document.title = originalTitle;
+    };
+  }, [record, settings.bankStyle, customerDetails]);
 
   const handlePrint = async () => {
     if (onPrint) {
@@ -268,9 +282,23 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
             return (
               <div
                 key={pageIndex}
+                data-bank-style={settings.bankStyle}
+                data-bank-name={
+                  settings.bankStyle === 'PNB' ? 'Punjab National Bank' :
+                  settings.bankStyle === 'BOI' ? 'Bank of India' :
+                  settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
+                  'State Bank of India'
+                }
                 className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col ${settings.bankStyle === 'BOI' ? 'justify-start' : 'justify-between'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
                 style={{ contentVisibility: 'auto', fontFamily: 'sans-serif' }}
               >
+                {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers */}
+                <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
+                  {settings.bankStyle === 'PNB' ? 'Punjab National Bank (PNB)' :
+                   settings.bankStyle === 'BOI' ? 'Bank of India (BOI)' :
+                   settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
+                   'State Bank of India (SBI)'}
+                </span>
 
                 <div className={`${settings.bankStyle === 'BOI' ? 'flex flex-col h-full' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: settings.bankStyle === 'BOI' ? 1 : undefined }}>
 
