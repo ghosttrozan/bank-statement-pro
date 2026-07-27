@@ -19,6 +19,17 @@ function formatCurrency(val: number | null): string {
   return val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatAddress4Lines(address: string): string {
+  if (!address) return '';
+  const parts = address.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length <= 4) {
+    return parts.join('\n');
+  }
+  return [parts[0], parts[1], parts[2], parts.slice(3).join(', ')].join('\n');
+}
+
+
 export function renderStatementHtml(record: StatementRecord): string {
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
   const bankStyle = settings.bankStyle || 'SBI';
