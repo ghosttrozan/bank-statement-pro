@@ -258,9 +258,9 @@ ${containerHtml}
   const { useAuthStore } = await import('../store/authStore');
   const accessToken = useAuthStore.getState().accessToken;
 
-  // Set 12-second timeout to prevent UI hanging at 30% if backend server is unreachable
+  // Set 60-second timeout to accommodate Render free tier cold-starts & Puppeteer launch
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000);
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   let response: Response;
   try {
@@ -277,7 +277,7 @@ ${containerHtml}
   } catch (fetchErr: any) {
     clearTimeout(timeoutId);
     if (fetchErr.name === 'AbortError') {
-      throw new Error('Backend PDF request timed out (12s). Falling back to client renderer.');
+      throw new Error('Backend PDF request timed out (60s). Falling back to client renderer.');
     }
     throw fetchErr;
   } finally {
