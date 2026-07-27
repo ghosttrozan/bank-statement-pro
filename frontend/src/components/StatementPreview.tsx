@@ -475,7 +475,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
                   'State Bank of India'
                 }
-                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col ${settings.bankStyle === 'BOI' ? 'justify-start' : 'justify-between'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
+                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col ${(settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 'justify-center' : 'justify-between'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
                 style={{ contentVisibility: 'auto', fontFamily: 'sans-serif' }}
               >
                 {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers */}
@@ -486,7 +486,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                    'State Bank of India (SBI)'}
                 </span>
 
-                <div className={`${settings.bankStyle === 'BOI' ? 'flex flex-col h-full' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: settings.bankStyle === 'BOI' ? 1 : undefined }}>
+                <div className={`${(settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 'flex flex-col h-full justify-center' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: (settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 1 : undefined }}>
 
                   {/* BRAND TEMPLATE HEADER */}
                   {settings.bankStyle === 'SBI' ? (
@@ -732,7 +732,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     </div>
                   ) : settings.bankStyle === 'SBI2' ? (
                     /* SBI 2 DESIGN THEME (100% Matching PDF Layout) */
-                    <div className="w-full px-[18mm] pt-4" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#000000' }}>
+                    <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#000000' }}>
                       {isFirst ? (
                         <div>
                           {/* Top Header Logo */}
@@ -766,7 +766,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Account Number</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{customerDetails.accountNumber.padStart(17, '0')}</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{customerDetails.accountNumber}</td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Account Description</td>
@@ -1328,7 +1328,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                   {/* STATEMENT TRANSACTIONS LIST TABLE */}
                   {chunkTransactions.length > 0 && (
-                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[10mm] mt-2' : settings.bankStyle === 'SBI' ? 'px-[8mm] mt-2' : 'px-[8mm] mt-2'}`}>
+                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[10mm] mt-2' : settings.bankStyle === 'SBI2' ? `px-[10mm] ${!isFirst ? 'my-auto' : 'mt-2'}` : 'px-[8mm] mt-2'}`}>
                       {settings.bankStyle === 'SBI' ? (
                         /* ─── SBI TABLE (unchanged) ──────────────────────────────── */
                         <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>

@@ -353,6 +353,8 @@ export async function downloadStatementPdfFromBackend(payload: {
 
   if (onProgress) onProgress(75, 'Receiving PDF stream from backend...');
 
+  const blob = await response.blob();
+
   const randCode = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
   const filename = `${settings.bankStyle || 'Bank'}_Statement_${randCode}.pdf`;
 

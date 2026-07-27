@@ -45,7 +45,7 @@ export function renderStatementHtml(record: StatementRecord): string {
       const endDateStr = transactions[transactions.length - 1]?.valueDate || '21 Jan 2026';
 
       return `
-      <div class="page" style="page-break-after: always; padding: 15mm 18mm; box-sizing: border-box; min-height: 297mm; font-family: Arial, Helvetica, sans-serif; color: #000000;">
+      <div class="page" style="page-break-after: always; padding: 15mm 10mm; box-sizing: border-box; min-height: 297mm; font-family: Arial, Helvetica, sans-serif; color: #000000; ${!isFirstPage ? 'display: flex; flex-direction: column; justify-content: center;' : ''}">
         
         ${isFirstPage ? `
         <!-- SBI 2 Header & Logo -->
@@ -60,7 +60,7 @@ export function renderStatementHtml(record: StatementRecord): string {
             <tr><td style="width: 165px; vertical-align: top;">Account Name</td><td style="width: 8px; vertical-align: top; padding-right: 2px;">:</td><td style="vertical-align: top;">${customerDetails.accountHolderName}</td></tr>
             <tr><td style="vertical-align: top;">Address</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; white-space: pre-line;">${formatAddress4Lines(customerDetails.address)}</td></tr>
             <tr><td style="vertical-align: top;">Date</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${endDateStr}</td></tr>
-            <tr><td style="vertical-align: top;">Account Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; font-family: monospace;">${(customerDetails.accountNumber || '').padStart(17, '0')}</td></tr>
+            <tr><td style="vertical-align: top;">Account Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; font-family: monospace;">${customerDetails.accountNumber || ''}</td></tr>
             <tr><td style="vertical-align: top;">Account Description</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">SBCHQ-SGSP-PUBIND-DIAMOND-INR</td></tr>
             <tr><td style="vertical-align: top;">Branch</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.branchName}</td></tr>
             <tr><td style="vertical-align: top;">Drawing Power</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">0.00</td></tr>
