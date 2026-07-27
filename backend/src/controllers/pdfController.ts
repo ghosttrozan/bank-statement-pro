@@ -5,6 +5,45 @@ import { generateStatementTransactions } from '../services/transactionEngine';
 import { renderStatementHtml } from '../templates/statementTemplates';
 import { StatementRecord } from '../types/statement';
 
+import fs from 'fs';
+import path from 'path';
+
+function getLaunchOptions() {
+  const args = [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage',
+    '--disable-gpu',
+    '--disable-web-security',
+    '--allow-file-access-from-files',
+    '--no-first-run',
+    '--no-zygote',
+    '--single-process',
+  ];
+
+  const options: any = {
+    headless: true,
+    args,
+  };
+
+  const possiblePaths = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chrome',
+  ].filter(Boolean) as string[];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      options.executablePath = p;
+      break;
+    }
+  }
+
+  return options;
+}
+
 /**
  * Encrypts a PDF Buffer with user and owner passwords using muhammara,
  * maintaining 100% vector text extractability and compact file size.
@@ -44,17 +83,8 @@ export const generatePdf = async (req: Request, res: Response): Promise<void> =>
 
     const safeFilename = filename.replace(/[^a-zA-Z0-9._\-]/g, '_').substring(0, 128);
 
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--allow-file-access-from-files',
-      ],
-    });
+    browser = await puppeteer.launch(getLaunchOptions());
+
 
     const page = await browser.newPage();
 
@@ -168,16 +198,8 @@ export const generateStatementPdf = async (req: Request, res: Response): Promise
     const htmlContent = renderStatementHtml(record);
 
     // 3. Launch Puppeteer to render PDF
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-web-security',
-      ],
-    });
+    browser = await puppeteer.launch(getLaunchOptions());
+
 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: 'domcontentloaded', timeout: 10000 });
