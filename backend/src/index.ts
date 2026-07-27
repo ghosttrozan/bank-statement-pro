@@ -22,9 +22,16 @@ import activityRoutes from './routes/activity';
 import settingsRoutes from './routes/settings';
 import pdfRoutes from './routes/pdf';
 
+// Ensure Puppeteer cache directory default for cloud environments like Render
+if (!process.env.PUPPETEER_CACHE_DIR) {
+  process.env.PUPPETEER_CACHE_DIR = path.join(process.cwd(), '.cache', 'puppeteer');
+}
+
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || '0.0.0.0';
+
 
 // ── Global Middlewares ──
 
