@@ -304,42 +304,70 @@ function generateRawSalariedTransactions(
   const paiseCarry = parseFloat((Math.random()).toFixed(2));
   let runningBal = Math.floor(info.openingBalance) + paiseCarry;
 
-  const totalTxs: Transaction[] = [];
-  const totalDays = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)));
+  const monthsList: { start: Date; end: Date }[] = [];
+  let mCurr = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate());
+  while (mCurr <= endDay) {
+    const mStart = new Date(mCurr.getFullYear(), mCurr.getMonth(), 1);
+    const mEnd = new Date(mCurr.getFullYear(), mCurr.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    const actualStart = mStart < startDay ? startDay : mStart;
+    const actualEnd = mEnd > endDay ? endDay : mEnd;
 
-  // Distribute transactions across duration range
-  for (let i = 0; i < targetTxCount; i++) {
-    const randomOffset = randRange(0, totalDays);
-    const txDate = new Date(startDay.getTime());
-    txDate.setDate(txDate.getDate() + randomOffset);
-    txDate.setHours(randRange(8, 20), randRange(0, 59), randRange(0, 59));
-
-    const isCredit = Math.random() < 0.20; // 80% Debits, 20% Credits
-    const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
-    const amount = Math.round(tmpl.amount() * 100) / 100;
-
-    if (isCredit) {
-      runningBal += amount;
-    } else {
-      if (runningBal - amount < 100) {
-        runningBal = Math.max(200, runningBal);
-      }
-      runningBal -= amount;
+    if (actualStart <= actualEnd) {
+      monthsList.push({ start: actualStart, end: actualEnd });
     }
-    runningBal = Math.round(runningBal * 100) / 100;
-    const dateStr = formatDate(txDate);
-
-    totalTxs.push({
-      id: `tx_${i}_${txDate.getTime()}`,
-      valueDate: dateStr,
-      postDate: dateStr,
-      details: tmpl.detail(bankStyle),
-      refNo: generateRefNo(bankStyle),
-      debit: isCredit ? null : amount,
-      credit: isCredit ? amount : null,
-      balance: runningBal
-    });
+    mCurr = new Date(mCurr.getFullYear(), mCurr.getMonth() + 1, 1);
   }
+
+  const numMonths = Math.max(1, monthsList.length);
+  const basePerMonth = Math.max(2, Math.floor(targetTxCount / numMonths));
+  let remainingTxs = targetTxCount - (basePerMonth * numMonths);
+
+  const totalTxs: Transaction[] = [];
+
+  monthsList.forEach((mRange, idx) => {
+    let countForThisMonth = basePerMonth;
+    if (remainingTxs > 0) {
+      countForThisMonth += 1;
+      remainingTxs -= 1;
+    }
+
+    const mDays = Math.max(0, Math.round((mRange.end.getTime() - mRange.start.getTime()) / (1000 * 60 * 60 * 24)));
+
+    for (let i = 0; i < countForThisMonth; i++) {
+      const offset = randRange(0, mDays);
+      const txDate = new Date(mRange.start.getTime());
+      txDate.setDate(txDate.getDate() + offset);
+      if (txDate > mRange.end) txDate.setTime(mRange.end.getTime());
+      txDate.setHours(randRange(8, 20), randRange(0, 59), randRange(0, 59));
+
+      const isCredit = Math.random() < 0.20;
+      const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
+      const amount = Math.round(tmpl.amount() * 100) / 100;
+
+      if (isCredit) {
+        runningBal += amount;
+      } else {
+        if (runningBal - amount < 100) {
+          runningBal = Math.max(200, runningBal);
+        }
+        runningBal -= amount;
+      }
+      runningBal = Math.round(runningBal * 100) / 100;
+      const dateStr = formatDate(txDate);
+
+      totalTxs.push({
+        id: `tx_${idx}_${i}_${txDate.getTime()}`,
+        valueDate: dateStr,
+        postDate: dateStr,
+        details: tmpl.detail(bankStyle),
+        refNo: generateRefNo(bankStyle),
+        debit: isCredit ? null : amount,
+        credit: isCredit ? amount : null,
+        balance: runningBal
+      });
+    }
+  });
 
   // ── Inject monthly salary on exact salary credit day ────────────────────────
   let salaryMonthDate = new Date(startDay.getFullYear(), startDay.getMonth(), 1);
