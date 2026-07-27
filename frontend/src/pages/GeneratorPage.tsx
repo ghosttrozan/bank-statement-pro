@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, ChevronsUpDown } from 'lucide-react';
+import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, ChevronsUpDown, Download, Loader2, FileCheck, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components, Types & Hooks
@@ -9,7 +9,10 @@ import { generateStatementTransactions, generateSalariedStatementTransactions, f
 import { StatementRecord, CustomerDetails, BranchDetails, AccountInfo, StatementSettings, Transaction } from '../types';
 import { logToSystem } from '../lib/dbBridge';
 import { useAuth } from '../hooks/useAuth';
+import { downloadStatementPdfFromBackend } from '../lib/pdfExport';
 import api from '../lib/api';
+
+
 
 type StatementType = 'salaried' | 'business';
 type StatementDuration = '3months' | '6months' | '1year';
@@ -36,95 +39,8 @@ function recomputeTotals(transactions: Transaction[], openingBal: number): {
 }
 
 function applyDuration(record: StatementRecord, duration: StatementDuration): StatementRecord {
-  if (duration === '6months' || record.transactions.length === 0) return record;
-
-  const txs = record.transactions;
-
-  // ── 3 Months: take the first 3 months starting from Jan 1st 2026 ──────────
-  if (duration === '3months') {
-    const startDate = new Date(2026, 0, 1, 0, 0, 0, 0); // 01-01-2026
-    const cutoff = new Date(2026, 3, 1, 0, 0, 0, 0);    // 01-04-2026
-
-    const filtered: Transaction[] = [];
-    for (let i = 0; i < txs.length; i++) {
-      const txDate = parseIndianDate(txs[i].valueDate);
-      if (txDate >= startDate && txDate < cutoff) {
-        filtered.push({ ...txs[i] });
-      }
-    }
-
-    if (filtered.length > 0) {
-      filtered[0].valueDate = '01-01-2026';
-      filtered[0].postDate = '01-01-2026';
-    }
-
-    let runningBal = record.accountInfo.openingBalance;
-    const recalculated = filtered.map(tx => {
-      const updatedTx = { ...tx };
-      if (tx.credit) runningBal += tx.credit;
-      if (tx.debit) runningBal -= tx.debit;
-      updatedTx.balance = runningBal;
-      return updatedTx;
-    });
-
-    const totals = recomputeTotals(recalculated, record.accountInfo.openingBalance);
-
-    return {
-      ...record,
-      transactions: recalculated,
-      ...totals,
-    };
-  }
-
-  // ── 1 Year: prepend a cloned-and-shifted previous 6 months ──────────────
-  if (duration === '1year') {
-    // Clone txs shifted 6 months back with ±10% variation in amounts
-    const vary = (amount: number): number =>
-      Math.max(50, Math.round(amount * (0.90 + Math.random() * 0.20)));
-
-    const prevTxsRaw: Transaction[] = txs.map((tx, i) => {
-      const d = parseIndianDate(tx.valueDate);
-      d.setMonth(d.getMonth() - 6);
-      const dateStr = formatDate(d);
-      return {
-        ...tx,
-        id: `tx_prev_${i}_${d.getTime()}`,
-        valueDate: dateStr,
-        postDate: dateStr,
-        debit: tx.debit ? vary(tx.debit) : null,
-        credit: tx.credit ? vary(tx.credit) : null,
-        balance: 0,
-      };
-    });
-
-    const allTxs = [...prevTxsRaw, ...txs];
-
-    // Sort chronologically
-    allTxs.sort((a, b) => {
-      const dateA = parseIndianDate(a.valueDate).getTime();
-      const dateB = parseIndianDate(b.valueDate).getTime();
-      return dateA - dateB;
-    });
-
-    let runningBal = record.accountInfo.openingBalance;
-    const recalculatedTxs = allTxs.map(tx => {
-      const updatedTx = { ...tx };
-      if (tx.credit) runningBal += tx.credit;
-      if (tx.debit) runningBal -= tx.debit;
-      updatedTx.balance = runningBal;
-      return updatedTx;
-    });
-
-    const totals = recomputeTotals(recalculatedTxs, record.accountInfo.openingBalance);
-
-    return {
-      ...record,
-      accountInfo: { ...record.accountInfo, openingBalance: record.accountInfo.openingBalance },
-      transactions: recalculatedTxs,
-      ...totals,
-    };
-  }
-
+  // Statement transactions are already generated for the exact duration
+  // via transactionEngine. Return record intact without corrupting dates/salary credits.
   return record;
 }
 
@@ -211,12 +127,13 @@ export default function GeneratorPage() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('duration');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
-  const [bankStyle, setBankStyle] = useState<'SBI' | 'Kotak' | 'BOI' | 'PNB'>('SBI');
+  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'>('SBI');
 
   // ─── New salary configuration states ──────────────────────────────────────
   const [salaryMode, setSalaryMode] = useState<SalaryMode>('auto');
   const [companyName, setCompanyName] = useState<string>('');
   const [monthlySalary, setMonthlySalary] = useState<number | undefined>(undefined);
+  const [salaryDay, setSalaryDay] = useState<'1' | '3' | '5' | '7' | '10' | 'last_day'>('5');
 
   // Separate base record (always 6-month) from displayed record (duration-adjusted)
   const [baseRecord, setBaseRecord] = useState<StatementRecord | null>(null);
@@ -245,14 +162,14 @@ export default function GeneratorPage() {
   const baseSettings: StatementSettings = {
     bankStyle,
     duration: '6 Months',
-    pageCount: 'Custom',
-    customTransactionsCount: 320,
+    pageCount: '15 Pages',
+    customTransactionsCount: 380,
     transactionMode: 'Normal',
     profile: 'Personal',
   };
 
   // When bank switches, auto-update branch defaults and patch the live record
-  const handleBankStyleChange = (style: 'SBI' | 'Kotak' | 'BOI' | 'PNB') => {
+  const handleBankStyleChange = (style: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB') => {
     setBankStyle(style);
     let newBranch = SBI_BRANCH_DEFAULTS;
     if (style === 'Kotak') newBranch = KOTAK_BRANCH_DEFAULTS;
@@ -275,7 +192,51 @@ export default function GeneratorPage() {
   };
 
   const [activeRecord, setActiveRecord] = useState<StatementRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState('');
+
+  const handleDownloadBackendPdf = async () => {
+    setIsDownloadingPdf(true);
+    setDownloadStatus('Connecting to backend PDF engine...');
+
+    try {
+      const settings: StatementSettings = {
+        ...baseSettings,
+        bankStyle,
+        ...(generationMode === 'custom' && {
+          generationMode: 'custom',
+          fromDate,
+          toDate,
+        }),
+        ...(statementType === 'salaried' && {
+          salaryMode,
+          companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
+          monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
+          salaryDay,
+        }),
+      };
+
+      await downloadStatementPdfFromBackend({
+        customerDetails: customer,
+        branchDetails: branch,
+        accountInfo: account,
+        settings,
+        onProgress: (pct, msg) => setDownloadStatus(msg),
+      });
+
+      toast.success('Statement PDF generated & downloaded directly from backend!', { theme: 'dark' });
+      logToSystem('SYSTEM', 'INFO', `Direct backend statement PDF generated & downloaded for ${customer.accountHolderName}`);
+    } catch (err: any) {
+      console.error('Backend PDF generation failed:', err);
+      toast.error(`Backend PDF generation error: ${err.message || 'Failed to download'}`, { theme: 'dark' });
+      logToSystem('SYSTEM', 'ERROR', `Backend PDF generation failed: ${err.message}`);
+    } finally {
+      setIsDownloadingPdf(false);
+      setDownloadStatus('');
+    }
+  };
+
 
   // Initialize default custom dates on mount
   useEffect(() => {
@@ -294,6 +255,7 @@ export default function GeneratorPage() {
       setSalaryMode('auto');
       setCompanyName('');
       setMonthlySalary(undefined);
+      setSalaryDay('5');
     }
   }, [statementType]);
 
@@ -350,6 +312,7 @@ export default function GeneratorPage() {
         salaryMode,
         companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
         monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
+        salaryDay,
       }),
     };
 
@@ -563,14 +526,16 @@ export default function GeneratorPage() {
   };
 
   // Helper to format bank names
-  const getBankFullName = (style: 'SBI' | 'Kotak' | 'BOI' | 'PNB') => {
+  const getBankFullName = (style: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB') => {
     switch (style) {
       case 'SBI': return 'State Bank of India';
+      case 'SBI2': return 'State Bank of India 2.0';
       case 'Kotak': return 'Kotak Mahindra Bank';
       case 'BOI': return 'Bank of India';
       case 'PNB': return 'Punjab National Bank';
     }
   };
+
 
   return (
     <div className="h-screen overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans print:bg-white print:text-black print:h-auto print:overflow-visible">
@@ -659,6 +624,32 @@ export default function GeneratorPage() {
                   <div className="text-[8.5px] text-slate-400 leading-tight">State Bank</div>
                 </div>
               </button>
+
+              {/* SBI 2 Option */}
+              <button
+                onClick={() => handleBankStyleChange('SBI2')}
+                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                  bankStyle === 'SBI2'
+                    ? 'border-cyan-600 bg-cyan-50 shadow-sm shadow-cyan-100'
+                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                }`}
+              >
+                {bankStyle === 'SBI2' && (
+                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-cyan-600" />
+                )}
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
+                  bankStyle === 'SBI2'
+                    ? 'bg-cyan-600 text-white'
+                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
+                }`}>SBI 2</div>
+                <div className="text-center">
+                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
+                    bankStyle === 'SBI2' ? 'text-cyan-800' : 'text-slate-600'
+                  }`}>SBI 2.0</div>
+                  <div className="text-[8.5px] text-slate-400 leading-tight">Clean Table</div>
+                </div>
+              </button>
+
 
               {/* Kotak Option */}
               <button
@@ -902,8 +893,61 @@ export default function GeneratorPage() {
                   </div>
                 </div>
               )}
+
+              {/* ── Salary Credit Day Selector ── */}
+              <div className="mt-4 pt-4 border-t border-slate-100">
+                <label className="block text-slate-600 text-[10.5px] font-bold mb-2 uppercase tracking-wider">
+                  Salary Credit Day of Month
+                </label>
+                <div className="grid grid-cols-5 gap-1.5 mb-2">
+                  {[
+                    { val: '1', label: '1st' },
+                    { val: '3', label: '3rd' },
+                    { val: '5', label: '5th' },
+                    { val: '7', label: '7th' },
+                    { val: '10', label: '10th' },
+                    { val: '15', label: '15th' },
+                    { val: '25', label: '25th' },
+                    { val: '30', label: '30th' },
+                    { val: 'last_day', label: 'Last Day' },
+                  ].map(({ val, label }) => (
+                    <button
+                      key={val}
+                      onClick={() => setSalaryDay(val as any)}
+                      className={`py-1.5 px-2 rounded-lg text-[10.5px] font-bold uppercase tracking-wider transition-all border ${
+                        salaryDay === val
+                          ? 'bg-indigo-500 text-white border-indigo-500 shadow-sm'
+                          : 'bg-slate-50 text-slate-500 border-slate-200/80 hover:bg-slate-100'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-slate-500 font-medium">Or custom day (1-31):</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={31}
+                    value={salaryDay !== 'last_day' ? salaryDay : ''}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!isNaN(v) && v >= 1 && v <= 31) {
+                        setSalaryDay(v.toString() as any);
+                      }
+                    }}
+                    placeholder="Day"
+                    className="w-20 px-2 py-1 text-xs border border-slate-200 rounded-md font-mono text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+                <div className="mt-2 text-[10px] text-slate-400 italic">
+                  Salary will be credited on the chosen day of month for every month in statement duration. Sunday dates auto-shift to Saturday.
+                </div>
+              </div>
             </div>
           )}
+
 
           {/* ── Statement Generation Mode & Duration / Custom Dates ── */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
@@ -1189,7 +1233,7 @@ export default function GeneratorPage() {
 
         </aside>
 
-        {/* Right Side: A4 Preview Container */}
+        {/* Right Side: Exact Original Bank Layout Preview Container */}
         <main className="flex-1 overflow-auto min-w-0 bg-white lg:bg-slate-200/20 lg:border lg:border-slate-200 lg:rounded-3xl p-0 lg:p-6 shadow-inner print:p-0 print:border-none print:shadow-none print:bg-white print:overflow-visible h-full">
           {loading && !activeRecord ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-sans italic">
@@ -1211,7 +1255,9 @@ export default function GeneratorPage() {
           )}
         </main>
 
+
       </div>
     </div>
   );
+
 }

@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
-import { Printer, Download, X, HelpCircle, FileText, CheckCircle, Calendar, CalendarDays } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Printer, Download, X, HelpCircle, FileText, CheckCircle, Calendar, CalendarDays, Lock, Unlock, Key, Eye, EyeOff, Sparkles, Loader2, ShieldCheck, Copy } from 'lucide-react';
 import { StatementRecord, Transaction } from '../types';
 import { formatDate, isoToIndianFormat } from '../lib/transactionEngine';
 import { logToSystem } from '../lib/dbBridge';
+import { exportStatementToPdf, exportStatementToPdfViaBackend } from '../lib/pdfExport';
+import { toast } from 'react-toastify';
 
 interface StatementPreviewProps {
   record: StatementRecord;
@@ -31,8 +33,18 @@ function formatKotakDate(dateStr: string): string {
   return dateStr;
 }
 
+function formatAddress4Lines(address: string): string {
+  if (!address) return '';
+  const parts = address.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length <= 4) {
+    return parts.join('\n');
+  }
+  return [parts[0], parts[1], parts[2], parts.slice(3).join(', ')].join('\n');
+}
+
 // Custom programmatic division of transactions into exact physical pages
-function chunkTransactionsForA4(transactions: Transaction[], firstPageLimit = 12, subsequentPageLimit = 22) {
+function chunkTransactionsForA4(transactions: Transaction[], firstPageLimit = 12, subsequentPageLimit = 28) {
   const pages: Transaction[][] = [];
   if (transactions.length === 0) return [[]];
 
@@ -189,14 +201,16 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
 
   const pageChunks = settings.bankStyle === 'SBI'
-    ? chunkTransactionsForA4(transactions, 6, 21)
-    : settings.bankStyle === 'BOI'
-      ? chunkTransactionsForA4(transactions, 16, 30)
-      : settings.bankStyle === 'PNB'
-        ? chunkTransactionsForA4(transactions, 15, 30)
-        : chunkTransactionsForA4(transactions, 12, 21);
+    ? chunkTransactionsForA4(transactions, 6, 28)
+    : settings.bankStyle === 'SBI2'
+      ? chunkTransactionsForA4(transactions, 15, 26)
+      : settings.bankStyle === 'BOI'
+        ? chunkTransactionsForA4(transactions, 16, 30)
+        : settings.bankStyle === 'PNB'
+          ? chunkTransactionsForA4(transactions, 15, 30)
+          : chunkTransactionsForA4(transactions, 12, 28);
 
-  const allPages = settings.bankStyle === 'BOI'
+  const allPages = (settings.bankStyle === 'BOI' || settings.bankStyle === 'SBI2')
     ? pageChunks
     : [...pageChunks, [] as Transaction[]];
 
@@ -207,7 +221,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
         ? 'Bank of India' 
         : settings.bankStyle === 'Kotak' 
           ? 'Kotak Mahindra Bank' 
-          : 'State Bank of India';
+          : settings.bankStyle === 'SBI2'
+            ? 'State Bank of India 2.0'
+            : 'State Bank of India';
+
 
     const originalTitle = document.title;
     document.title = `${bankFullName} Statement - Acc ${customerDetails.accountNumber} - ${customerDetails.accountHolderName}`;
@@ -218,6 +235,16 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     };
   }, [record, settings.bankStyle, customerDetails]);
 
+  // PDF Password Protection state
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [enablePassword, setEnablePassword] = useState(settings.enablePdfPassword ?? false);
+  const [pdfPassword, setPdfPassword] = useState(settings.pdfPassword || '');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState({ percent: 0, text: '' });
+  const [isBackendExporting, setIsBackendExporting] = useState(false);
+  const [backendExportProgress, setBackendExportProgress] = useState({ percent: 0, text: '' });
+
   const handlePrint = async () => {
     if (onPrint) {
       const allowed = await onPrint();
@@ -225,6 +252,98 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     }
     logToSystem('IPC_BRIDGE', 'INFO', 'Invoking browser-level native printer/PDF output spooler.');
     window.print();
+  };
+
+  const handleDownloadPdf = async () => {
+    if (onPrint) {
+      const allowed = await onPrint();
+      if (!allowed) return;
+    }
+
+    const container = document.querySelector('.print-container-target') as HTMLElement;
+    if (!container) {
+      toast.error('Statement document target container not found.');
+      return;
+    }
+
+    setIsExporting(true);
+    setExportProgress({ percent: 0, text: 'Preparing statement pages...' });
+
+    try {
+      const passToUse = (enablePassword && pdfPassword && pdfPassword.trim()) ? pdfPassword.trim() : undefined;
+      const bankName = settings.bankStyle;
+      const randCode = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+      const filename = `${bankName}_Statement_${randCode}.pdf`;
+
+      // Try Backend Puppeteer vector PDF first (100% text-extractable, size ~200-700KB, password protected)
+      try {
+        await exportStatementToPdfViaBackend(container, {
+          filename,
+          password: passToUse,
+          onProgress: (percent, text) => {
+            setExportProgress({ percent, text });
+          },
+        });
+      } catch (backendErr) {
+        console.warn('Backend vector PDF failed, falling back to client-side renderer:', backendErr);
+        // Fallback to client-side canvas PDF generator
+        await exportStatementToPdf(container, {
+          filename,
+          password: passToUse,
+          onProgress: (percent, text) => {
+            setExportProgress({ percent, text });
+          },
+        });
+      }
+
+      if (passToUse) {
+        toast.success(`🔐 Password-protected PDF downloaded! Text is 100% extractable. Password: "${passToUse}"`, { theme: 'dark', autoClose: 7000 });
+      } else {
+        toast.success('📄 PDF downloaded successfully! Text is 100% extractable.', { theme: 'dark' });
+      }
+    } catch (err: any) {
+      console.error('PDF export error:', err);
+      toast.error('Failed to export PDF: ' + (err.message || 'Unknown error'), { theme: 'dark' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // ── Backend Puppeteer PDF (text-extractable, for verification) ─────────────
+  const handleDownloadTextPdf = async () => {
+    if (onPrint) {
+      const allowed = await onPrint();
+      if (!allowed) return;
+    }
+
+    const container = document.querySelector('.print-container-target') as HTMLElement;
+    if (!container) {
+      toast.error('Statement document target container not found.');
+      return;
+    }
+
+    setIsBackendExporting(true);
+    setBackendExportProgress({ percent: 0, text: 'Preparing statement...' });
+
+    try {
+      const bankName = settings.bankStyle;
+      const randCode = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+      const filename = `${bankName}_Statement_${randCode}.pdf`;
+
+      await exportStatementToPdfViaBackend(container, {
+        filename,
+        onProgress: (percent, text) => {
+          setBackendExportProgress({ percent, text });
+        },
+      });
+
+      toast.success('✅ Text PDF downloaded! Text is fully extractable & verifiable.', { theme: 'dark', autoClose: 6000 });
+    } catch (err: any) {
+      console.error('Backend PDF export error:', err);
+      toast.error('Text PDF failed: ' + (err.message || 'Unknown error') + '. Try Print → Save as PDF instead.', { theme: 'dark', autoClose: 7000 });
+    } finally {
+      setIsBackendExporting(false);
+    }
   };
 
 
@@ -243,18 +362,85 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Password Protection Button */}
+          <button
+            onClick={() => setIsPasswordModalOpen(true)}
+            className={`font-semibold py-2 px-3.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border ${
+              enablePassword && pdfPassword.trim()
+                ? 'bg-amber-500/10 text-amber-700 border-amber-300 hover:bg-amber-500/20 shadow-xs'
+                : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+            }`}
+            title="Set PDF opening password"
+          >
+            {enablePassword && pdfPassword.trim() ? (
+              <>
+                <Lock size={14} className="text-amber-600 animate-pulse" />
+                <span>PDF Password:</span>
+                <span className="font-mono bg-amber-200/60 px-1.5 py-0.5 rounded text-[11px] text-amber-900 font-bold">
+                  {pdfPassword.trim()}
+                </span>
+              </>
+            ) : (
+              <>
+                <Lock size={14} className="text-slate-500" />
+                <span>PDF Password</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">
+                  OFF
+                </span>
+              </>
+            )}
+          </button>
+
+          {/* Export PDF with Encryption button (image-based, for password protection) */}
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isExporting || isBackendExporting}
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                <span>Exporting ({exportProgress.percent}%)...</span>
+              </>
+            ) : (
+              <>
+                <Download size={13} />
+                <span>Download PDF {enablePassword && pdfPassword.trim() ? '(Protected)' : ''}</span>
+              </>
+            )}
+          </button>
+
+          {/* Download Text PDF via Backend Puppeteer (text-extractable, for verification) */}
+          <button
+            onClick={handleDownloadTextPdf}
+            disabled={isBackendExporting || isExporting}
+            title="Generate a native vector PDF with selectable text — required for Perfios / Karza / bank verification"
+            className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+          >
+            {isBackendExporting ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                <span>Generating ({backendExportProgress.percent}%)...</span>
+              </>
+            ) : (
+              <>
+                <FileText size={13} />
+                <span>Download Text PDF</span>
+              </>
+            )}
+          </button>
+
+          {/* Browser Native Print / Save */}
           <button
             onClick={handlePrint}
             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
           >
-            <Printer size={13} /> Print or Save PDF
+            <Printer size={13} /> Print
           </button>
-
-
-
         </div>
       </div>
+
 
       {/* Proof container area */}
       <div className="flex flex-col items-center gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-200/60 overflow-y-auto max-h-[800px] shadow-inner select-text print:bg-white print:p-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible">
@@ -308,7 +494,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     <div className="w-full print:m-0 print:p-0 print:mt-0 print:pt-0" style={{ fontFamily: 'sans-serif', marginTop: 0, paddingTop: 0 }}>
                       {isFirst ? (
                         /* FIRST PAGE COMPLETE SBI METRICS HEADER */
-                        <div className="w-full flex flex-col select-none print:m-0 print:mt-0 print:pt-0" style={{ marginTop: 0, paddingTop: 0 }}>
+                        <div className="w-full flex flex-col print:m-0 print:mt-0 print:pt-0" style={{ marginTop: 0, paddingTop: 0 }}>
                           {/* Full-width header top bar */}
                           <div style={{
                             height: '68px',
@@ -544,7 +730,126 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         <div style={{ height: '0px' }}></div>
                       )}
                     </div>
+                  ) : settings.bankStyle === 'SBI2' ? (
+                    /* SBI 2 DESIGN THEME (100% Matching PDF Layout) */
+                    <div className="w-full px-[18mm] pt-4" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#000000' }}>
+                      {isFirst ? (
+                        <div>
+                          {/* Top Header Logo */}
+                          <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                            <img
+                              src="/sbi2-logo.png"
+                              alt="SBI"
+                              style={{ height: '58px', width: 'auto', display: 'block' }}
+                            />
+
+                          </div>
+
+                          {/* Customer & Account Details Meta Table */}
+                          <table style={{ width: '100%', fontSize: '11px', lineHeight: '1.45', borderCollapse: 'collapse', color: '#000000', marginBottom: '14px' }}>
+                            <tbody>
+                              <tr>
+                                <td style={{ width: '165px', verticalAlign: 'top' }}>Account Name</td>
+                                <td style={{ width: '8px', verticalAlign: 'top', paddingRight: '2px' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontWeight: '' }}>{customerDetails.accountHolderName}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Address</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', whiteSpace: 'pre-line' }}>{formatAddress4Lines(customerDetails.address)}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Date</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>{formatKotakDate(transactions[transactions.length - 1]?.valueDate || '21 Jan 2026')}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Account Number</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{customerDetails.accountNumber.padStart(17, '0')}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Account Description</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>SBCHQ-SGSP-PUBIND-DIAMOND-INR</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Branch</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>{branchDetails.branchName}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Drawing Power</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>0.00</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Interest Rate(% p.a.)</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>{accountInfo.interestRate || '2.5'}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>MOD Balance</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>0.00</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>CIF No.</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{customerDetails.cifNumber}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>CKYCR Number</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>
+                                  {(() => {
+                                    const val = branchDetails.ckycrNumber || '1234';
+                                    const digits = val.replace(/\D/g, '');
+                                    const last4 = digits.length >= 4 ? digits.slice(-4) : '1234';
+                                    return `XXXXXXXXXXX${last4}`;
+                                  })()}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>IFS Code</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{branchDetails.ifscCode}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ fontSize: '10px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Indian Financial System)</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>MICR Code</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{branchDetails.micrCode}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ fontSize: '10px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Magnetic Ink Character Recognition)</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Nomination Registered</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>{customerDetails.nomineeName && !customerDetails.nomineeName.toLowerCase().includes('no') ? 'Yes' : 'No'}</td>
+                              </tr>
+                              <tr>
+                                <td style={{ verticalAlign: 'top' }}>Balance as on {formatKotakDate(transactions[0]?.valueDate || '21 Jul 2025')}</td>
+                                <td style={{ verticalAlign: 'top' }}>:</td>
+                                <td style={{ verticalAlign: 'top', fontWeight: '' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+
+                          {/* Statement Title */}
+                          <div style={{ fontSize: '13px', fontWeight: '', margin: '14px 0 10px 0', color: '#000000' }}>
+                            Account Statement from {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ height: '0px' }}></div>
+                      )}
+                    </div>
                   ) : settings.bankStyle === 'BOI' ? (
+
                     /* BOI DESIGN THEME */
                     <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, sans-serif', color: '#000000', paddingTop: '15px' }}>
                       {isFirst ? (
@@ -1028,7 +1333,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         /* ─── SBI TABLE (unchanged) ──────────────────────────────── */
                         <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>
                           <thead>
-                            <tr style={{ height: '32px', backgroundColor: '#5452AA', color: '#ffffff', fontSize: '10px', fontWeight: 600, userSelect: 'none' }}>
+                            <tr style={{ height: '32px', backgroundColor: '#5452AA', color: '#ffffff', fontSize: '10px', fontWeight: 600 }}>
                               <th style={{ width: '9%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '2px solid #E0E0E0' }}>Value Date</th>
                               <th style={{ width: '9%', padding: '3px 4px', textAlign: 'center', fontWeight: 600, border: '1px solid #E0E0E0' }}>Post Date</th>
                               <th style={{ width: '33%', padding: '3px 4px', textAlign: 'left', fontWeight: 600, border: '1px solid #E0E0E0' }}>Details</th>
@@ -1063,7 +1368,81 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             </tr>
                           </tbody>
                         </table>
+                      ) : settings.bankStyle === 'SBI2' ? (
+                        /* ─── SBI 2 TABLE (Exact 100% Matching Layout) ───────────────── */
+                        <>
+                          <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: '1px solid #000000', fontSize: '10px', color: '#000000' }}>
+                            <thead>
+                              <tr style={{ height: '28px', backgroundColor: '#ffffff', color: '#000000', fontSize: '10.5px', fontWeight: 'bold' }}>
+                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Txn Date</th>
+                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Value Date</th>
+                                <th style={{ width: '38%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Description</th>
+                                <th style={{ width: '18%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Ref No./Cheque No.</th>
+                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000' }}>Debit</th>
+                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000' }}>Credit</th>
+                                <th style={{ width: '8%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000' }}>Balance</th>
+                              </tr>
+                            </thead>
+                            <tbody style={{ backgroundColor: '#ffffff', color: '#000000' }}>
+                              {chunkTransactions.map((tx) => {
+                                let descLine1 = '';
+                                let descLine2 = '';
+                                let refLine1 = '';
+                                let refLine2 = '';
+
+                                if (tx.credit && (tx.details.includes('NEFT') || tx.details.includes('SALARY'))) {
+                                  descLine1 = 'BY TRANSFER-';
+                                  descLine2 = `${tx.details}-`;
+                                  refLine1 = 'TRANSFER FROM';
+                                  refLine2 = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                } else if (tx.credit && tx.details.includes('INTEREST')) {
+                                  descLine1 = 'CREDIT INTEREST--';
+                                  descLine2 = '';
+                                  refLine1 = '';
+                                  refLine2 = '';
+                                } else {
+                                  descLine1 = 'TO TRANSFER-';
+                                  const cleanDetails = tx.details.startsWith('TO TRANSFER-') ? tx.details.replace('TO TRANSFER-', '') : tx.details;
+                                  descLine2 = `${cleanDetails}-`;
+                                  refLine1 = 'TRANSFER TO';
+                                  refLine2 = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                }
+
+                                return (
+                                  <tr key={tx.id} style={{ borderBottom: '1px solid #000000', height: '38px', minHeight: '38px' }}>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.valueDate)}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.postDate)}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                      <div>{descLine1}</div>
+                                      {descLine2 ? <div>{descLine2}</div> : null}
+                                    </td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                      {refLine1 ? <div>{refLine1}</div> : null}
+                                      {refLine2 ? <div>{refLine2}</div> : null}
+                                    </td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '1px solid #000000', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                      {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+                                    </td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '1px solid #000000', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                      {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
+                                    </td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '1px solid #000000', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                      {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+
+                          </table>
+                          {isLast && (
+                            <div style={{ marginTop: '14px', fontSize: '9.5px', lineHeight: '1.35', color: '#000000' }}>
+                              Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
+                            </div>
+                          )}
+                        </>
                       ) : settings.bankStyle === 'BOI' ? (
+
                         /* ─── BOI TABLE ─────────────────────────────────────────── */
                         <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', padding: '10px 0' }}>
                           <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10.5px' }}>
@@ -1430,6 +1809,150 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
         </div>
 
       </div>
+
+      {/* Password Protection Modal */}
+      {isPasswordModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 print:hidden animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 relative">
+            <button
+              onClick={() => setIsPasswordModalOpen(false)}
+              aria-label="Close modal"
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl border border-amber-100">
+                <ShieldCheck size={24} />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-800">PDF Password Protection</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Set an encryption password for your statement. Adobe Acrobat, Chrome, Apple Preview, and mobile PDF readers will require this password to view the statement.
+                </p>
+              </div>
+            </div>
+
+            {/* Toggle Enable */}
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80">
+              <div className="flex items-center gap-2.5">
+                <Lock size={16} className={enablePassword ? 'text-amber-600' : 'text-slate-400'} />
+                <span className="text-xs font-bold text-slate-700">Protect PDF with Password</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={enablePassword}
+                  onChange={(e) => {
+                    setEnablePassword(e.target.checked);
+                    if (e.target.checked && !pdfPassword) {
+                      setPdfPassword(customerDetails.accountNumber ? customerDetails.accountNumber.slice(-4) : '1234');
+                    }
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+            {/* Password Input */}
+            {enablePassword && (
+              <div className="space-y-3 pt-1">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Set PDF Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={pdfPassword}
+                      onChange={(e) => setPdfPassword(e.target.value)}
+                      placeholder="Enter password (e.g. 1234, DOB, Acc No)"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none pr-20"
+                    />
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                        title={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                      {pdfPassword && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(pdfPassword);
+                            toast.info('Password copied to clipboard!', { theme: 'dark' });
+                          }}
+                          className="p-1 text-slate-400 hover:text-slate-600 rounded cursor-pointer"
+                          title="Copy password"
+                        >
+                          <Copy size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Presets */}
+                <div>
+                  <span className="block text-[11px] font-semibold text-slate-500 mb-1.5">
+                    Quick Bank Presets:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setPdfPassword(customerDetails.accountNumber ? customerDetails.accountNumber.slice(-4) : '1234')}
+                      className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors font-medium cursor-pointer"
+                    >
+                      Account No (Last 4: {customerDetails.accountNumber ? customerDetails.accountNumber.slice(-4) : '1234'})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPdfPassword('01011995')}
+                      className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors font-medium cursor-pointer"
+                    >
+                      DOB (01011995)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPdfPassword(Math.floor(100000 + Math.random() * 900000).toString())}
+                      className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200 transition-colors font-medium flex items-center gap-1 cursor-pointer"
+                    >
+                      <Sparkles size={11} className="text-amber-500" /> Random PIN
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsPasswordModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Done
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPasswordModalOpen(false);
+                  handleDownloadPdf();
+                }}
+                disabled={enablePassword && !pdfPassword.trim()}
+                className="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-40 rounded-xl transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <Download size={13} /> Apply & Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,4 +1,4 @@
-import { Transaction, StatementSettings, AccountInfo } from '../types';
+import { Transaction, StatementSettings, AccountInfo } from '../types/statement';
 
 // Helper to generate a random number in a range
 function randRange(min: number, max: number): number {
@@ -9,6 +9,7 @@ function randRange(min: number, max: number): number {
 export function generateRefNo(bankStyle?: string): string {
   const digits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
   if (bankStyle === 'IndusInd') {
+    // IndusInd Bank uses 'S' prefix + 8 digits in RefNo column
     return `S${digits.substring(0, 8)}`;
   }
   return digits;
@@ -78,6 +79,7 @@ function getDateRange(settings: StatementSettings, localTime?: string): { startD
   return { startDay, endDay };
 }
 
+// ─── Bank-Specific NEFT Salary Narrative Generator ────────────────────────────
 function buildSalaryNeftNarrative(bankStyle: string, companyName: string): string {
   const neftRef = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
   switch (bankStyle) {
@@ -93,6 +95,7 @@ function buildSalaryNeftNarrative(bankStyle: string, companyName: string): strin
   }
 }
 
+// ─── Bank-Specific NEFT Credit Narrative ──────────────────────────────────────
 function buildNeftCreditNarrative(bankStyle: string, senderName: string): string {
   const neftRef = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
   switch (bankStyle) {
@@ -228,6 +231,7 @@ function getRandomUpiBank(): string {
   return weightedPick(REAL_UPI_BANK_CODES).code;
 }
 
+// ─── Bank-Specific Authentic UPI Narrative Generator ────────────────────────
 function buildUpiNarrative(isCredit: boolean, bankStyle: string): string {
   const ref = genRef();
   const name = getRandomUpiName();
@@ -238,26 +242,36 @@ function buildUpiNarrative(isCredit: boolean, bankStyle: string): string {
   const ss = String(randRange(0, 59)).padStart(2, '0');
 
   if (bankStyle === 'BOI') {
+    // BOB World timestamp format: UPI/RefNo/HH:MM:SS/UPI/handle@bank/Payment
     const direction = isCredit ? 'CR' : 'DR';
     return `UPI/${ref}/${hh}:${mm}:${ss}/UPI/${name.toLowerCase()}${randRange(10, 99)}@${bank.toLowerCase()}/${direction}`;
   }
 
+  // Union Bank (UBI) style uses UPIAR for debits, UPIAB for credits
   const tag = isCredit ? 'UPIAB' : 'UPIAR';
   const direction = isCredit ? 'CR' : 'DR';
 
   return `${tag}/${ref}/${direction}/${name}/${bank}/${accountSuffix}/Paymen`;
 }
 
+// ─── 75% Micro-Transaction Sizing Rules (< ₹1,000) ───────────────────────────
 const SALARIED_DEBIT_TEMPLATES = [
+  // 1. Micro-Payments (< ₹500) — Weight 65% (Real Statement Micro Density)
   { detail: (style: string) => buildUpiNarrative(false, style), amount: () => pick([10, 20, 30, 45, 50, 65, 80, 100, 120, 150, 180, 240, 299, 350, 499]), weight: 65 },
+  
+  // 2. Small Payments (₹500 - ₹1,500) — Weight 20%
   { detail: (style: string) => buildUpiNarrative(false, style), amount: () => randRange(500, 1500), weight: 20 },
+  
+  // 3. Round ATM Cash Withdrawals — Weight 10%
   { detail: () => {
       const locs = ['GOVINDPURA BHOPAL', 'NEW MARKET', 'ARERA COL', 'MP NAGAR', 'KHILCHIPUR', 'ASHTA'];
       return `TO ATM WD-ATM CARD-${randRange(1000, 9999)} ${pick(locs)}`;
     },
-    amount: () => pick([500, 1000, 1500, 2000, 3000, 5000, 10000]),
+    amount: () => pick([500, 1000, 1500, 2000, 3000, 5000, 10000]), // Strictly round cash figures
     weight: 10
   },
+
+  // 4. Loan EMI / Financial Deductions — Weight 5%
   { detail: () => pick([
       `ACHDR/HDB FINANCIAL SERVIC/${randRange(100000, 999999)}`,
       `CMS/BAJFINSERV/${randRange(10000000, 99999999)}`,
@@ -286,19 +300,21 @@ function generateRawSalariedTransactions(
     ? settings.customTransactionsCount
     : getPageToTxCount(settings.pageCount));
 
+  // Initialize with exact paise carry (e.g. .04, .27, .74)
   const paiseCarry = parseFloat((Math.random()).toFixed(2));
   let runningBal = Math.floor(info.openingBalance) + paiseCarry;
 
   const totalTxs: Transaction[] = [];
   const totalDays = Math.max(1, Math.round((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)));
 
+  // Distribute transactions across duration range
   for (let i = 0; i < targetTxCount; i++) {
     const randomOffset = randRange(0, totalDays);
     const txDate = new Date(startDay.getTime());
     txDate.setDate(txDate.getDate() + randomOffset);
     txDate.setHours(randRange(8, 20), randRange(0, 59), randRange(0, 59));
 
-    const isCredit = Math.random() < 0.20;
+    const isCredit = Math.random() < 0.20; // 80% Debits, 20% Credits
     const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
     const amount = Math.round(tmpl.amount() * 100) / 100;
 
@@ -325,6 +341,7 @@ function generateRawSalariedTransactions(
     });
   }
 
+  // ── Inject monthly salary on exact salary credit day ────────────────────────
   let salaryMonthDate = new Date(startDay.getFullYear(), startDay.getMonth(), 1);
   while (salaryMonthDate <= endDay) {
     const year = salaryMonthDate.getFullYear();
@@ -348,6 +365,7 @@ function generateRawSalariedTransactions(
     salaryMonthDate.setMonth(salaryMonthDate.getMonth() + 1);
   }
 
+  // ── Inject Monthly SMS Alert Charges (Automated Fee) ────────────────────────
   let chargeMonth = new Date(startDay.getFullYear(), startDay.getMonth(), 25);
   while (chargeMonth <= endDay) {
     if (chargeMonth >= startDay) {
@@ -366,7 +384,8 @@ function generateRawSalariedTransactions(
     chargeMonth.setMonth(chargeMonth.getMonth() + 1);
   }
 
-  const interestMonths = [1, 4, 7, 10];
+  // ── Inject Savings Bank Quarterly Interest ─────────────────────────────────
+  const interestMonths = [1, 4, 7, 10]; // Feb=1, May=4, Aug=7, Nov=10
   for (const im of interestMonths) {
     const iYear = im <= startDay.getMonth() ? startDay.getFullYear() + 1 : startDay.getFullYear();
     const iDate = new Date(iYear, im, 1, 9, 0, 0);
@@ -389,6 +408,7 @@ function generateRawSalariedTransactions(
     }
   }
 
+  // Sort chronologically and recalculate running balance from opening balance
   function parseDateStr(str: string): number {
     const [d, m, y] = str.split('-').map(Number);
     return new Date(y, m - 1, d).getTime();

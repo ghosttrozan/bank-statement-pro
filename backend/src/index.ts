@@ -20,6 +20,7 @@ import statementRoutes from './routes/statements';
 import analyticsRoutes from './routes/analytics';
 import activityRoutes from './routes/activity';
 import settingsRoutes from './routes/settings';
+import pdfRoutes from './routes/pdf';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,9 +40,9 @@ app.use(
   })
 );
 
-// Parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Parsers (bump limit to 15mb to accept full statement HTML payloads for PDF generation)
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ limit: '15mb', extended: true }));
 app.use(cookieParser());
 
 // Request logger (logs metadata, not bodies)
@@ -61,6 +62,7 @@ app.use('/api/statements', statementRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/pdf', pdfRoutes);
 
 // ── Error Handling Middleware ──
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

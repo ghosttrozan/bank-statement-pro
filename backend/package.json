@@ -26,6 +26,8 @@
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.2",
+    "muhammara": "^6.0.5",
+    "puppeteer": "^25.3.0",
     "ua-parser-js": "^2.0.10"
   },
   "devDependencies": {

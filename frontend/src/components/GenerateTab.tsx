@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  User, Building2, Landmark, Settings, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, Info, HelpCircle
+  User, Building2, Landmark, Settings, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, Info, HelpCircle, Loader2, Download
 } from 'lucide-react';
 import { CustomerDetails, BranchDetails, AccountInfo, StatementSettings, StatementRecord } from '../types';
 import { CUSTOMER_PRESETS, logToSystem } from '../lib/dbBridge';
 import { generateStatementTransactions } from '../lib/transactionEngine';
+import { downloadStatementPdfFromBackend } from '../lib/pdfExport';
+
 
 interface GenerateTabProps {
   onGenerate: (record: StatementRecord) => void;
@@ -50,8 +52,8 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
   const [settings, setSettings] = useState<StatementSettings>({
     bankStyle: 'SBI',
     duration: '3 Months',
-    pageCount: '2 Pages',
-    customTransactionsCount: 32,
+    pageCount: '15 Pages',
+    customTransactionsCount: 380,
     transactionMode: 'Normal',
     profile: 'Personal'
   });
@@ -138,49 +140,95 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleCreateDocumentPayload = () => {
+  const [isGeneratingBackendPdf, setIsGeneratingBackendPdf] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState('');
+
+  const handleCreateDocumentPayload = async () => {
     const finalTime = new Date().toISOString();
-    logToSystem('SYSTEM', 'INFO', 'Invoking final Transaction Generation Engine algorithms.');
+    logToSystem('SYSTEM', 'INFO', 'Invoking Backend Statement HTML Template & PDF Generation Engine.');
     
-    // Generate transactions array chronologically
-    const transactions = generateStatementTransactions(settings, account, finalTime);
-    
-    // Calculate aggregate totals
-    let totalDebits = 0;
-    let totalCredits = 0;
-    let drCount = 0;
-    let crCount = 0;
-    
-    transactions.forEach(tx => {
-      if (tx.debit) {
-        totalDebits += tx.debit;
-        drCount++;
-      }
-      if (tx.credit) {
-        totalCredits += tx.credit;
-        crCount++;
-      }
-    });
+    setIsGeneratingBackendPdf(true);
+    setDownloadStatus('Connecting to backend PDF generator...');
 
-    const closingBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : account.openingBalance;
+    try {
+      // 1. Send form payload to Backend API to compile HTML template and download PDF directly
+      await downloadStatementPdfFromBackend({
+        customerDetails: customer,
+        branchDetails: branch,
+        accountInfo: account,
+        settings,
+        onProgress: (pct, msg) => setDownloadStatus(msg),
+      });
 
-    const payload: StatementRecord = {
-      id: `stmt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
-      createdAt: finalTime,
-      customerDetails: customer,
-      branchDetails: branch,
-      accountInfo: account,
-      settings,
-      transactions,
-      closingBalance,
-      totalCredits,
-      totalDebits,
-      drCount,
-      crCount
-    };
+      // 2. Local fallback sync for preview history
+      const transactions = generateStatementTransactions(settings, account, finalTime);
+      let totalDebits = 0;
+      let totalCredits = 0;
+      let drCount = 0;
+      let crCount = 0;
+      
+      transactions.forEach(tx => {
+        if (tx.debit) { totalDebits += tx.debit; drCount++; }
+        if (tx.credit) { totalCredits += tx.credit; crCount++; }
+      });
 
-    onGenerate(payload);
+      const closingBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : account.openingBalance;
+
+      const payload: StatementRecord = {
+        id: `stmt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        createdAt: finalTime,
+        customerDetails: customer,
+        branchDetails: branch,
+        accountInfo: account,
+        settings,
+        transactions,
+        closingBalance,
+        totalCredits,
+        totalDebits,
+        drCount,
+        crCount
+      };
+
+      onGenerate(payload);
+    } catch (err: any) {
+      console.error('Backend PDF download error:', err);
+      logToSystem('SYSTEM', 'ERROR', `Backend PDF generation failed: ${err.message}`);
+      alert(`Backend PDF generation note: ${err.message || 'Connecting fallback'}`);
+
+      // Fallback preview record creation
+      const transactions = generateStatementTransactions(settings, account, finalTime);
+      let totalDebits = 0;
+      let totalCredits = 0;
+      let drCount = 0;
+      let crCount = 0;
+      
+      transactions.forEach(tx => {
+        if (tx.debit) { totalDebits += tx.debit; drCount++; }
+        if (tx.credit) { totalCredits += tx.credit; crCount++; }
+      });
+
+      const closingBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : account.openingBalance;
+
+      onGenerate({
+        id: `stmt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+        createdAt: finalTime,
+        customerDetails: customer,
+        branchDetails: branch,
+        accountInfo: account,
+        settings,
+        transactions,
+        closingBalance,
+        totalCredits,
+        totalDebits,
+        drCount,
+        crCount
+      });
+    } finally {
+      setIsGeneratingBackendPdf(false);
+      setDownloadStatus('');
+    }
   };
+
 
   const stepsList = [
     { num: 1, label: 'Customer', icon: User },
@@ -537,6 +585,7 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
                   <option value="3 Pages">3 Pages (~52 transactions to fill pages)</option>
                   <option value="5 Pages">5 Pages (~92 transactions)</option>
                   <option value="10 Pages">10 Pages (~192 transactions)</option>
+                  <option value="15 Pages">15 Pages (~380 transactions)</option>
                   <option value="20 Pages">20 Pages (~392 transactions)</option>
                   <option value="Custom">Custom Selection (Define exact number below)</option>
                 </select>
@@ -628,13 +677,25 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
 
               <button
                 onClick={handleCreateDocumentPayload}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-indigo-100 cursor-pointer transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
+                disabled={isGeneratingBackendPdf}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-indigo-100 cursor-pointer transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2"
               >
-                Assemble Statement Record
+                {isGeneratingBackendPdf ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>{downloadStatus || 'Generating Backend PDF...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    <span>Generate & Download Statement PDF (Backend)</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
         )}
+
 
       </div>
 
