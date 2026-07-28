@@ -192,26 +192,26 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
 
   const pageChunks = settings.bankStyle === 'SBI'
-    ? chunkTransactionsForA4(transactions, 6, 20)
+    ? chunkTransactionsForA4(transactions, 6, 28)
     : settings.bankStyle === 'SBI2'
-      ? chunkTransactionsForA4(transactions, 14, 24)
+      ? chunkTransactionsForA4(transactions, 12, 22)
       : settings.bankStyle === 'BOI'
-        ? chunkTransactionsForA4(transactions, 8, 18)
+        ? chunkTransactionsForA4(transactions, 18, 38)
         : settings.bankStyle === 'PNB'
-          ? chunkTransactionsForA4(transactions, 7, 18)
-          : chunkTransactionsForA4(transactions, 8, 20);
+          ? chunkTransactionsForA4(transactions, 14, 34)
+          : chunkTransactionsForA4(transactions, 18, 28);
 
   const allPages = (settings.bankStyle === 'BOI' || settings.bankStyle === 'SBI2')
     ? pageChunks
     : [...pageChunks, [] as Transaction[]];
 
   useEffect(() => {
-    const bankFullName = settings.bankStyle === 'PNB' 
-      ? 'Punjab National Bank' 
-      : settings.bankStyle === 'BOI' 
-        ? 'Bank of India' 
-        : settings.bankStyle === 'Kotak' 
-          ? 'Kotak Mahindra Bank' 
+    const bankFullName = settings.bankStyle === 'PNB'
+      ? 'Punjab National Bank'
+      : settings.bankStyle === 'BOI'
+        ? 'Bank of India'
+        : settings.bankStyle === 'Kotak'
+          ? 'Kotak Mahindra Bank'
           : settings.bankStyle === 'SBI2'
             ? 'State Bank of India 2.0'
             : 'State Bank of India';
@@ -220,7 +220,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
     const originalTitle = document.title;
     document.title = `${bankFullName} Statement - Acc ${customerDetails.accountNumber} - ${customerDetails.accountHolderName}`;
     logToSystem('SYSTEM', 'INFO', `Preview initialized for record: "${customerDetails.accountHolderName}". Bank: ${bankFullName} (${settings.bankStyle}). Loaded ${allPages.length} compiled pages.`);
-    
+
     return () => {
       document.title = originalTitle;
     };
@@ -369,11 +369,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
           {/* Password Protection Button */}
           <button
             onClick={() => setIsPasswordModalOpen(true)}
-            className={`font-semibold py-2 px-3.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border ${
-              enablePassword && pdfPassword.trim()
+            className={`font-semibold py-2 px-3.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border ${enablePassword && pdfPassword.trim()
                 ? 'bg-amber-500/10 text-amber-700 border-amber-300 hover:bg-amber-500/20 shadow-xs'
                 : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-            }`}
+              }`}
             title="Set PDF opening password"
           >
             {enablePassword && pdfPassword.trim() ? (
@@ -474,19 +473,19 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                 data-bank-style={settings.bankStyle}
                 data-bank-name={
                   settings.bankStyle === 'PNB' ? 'Punjab National Bank' :
-                  settings.bankStyle === 'BOI' ? 'Bank of India' :
-                  settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
-                  'State Bank of India'
+                    settings.bankStyle === 'BOI' ? 'Bank of India' :
+                      settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
+                        'State Bank of India'
                 }
-                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col ${(settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 'justify-center' : 'justify-between'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
-                style={{ contentVisibility: 'auto', fontFamily: 'sans-serif' }}
+                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] max-h-[297mm] overflow-hidden bg-white text-black relative flex flex-col ${settings.bankStyle === 'SBI2' ? 'justify-start pt-[50px] pb-[20px] box-border' : (settings.bankStyle === 'BOI' && !isFirst) ? 'justify-center p-0 pb-0' : 'justify-between p-0 pb-0'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after`}
+                style={{ contentVisibility: 'auto', fontFamily: 'sans-serif', ...(settings.bankStyle === 'SBI2' ? { paddingTop: '50px', paddingBottom: '20px', boxSizing: 'border-box' } : {}) }}
               >
-                {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers (Digitap, Perfios, Karza, Precisa, Anode) */}
+                {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers (Digitap, Perfios, Karza, Perfisa, Anode) */}
                 <div style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
                   {settings.bankStyle === 'PNB' ? 'PUNJAB NATIONAL BANK Punjab National Bank PNB' :
-                   settings.bankStyle === 'BOI' ? 'BANK OF INDIA Bank of India BOI' :
-                   settings.bankStyle === 'Kotak' ? 'KOTAK MAHINDRA BANK Kotak Mahindra Bank Kotak' :
-                   'STATE BANK OF INDIA State Bank of India SBI'}
+                    settings.bankStyle === 'BOI' ? 'BANK OF INDIA Bank of India BOI' :
+                      settings.bankStyle === 'Kotak' ? 'KOTAK MAHINDRA BANK Kotak Mahindra Bank Kotak' :
+                        'STATE BANK OF INDIA State Bank of India SBI'}
                   Account Name : {customerDetails.accountHolderName}
                   Account Number : {customerDetails.accountNumber}
                   Account Number : xxxxxxxxxxxxxx{customerDetails.accountNumber ? customerDetails.accountNumber.slice(-3) : '371'}
@@ -502,7 +501,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
                 </div>
 
-                <div className={`${(settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 'flex flex-col h-full justify-center' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: (settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 1 : undefined }}>
+                <div className={`${settings.bankStyle === 'SBI2' ? 'flex flex-col justify-start w-full' : (settings.bankStyle === 'BOI' && !isFirst) ? 'flex flex-col h-full justify-center' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: (settings.bankStyle === 'BOI') ? 1 : undefined }}>
 
                   {/* BRAND TEMPLATE HEADER */}
                   {settings.bankStyle === 'SBI' ? (
@@ -741,15 +740,12 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             </div>
                           </div>
                         </div>
-                      ) : (
-                        /* PAGE 2+ REPEATED HEADER EMPTY DIV */
-                        <div style={{ height: '0px' }}></div>
-                      )}
+                      ) : null}
                     </div>
                   ) : settings.bankStyle === 'SBI2' ? (
                     /* SBI 2 DESIGN THEME (100% Matching PDF Layout) */
-                    <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#000000' }}>
-                      {isFirst ? (
+                    isFirst ? (
+                      <div className="w-full px-[10mm] pt-0" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#000000' }}>
                         <div>
                           {/* Top Header Logo */}
                           <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
@@ -758,7 +754,6 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               alt="SBI"
                               style={{ height: '58px', width: 'auto', display: 'block' }}
                             />
-
                           </div>
 
                           {/* Customer & Account Details Meta Table */}
@@ -864,10 +859,8 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
                           </div>
                         </div>
-                      ) : (
-                        <div style={{ height: '0px' }}></div>
-                      )}
-                    </div>
+                      </div>
+                    ) : null
                   ) : settings.bankStyle === 'BOI' ? (
 
                     /* BOI DESIGN THEME */
@@ -951,10 +944,6 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         </div>
                       ) : (
                         <div></div>
-                        // <div style={{ padding: '15px 0 10px 0', display: 'flex', justifyContent: 'space-between', fontFamily: 'Arial, sans-serif', fontSize: '11px', borderBottom: '1px solid #ccc', marginBottom: '10px' }}>
-                        //   <span><strong>Detailed Statement:</strong> {customerDetails.accountHolderName} (Acc: {customerDetails.accountNumber})</span>
-                        //   <span>Page {pageNum}</span>
-                        // </div>
                       )}
                     </div>
                   ) : settings.bankStyle === 'PNB' ? (
@@ -1288,33 +1277,6 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               </div>
                             </div>
                           </div>
-
-                          {/* Balance Summary Strip */}
-                          {/* <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(3, 1fr)',
-                            background: '#1c1c1c',
-                            margin: '0 10mm',
-                            padding: '6px 12px',
-                            boxSizing: 'border-box',
-                          }}>
-                            <div style={{ textAlign: 'center', borderRight: '1px solid #333', padding: '4px 0' }}>
-                              <div style={{ fontSize: '7.5px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Opening Balance</div>
-                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff',   marginTop: '2px' }}>
-                                &#8377;{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: 'center', borderRight: '1px solid #333', padding: '4px 0' }}>
-                              <div style={{ fontSize: '7.5px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Closing Balance</div>
-                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#4ade80',   marginTop: '2px' }}>
-                                &#8377;{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                              </div>
-                            </div>
-                            <div style={{ textAlign: 'center', padding: '4px 0' }}>
-                              <div style={{ fontSize: '7.5px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Account Status</div>
-                              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ED1C24', marginTop: '2px', letterSpacing: '0.06em' }}>ACTIVE</div>
-                            </div>
-                          </div> */}
                         </div>
                       ) : (
                         /* PAGE 2+ KOTAK CONTINUATION HEADER */
@@ -1348,7 +1310,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                   {/* STATEMENT TRANSACTIONS LIST TABLE */}
                   {chunkTransactions.length > 0 && (
-                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[10mm] mt-2' : settings.bankStyle === 'SBI2' ? `px-[10mm] ${!isFirst ? 'my-auto' : 'mt-2'}` : 'px-[8mm] mt-2'}`}>
+                    <div className={`${settings.bankStyle === 'BOI' ? 'px-[10mm] mt-2' : settings.bankStyle === 'SBI2' ? 'px-[10mm] mt-0' : 'px-[8mm] mt-2'}`}>
                       {settings.bankStyle === 'SBI' ? (
                         /* ─── SBI TABLE (unchanged) ──────────────────────────────── */
                         <table className="w-full border-collapse" style={{ fontFamily: 'sans-serif', border: '1px solid #E0E0E0' }}>

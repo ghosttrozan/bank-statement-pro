@@ -36,7 +36,7 @@ export function renderStatementHtml(record: StatementRecord): string {
 
   // If bankStyle is SBI2, render the 100% exact clean SBI2 table layout
   if (bankStyle === 'SBI2') {
-    const pages = chunkTransactions(transactions, 6, 17);
+    const pages = chunkTransactions(transactions, 8, 22);
     const totalPagesCount = pages.length;
 
     const sbi2Pages = pages.map((pageTxs, pageIdx) => {
@@ -45,7 +45,7 @@ export function renderStatementHtml(record: StatementRecord): string {
       const endDateStr = transactions[transactions.length - 1]?.valueDate || '21 Jan 2026';
 
       return `
-        <div style="width: 100%; position: relative;">
+        <div class="page" style="width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 50px 10mm 20px 10mm; position: relative; page-break-after: always; display: flex; flex-direction: column; justify-content: flex-start; background: #ffffff; color: #000000;">
         <!-- Hidden Text Layer for Automated PDF Extractors & Parsers (Digitap, Perfios, Karza, Precisa, Anode) -->
         <div style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">
           STATE BANK OF INDIA State Bank of India SBI
@@ -178,7 +178,7 @@ export function renderStatementHtml(record: StatementRecord): string {
   <style>
     @page { size: A4 portrait; margin: 0; }
     body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background: white; color: #000000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: 210mm; min-height: 297mm; box-sizing: border-box; }
+    .page { width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 20px 10mm; }
   </style>
 </head>
 <body>

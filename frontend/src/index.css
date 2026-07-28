@@ -18,6 +18,7 @@ body {
 
 /* Print layout optimizations for zero whitespace at the top of A4 pages */
 @media print {
+
   html,
   body {
     margin: 0 !important;
@@ -51,6 +52,13 @@ body {
     display: block !important;
   }
 
+  /* Ensure SBI2 pages maintain explicit 50px top & 20px bottom margin/padding during print */
+  .print-page[data-bank-style="SBI2"] {
+    padding-top: 50px !important;
+    padding-bottom: 20px !important;
+    box-sizing: border-box !important;
+  }
+
   /* Make sure every printed page starts exactly at the boundaries of the A4 layout with no gaps */
   .print-page {
     margin: 0 !important;
@@ -65,14 +73,14 @@ body {
   }
 
   /* Remove any margins from the first child within the print page */
-  .print-page > div:first-child,
-  .print-page > *:first-child {
+  .print-page>div:first-child,
+  .print-page>*:first-child {
     margin-top: 0 !important;
     padding-top: 0 !important;
   }
 
   /* Direct top child must not push elements down */
-  .print-page > div > *:first-child {
+  .print-page>div>*:first-child {
     margin-top: 0 !important;
     padding-top: 0 !important;
   }
@@ -281,22 +289,32 @@ body {
   background-color: #ffffff !important;
   border-right: 1px solid #e2e8f0 !important;
 }
+
 .admin-panel-root aside div.bg-slate-950\/40 {
   background-color: #f8fafc !important;
   border-bottom: 1px solid #e2e8f0 !important;
 }
+
 .admin-panel-root aside nav a {
-  color: #475569 !important; /* slate-600 */
+  color: #475569 !important;
+  /* slate-600 */
 }
+
 .admin-panel-root aside nav a:hover {
-  background-color: #f1f5f9 !important; /* slate-100 */
-  color: #0f172a !important; /* slate-900 */
+  background-color: #f1f5f9 !important;
+  /* slate-100 */
+  color: #0f172a !important;
+  /* slate-900 */
 }
+
 .admin-panel-root aside nav a.bg-indigo-600\/15 {
-  background-color: #e0e7ff !important; /* indigo-100 */
-  color: #4f46e5 !important;            /* indigo-600 */
+  background-color: #e0e7ff !important;
+  /* indigo-100 */
+  color: #4f46e5 !important;
+  /* indigo-600 */
   border-left: 4px solid #4f46e5 !important;
 }
+
 .admin-panel-root aside nav a.bg-indigo-600\/15 svg {
   color: #4f46e5 !important;
 }
@@ -306,11 +324,13 @@ body {
   background-color: #f8fafc !important;
   border-top: 1px solid #e2e8f0 !important;
 }
+
 .admin-panel-root aside .bg-slate-800 {
   background-color: #f1f5f9 !important;
   border: 1px solid #e2e8f0 !important;
   color: #475569 !important;
 }
+
 .admin-panel-root aside .bg-slate-800:hover {
   background-color: #e2e8f0 !important;
   color: #0f172a !important;
@@ -323,8 +343,8 @@ body {
 .admin-panel-root .border-slate-800\/80,
 .admin-panel-root .border-slate-800\/50,
 .admin-panel-root .border-slate-700,
-.admin-panel-root .divide-slate-800\/50 > *,
-.admin-panel-root .divide-y > * {
+.admin-panel-root .divide-slate-800\/50>*,
+.admin-panel-root .divide-y>* {
   border-color: #e2e8f0 !important;
 }
 
@@ -333,11 +353,13 @@ body {
   background-color: #ffffff !important;
   color: #475569 !important;
 }
+
 .admin-panel-root tr.bg-slate-950\/40 {
   background-color: #f8fafc !important;
   color: #475569 !important;
   font-weight: 600 !important;
 }
+
 .admin-panel-root tr.hover\:bg-slate-800\/30:hover,
 .admin-panel-root tr:hover {
   background-color: #f8fafc !important;
@@ -354,10 +376,12 @@ body {
   border: 1px solid #cbd5e1 !important;
   color: #1e293b !important;
 }
+
 .admin-panel-root input::placeholder,
 .admin-panel-root textarea::placeholder {
   color: #94a3b8 !important;
 }
+
 .admin-panel-root input:focus,
 .admin-panel-root select:focus,
 .admin-panel-root textarea:focus {
@@ -367,31 +391,39 @@ body {
 }
 
 /* Inactive toggles inside settings page */
-.admin-panel-root input[type="checkbox"]:not(:checked) + div.bg-slate-800 {
+.admin-panel-root input[type="checkbox"]:not(:checked)+div.bg-slate-800 {
   background-color: #cbd5e1 !important;
   border-color: #cbd5e1 !important;
 }
-.admin-panel-root input[type="checkbox"]:not(:checked) + div.bg-slate-800::after {
+
+.admin-panel-root input[type="checkbox"]:not(:checked)+div.bg-slate-800::after {
   background-color: #ffffff !important;
 }
 
 /* Typography Color Mappings */
 .admin-panel-root .text-slate-100,
 .admin-panel-root .text-slate-200 {
-  color: #0f172a !important; /* slate-900 */
+  color: #0f172a !important;
+  /* slate-900 */
 }
+
 .admin-panel-root .text-slate-300,
 .admin-panel-root .text-slate-350,
 .admin-panel-root .text-slate-400 {
-  color: #334155 !important; /* slate-700 */
+  color: #334155 !important;
+  /* slate-700 */
 }
+
 .admin-panel-root .text-slate-500,
 .admin-panel-root .text-slate-550 {
-  color: #64748b !important; /* slate-500 */
+  color: #64748b !important;
+  /* slate-500 */
 }
+
 .admin-panel-root .text-indigo-300,
 .admin-panel-root .text-indigo-400 {
-  color: #4f46e5 !important; /* indigo-600 */
+  color: #4f46e5 !important;
+  /* indigo-600 */
 }
 
 /* Buttons Hovers */
@@ -415,14 +447,17 @@ body {
   border: 1px solid #c7d2fe !important;
   color: #3730a3 !important;
 }
+
 .admin-panel-root .bg-indigo-950\/40 span {
   color: #3730a3 !important;
 }
+
 .admin-panel-root .bg-indigo-950\/40 button {
   background-color: #ffffff !important;
   border: 1px solid #c7d2fe !important;
   color: #4f46e5 !important;
 }
+
 .admin-panel-root .bg-indigo-950\/40 button:hover {
   background-color: #e0e7ff !important;
 }
@@ -437,16 +472,13 @@ body {
 .admin-panel-root .recharts-cartesian-grid line {
   stroke: #e2e8f0 !important;
 }
+
 .admin-panel-root .recharts-text {
   fill: #64748b !important;
 }
+
 .admin-panel-root .recharts-tooltip-wrapper .recharts-default-tooltip {
   background-color: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
-
-
-
-
-
