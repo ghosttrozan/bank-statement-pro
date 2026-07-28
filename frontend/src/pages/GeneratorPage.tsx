@@ -162,8 +162,8 @@ export default function GeneratorPage() {
   const baseSettings: StatementSettings = {
     bankStyle,
     duration: '6 Months',
-    pageCount: '30 Pages',
-    customTransactionsCount: 820,
+    pageCount: '12 Pages',
+    customTransactionsCount: 270,
     transactionMode: 'Normal',
     profile: 'Personal',
   };

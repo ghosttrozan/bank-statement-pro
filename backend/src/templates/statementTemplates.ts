@@ -29,6 +29,39 @@ function formatAddress4Lines(address: string): string {
   return [parts[0], parts[1], parts[2], parts.slice(3).join(', ')].join('\n');
 }
 
+function formatSbiDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  if (/[a-zA-Z]/.test(dateStr)) return dateStr;
+
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    let day = 0, month = 0, year = 0;
+    if (parts[0].length === 4) {
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[2], 10);
+    } else {
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      year = parseInt(parts[2], 10);
+    }
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 0 && month < 12) {
+      const d = day.toString().padStart(2, '0');
+      const m = MONTHS[month];
+      return `${d} ${m} ${year}`;
+    }
+  }
+  return dateStr;
+}
+
+function formatSbiAccountNumber(accNo?: string): string {
+  const raw = (accNo || '30521458920').trim();
+  if (raw.length < 17 && /^\d+$/.test(raw)) {
+    return raw.padStart(17, '0');
+  }
+  return raw;
+}
 
 export function renderStatementHtml(record: StatementRecord): string {
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
@@ -41,52 +74,26 @@ export function renderStatementHtml(record: StatementRecord): string {
 
     const sbi2Pages = pages.map((pageTxs, pageIdx) => {
       const isFirstPage = pageIdx === 0;
-      const startDateStr = transactions[0]?.valueDate || '21 Jul 2025';
-      const endDateStr = transactions[transactions.length - 1]?.valueDate || '21 Jan 2026';
+      const isLastPage = pageIdx === totalPagesCount - 1;
+      const startDateStr = formatSbiDate(transactions[0]?.valueDate || '2026-04-01');
+      const endDateStr = formatSbiDate(transactions[transactions.length - 1]?.valueDate || '2026-04-30');
 
       return `
-        <div class="page" style="width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 50px 10mm 20px 10mm; position: relative; page-break-after: always; display: flex; flex-direction: column; justify-content: flex-start; background: #ffffff; color: #000000;">
-        <!-- Hidden Text Layer for Automated PDF Extractors & Parsers (Digitap, Perfios, Karza, Precisa, Anode) -->
-        <div style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">
-          STATE BANK OF INDIA State Bank of India SBI
-          Account Name: ${customerDetails.accountHolderName}
-          Account Name : ${customerDetails.accountHolderName}
-          Customer Name: ${customerDetails.accountHolderName}
-          Name: ${customerDetails.accountHolderName}
-          Account Number: ${customerDetails.accountNumber}
-          Account Number : ${customerDetails.accountNumber}
-          IFS Code: ${branchDetails.ifscCode}
-          IFSC Code: ${branchDetails.ifscCode}
-          MICR Code: ${branchDetails.micrCode}
-          Branch: ${branchDetails.branchName}
-          CIF NO: ${customerDetails.cifNumber}
-          CIF No.: ${customerDetails.cifNumber}
-          Account Statement from ${startDateStr} to ${endDateStr}
-          Statement Period : ${startDateStr} to ${endDateStr}
-          Statement Period: ${startDateStr} to ${endDateStr}
-          Statement Period : ${startDateStr} - ${endDateStr}
-          From Date : ${startDateStr} To Date : ${endDateStr}
-          From Date: ${startDateStr} To Date: ${endDateStr}
-          Start Date : ${startDateStr} End Date : ${endDateStr}
-          Statement From Date: ${startDateStr} To Date: ${endDateStr}
-          Statement of ${customerDetails.accountHolderName} (A/c-${customerDetails.accountNumber}) between ${startDateStr} to ${endDateStr}
-          **This is computer generated statement and does not require a signature.**
-          Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
-        </div>
+        <div class="page" style="width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 50px 10mm 20px 10mm; position: relative; page-break-after: always; display: flex; flex-direction: column; justify-content: flex-start; background: #ffffff; color: #000000; font-family: Helvetica, sans-serif; font-size: 12.5524px;">
         ${isFirstPage ? `
         <!-- SBI 2 Header & Logo -->
-        <div style="margin-bottom: 10px;">
-          <img src="/sbi2-logo.png" alt="SBI" style="height: 58px; width: auto; display: block;" />
+        <div style="margin-bottom: 12px;">
+          <img src="/sbi2-logo.png" alt="SBI" style="height: 78px; width: auto; display: block;" />
         </div>
 
 
         <!-- SBI 2 Customer Account Meta Dossier -->
-        <table style="width: 100%; font-size: 11px; line-height: 1.35; border-collapse: collapse; color: #000000; margin-bottom: 14px;">
+        <table style="width: 100%; font-size: 12.5524px; font-family: Helvetica, sans-serif; line-height: 1.35; border-collapse: collapse; color: #000000; margin-bottom: 14px;">
           <tbody>
-            <tr><td style="width: 165px; vertical-align: top;">Account Name</td><td style="width: 8px; vertical-align: top; padding-right: 2px;">:</td><td style="vertical-align: top;">${customerDetails.accountHolderName}</td></tr>
+            <tr><td style="width: 165px; vertical-align: top;">Account Name</td><td style="width: 10px; vertical-align: top; padding-right: 4px;">:</td><td style="vertical-align: top;">${(customerDetails.accountHolderName || '').trim()}</td></tr>
             <tr><td style="vertical-align: top;">Address</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; white-space: pre-line;">${formatAddress4Lines(customerDetails.address)}</td></tr>
             <tr><td style="vertical-align: top;">Date</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${endDateStr}</td></tr>
-            <tr><td style="vertical-align: top;">Account Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${customerDetails.accountNumber || ''}</td></tr>
+            <tr><td style="vertical-align: top;">Account Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${formatSbiAccountNumber(customerDetails.accountNumber)}</td></tr>
             <tr><td style="vertical-align: top;">Account Description</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">REGULAR SB CHQ-INDIVIDUALS</td></tr>
             <tr><td style="vertical-align: top;">Branch</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.branchName}</td></tr>
             <tr><td style="vertical-align: top;">Drawing Power</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">0.00</td></tr>
@@ -95,29 +102,30 @@ export function renderStatementHtml(record: StatementRecord): string {
             <tr><td style="vertical-align: top;">CIF No.</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${customerDetails.cifNumber}</td></tr>
             <tr><td style="vertical-align: top;">CKYCR Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${(() => { const val = branchDetails.ckycrNumber || '1234'; const digits = val.replace(/\D/g, ''); const last4 = digits.length >= 4 ? digits.slice(-4) : '1234'; return `XXXXXXXXXXX${last4}`; })()}</td></tr>
             <tr><td style="vertical-align: top;">IFS Code</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.ifscCode}</td></tr>
-            <tr><td style="font-size: 10px; color: #000000; padding-bottom: 2px;" colSpan="3">(Indian Financial System)</td></tr>
+            <tr><td style="font-size: 12.5524px; color: #000000; padding-bottom: 2px;" colSpan="3">(Indian Financial System)</td></tr>
             <tr><td style="vertical-align: top;">MICR Code</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.micrCode}</td></tr>
-            <tr><td style="font-size: 10px; color: #000000; padding-bottom: 2px;" colSpan="3">(Magnetic Ink Character Recognition)</td></tr>
+            <tr><td style="font-size: 12.5524px; color: #000000; padding-bottom: 2px;" colSpan="3">(Magnetic Ink Character Recognition)</td></tr>
             <tr><td style="vertical-align: top;">Nomination Registered</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${customerDetails.nomineeName && !customerDetails.nomineeName.toLowerCase().includes('no') ? 'Yes' : 'No'}</td></tr>
             <tr><td style="vertical-align: top;">Balance as on ${startDateStr}</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${formatCurrency(accountInfo.openingBalance)}</td></tr>
           </tbody>
         </table>
 
-        <div style="font-size: 12px; font-weight: bold; margin: 10px 0 8px 0; color: #000000;">
-          Statement of ${customerDetails.accountHolderName} (A/c-${customerDetails.accountNumber || ''}) between ${startDateStr} to ${endDateStr}
+        <div style="font-size: 12.5524px; font-family: Helvetica, sans-serif; font-weight: bold; margin: 10px 0 8px 0; color: #000000;">
+          Statement of ${customerDetails.accountHolderName} (A/c-${formatSbiAccountNumber(customerDetails.accountNumber)}) between ${startDateStr} to ${endDateStr}
         </div>
         ` : ''}
 
         <!-- SBI 2 Clean Ledger Table -->
-        <table style="width: 100%; border-collapse: collapse; border: 0.5px solid #444444; font-size: 10px; color: #000000;">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-size: 12.5524px; font-family: Helvetica, sans-serif; color: #000000;">
           <thead>
-            <tr style="height: 28px; background-color: #ffffff; color: #000000; font-size: 10.5px; font-weight: bold;">
-              <th style="width: 12%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Txn Date</th>
-              <th style="width: 12%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Value Date</th>
-              <th style="width: 46%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Description</th>
-              <th style="width: 10%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Debit</th>
-              <th style="width: 10%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Credit</th>
-              <th style="width: 10%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Balance</th>
+            <tr style="height: 28px; background-color: #ffffff; color: #000000; font-size: 12.5524px; font-weight: bold;">
+              <th style="width: 10%; padding: 2px 4px; text-align: left; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Txn Date</th>
+              <th style="width: 10%; padding: 2px 4px; text-align: left; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Value<br>Date</th>
+              <th style="width: 32%; padding: 2px 4px; text-align: left; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Description</th>
+              <th style="width: 18%; padding: 2px 4px; text-align: left; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Ref No./Cheque<br>No.</th>
+              <th style="width: 10%; padding: 2px 4px; text-align: right; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Debit</th>
+              <th style="width: 10%; padding: 2px 4px; text-align: right; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Credit</th>
+              <th style="width: 10%; padding: 2px 4px; text-align: right; font-weight: bold; border: 1px solid #000000; vertical-align: top;">Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -129,32 +137,36 @@ export function renderStatementHtml(record: StatementRecord): string {
         if (tx.credit && (tx.details.includes('NEFT') || tx.details.includes('SALARY'))) {
           descLine1 = 'BY TRANSFER-';
           descLine2 = `${tx.details}`;
-          const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
-          refLine = `TRANSFER FROM ${rNum}`;
+          const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+          refLine = `TRANSFER<br>FROM<br>${rNum}`;
         } else if (tx.credit && tx.details.includes('INTEREST')) {
           descLine1 = 'CREDIT INTEREST--';
           descLine2 = '';
           refLine = '';
+        } else if (tx.credit) {
+          descLine1 = 'BY TRANSFER-';
+          descLine2 = `${tx.details}`;
+          const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+          refLine = `TRANSFER<br>FROM<br>${rNum}`;
         } else {
           descLine1 = 'TO TRANSFER-';
           const cleanDetails = tx.details.startsWith('TO TRANSFER-') ? tx.details.replace('TO TRANSFER-', '') : tx.details;
           descLine2 = `${cleanDetails}`;
-          const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
-          refLine = `TRANSFER TO ${rNum}`;
+          const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+          refLine = `TRANSFER TO<br>${rNum}`;
         }
 
+        const fullDesc = descLine2 ? `${descLine1}<br>${descLine2}` : descLine1;
+
         return `
-            <tr style="border-bottom: 0.5px solid #444444; height: 38px;">
-              <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.valueDate}</td>
-              <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.postDate}</td>
-              <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
-                <div>${descLine1}</div>
-                ${descLine2 ? `<div>${descLine2}</div>` : ''}
-                ${refLine ? `<div style="font-size: 9px; color: #111827;">${refLine}</div>` : ''}
-              </td>
-              <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.debit ? formatCurrency(tx.debit) : ''}</td>
-              <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.credit ? formatCurrency(tx.credit) : ''}</td>
-              <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${formatCurrency(tx.balance)}</td>
+            <tr style="border-bottom: 1px solid #000000;">
+              <td style="padding: 2px 4px; text-align: left; border: 1px solid #000000; font-size: 12.5524px; white-space: nowrap; vertical-align: top; line-height: 1.2;">${formatSbiDate(tx.valueDate)}</td>
+              <td style="padding: 2px 4px; text-align: left; border: 1px solid #000000; font-size: 12.5524px; white-space: nowrap; vertical-align: top; line-height: 1.2;">${formatSbiDate(tx.postDate)}</td>
+              <td style="padding: 2px 4px; text-align: left; border: 1px solid #000000; font-size: 12.5524px; vertical-align: top; line-height: 1.2; word-break: break-all;">${fullDesc}</td>
+              <td style="padding: 2px 4px; text-align: left; border: 1px solid #000000; font-size: 12.5524px; vertical-align: top; line-height: 1.2; word-break: break-all;">${refLine}</td>
+              <td style="padding: 2px 4px; text-align: right; border: 1px solid #000000; font-size: 12.5524px; vertical-align: top; line-height: 1.2;">${tx.debit ? formatCurrency(tx.debit) : ''}</td>
+              <td style="padding: 2px 4px; text-align: right; border: 1px solid #000000; font-size: 12.5524px; vertical-align: top; line-height: 1.2;">${tx.credit ? formatCurrency(tx.credit) : ''}</td>
+              <td style="padding: 2px 4px; text-align: right; border: 1px solid #000000; font-size: 12.5524px; vertical-align: top; line-height: 1.2;">${formatCurrency(tx.balance)}</td>
             </tr>
             `;
       }).join('')}
@@ -162,13 +174,12 @@ export function renderStatementHtml(record: StatementRecord): string {
         </table>
 
         ${pageIdx === totalPagesCount - 1 ? `
-        <div style="margin-top: 14px; font-size: 9.5px; line-height: 1.35; color: #000000;">
-          Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
+        <div style="margin-top: 14px; font-size: 12.5524px; font-family: Helvetica, sans-serif; line-height: 1.4; color: #000000;">
+          <div>Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information.</div>
+          <div style="margin-top: 10px;">**This is a computer generated statement and does not require a signature.</div>
         </div>
         ` : ''}
         </div>
-
-      </div>
       `;
     }).join('');
 
@@ -187,8 +198,8 @@ export function renderStatementHtml(record: StatementRecord): string {
   <title>State Bank of India - Account Statement</title>
   <style>
     @page { size: A4 portrait; margin: 0; }
-    body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background: white; color: #000000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 20px 10mm; }
+    body { margin: 0; padding: 0; font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; font-size: 12.5524px; background: white; color: #000000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 20px 10mm; font-family: Helvetica, "Helvetica Neue", Arial, sans-serif; font-size: 12.5524px; }
   </style>
 </head>
 <body>

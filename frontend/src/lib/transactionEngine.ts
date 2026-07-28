@@ -57,19 +57,19 @@ export function getDurationDays(duration: StatementSettings['duration']): number
   }
 }
 
-// Convert "PageCount" option to optimized number of transactions
-export function getPageToTxCount(pageCount: StatementSettings['pageCount'], customVal = 20): number {
+export function getPageToTxCount(pageCount: StatementSettings['pageCount'] | string, customVal = 20): number {
   switch (pageCount) {
     case '1 Page': return 12;
-    case '2 Pages': return 40;
-    case '3 Pages': return 68;
-    case '5 Pages': return 124;
-    case '10 Pages': return 264;
-    case '15 Pages': return 380;
-    case '20 Pages': return 544;
-    case '30 Pages': return 820;
+    case '2 Pages': return 28;
+    case '3 Pages': return 48;
+    case '5 Pages': return 88;
+    case '10 Pages': return 160;
+    case '12 Pages': return 190;
+    case '15 Pages': return 240;
+    case '20 Pages': return 310;
+    case '30 Pages': return 450;
     case 'Custom': return Math.max(5, Math.min(2000, customVal));
-    default: return 820;
+    default: return 120;
   }
 }
 
@@ -186,17 +186,21 @@ function detectPrimaryCity(customer?: CustomerDetails, branch?: BranchDetails): 
   };
 }
 
-// ─── 100+ Rich Indian Person Names ───────────────────────────────────────────
-const INDIAN_FULL_NAMES = [
-  'Kavita Sharma', 'Aditya Verma', 'Pradeep Kumar', 'Siddharth N', 'Venkatesh R',
-  'Tanvi Shah', 'Harish Patel', 'Nikhil Gupta', 'Deepa Menon', 'Rohan Deshmukh',
-  'Meenakshi Rao', 'Anand K', 'Swati Joshi', 'Gaurav Mishra', 'Pooja Agarwal',
-  'Sandeep Kulkarni', 'Archana Nair', 'Varun Kapoor', 'Shruti Saxena', 'Manish Reddy',
-  'Ritu Bhatia', 'Alok Choudhury', 'Kriti Sen', 'Abhishek Tiwari', 'Divya Iyer',
-  'Kiran More', 'Vishal Singhal', 'Neha Bansal', 'Rajeev Pillai', 'Bhavna Hegde',
+// ─── DISJOINT PERSON NAME POOLS (Zero overlap to prevent "PARTIES PRESENT IN BOTH DEBITS AND CREDITS") ───
+const DEBIT_ONLY_NAMES = [
   'Aakash Pandey', 'Preeti Sundaram', 'Suhas Mahajan', 'Shweta Jha', 'Naveen Shetty',
   'Anjali Saxena', 'Rahul Mehta', 'Sanjay Dutt', 'Priya Dhar', 'Deepak Chauhan',
-  'Meera Krishnan', 'Vijay Merchant', 'Vikram Rathore', 'Rohit Aggarwal', 'Arjun Nambiar'
+  'Meera Krishnan', 'Vijay Merchant', 'Vikram Rathore', 'Rohit Aggarwal', 'Arjun Nambiar',
+  'Kavita Sharma', 'Aditya Verma', 'Pradeep Kumar', 'Siddharth N', 'Venkatesh R',
+  'Tanvi Shah', 'Harish Patel', 'Deepa Menon', 'Anand K', 'Sandeep Kulkarni'
+];
+
+const CREDIT_ONLY_NAMES = [
+  'Nikhil Gupta', 'Rohan Deshmukh', 'Meenakshi Rao', 'Swati Joshi', 'Gaurav Mishra',
+  'Pooja Agarwal', 'Archana Nair', 'Varun Kapoor', 'Shruti Saxena', 'Manish Reddy',
+  'Ritu Bhatia', 'Alok Choudhury', 'Kriti Sen', 'Abhishek Tiwari', 'Divya Iyer',
+  'Kiran More', 'Vishal Singhal', 'Neha Bansal', 'Rajeev Pillai', 'Bhavna Hegde',
+  'Sunil Chhetri', 'Tarun Varma', 'Devika Pillai', 'Manoj Bajpayee', 'Sneha Kapoor'
 ];
 
 interface MerchantInfo {
@@ -278,7 +282,7 @@ function buildUpiNarrative(isCredit: boolean, bankStyle: string, customName?: st
   const ss = String(randRange(0, 59)).padStart(2, '0');
   const direction = isCredit ? 'CR' : 'DR';
 
-  const name = customName || pick(INDIAN_FULL_NAMES);
+  const name = customName || (isCredit ? pick(CREDIT_ONLY_NAMES) : pick(DEBIT_ONLY_NAMES));
   const firstName = name.split(' ')[0];
   const vpa = `${firstName.toLowerCase()}${randRange(10, 99)}${pick(VPA_SUFFIXES)}`;
 
@@ -643,17 +647,44 @@ function generateRawSalariedTransactions(
 
     const totalDays = Math.max(1, Math.round((mRange.end.getTime() - mRange.start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
     
-    // Guarantee 100% Every Single Calendar Day Coverage:
-    // Every single date in the month gets AT LEAST 1 transaction!
-    const dailyAllocation = new Array(totalDays).fill(1);
-    let unassigned = Math.max(0, countForThisMonth - totalDays);
+    // Create authentic human activity allocation with a 4-day dormant window (Max Dormant Days = 4):
+    const dailyAllocation = new Array(totalDays).fill(0);
+    const restDayIndices = new Set<number>();
+    
+    // For one middle month, inject a 4-day contiguous dormant window (e.g. Max Dormant Days = 4)
+    if (idx === Math.floor(monthsList.length / 2)) {
+      const blockStart = randRange(10, Math.max(10, totalDays - 6));
+      for (let b = 0; b < 4; b++) {
+        restDayIndices.add(blockStart + b);
+      }
+    }
 
+    // Pick 3-5 additional weekend rest days (1-2 day gaps)
+    let restAttempts = 0;
+    while (restDayIndices.size < 7 && restAttempts < 100) {
+      restAttempts++;
+      const rDay = randRange(0, totalDays - 1);
+      restDayIndices.add(rDay);
+      if (rDay + 1 < totalDays && restDayIndices.size < 7 && Math.random() < 0.6) {
+        restDayIndices.add(rDay + 1);
+      }
+    }
+
+    // Allocate at least 1 transaction for all active non-rest days
+    const activeDays: number[] = [];
+    for (let d = 0; d < totalDays; d++) {
+      if (!restDayIndices.has(d)) {
+        dailyAllocation[d] = 1;
+        activeDays.push(d);
+      }
+    }
+
+    let unassigned = Math.max(0, countForThisMonth - activeDays.length);
     let attempts = 0;
-    while (unassigned > 0 && attempts < 1000) {
+    while (unassigned > 0 && attempts < 1000 && activeDays.length > 0) {
       attempts++;
-      const randomDay = randRange(0, totalDays - 1);
-      const cap = (randomDay % 7 === 0) ? 6 : 4;
-      if (dailyAllocation[randomDay] < cap) {
+      const randomDay = pick(activeDays);
+      if (dailyAllocation[randomDay] < 3) {
         dailyAllocation[randomDay]++;
         unassigned--;
       }
@@ -676,7 +707,7 @@ function generateRawSalariedTransactions(
         const txTime = new Date(txDate.getTime());
         txTime.setHours(hour, randRange(0, 59), randRange(0, 59));
 
-        const isCredit = Math.random() < 0.18;
+        const isCredit = Math.random() < 0.30;
         const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
         const { detail, amount: rawAmt } = tmpl.detailAndAmount(bankStyle);
         const amount = Math.round(rawAmt * 100) / 100;
@@ -714,7 +745,6 @@ function generateRawSalariedTransactions(
     const month = salaryMonthDate.getMonth();
     let salaryDate = getSalaryDateForMonth(year, month, settings);
 
-    // Clamp salary date into [startDay, endDay] so edge months are never missing salary credits
     if (salaryDate < startDay) {
       salaryDate = new Date(startDay.getTime() + 86400000);
       salaryDate.setHours(9, 30, 0, 0);

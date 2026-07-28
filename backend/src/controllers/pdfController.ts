@@ -8,6 +8,8 @@ import { StatementRecord } from '../types/statement';
 import fs from 'fs';
 import path from 'path';
 
+import { signPdfBuffer } from '../utils/pdfSigner';
+
 function getLaunchOptions() {
   const args = [
     '--no-sandbox',
@@ -138,6 +140,46 @@ export const generatePdf = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
+function patchPdfFontsAndMetadata(pdfBuffer: Buffer, bankStyle = 'SBI'): Buffer {
+  try {
+    let pdfStr = pdfBuffer.toString('binary');
+    const producer = 'iText 2.1.7 by 1T3XT';
+    const bankName = bankStyle === 'BOI' ? 'Bank of India' : bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' : 'State Bank of India';
+    const creator = `${bankName} Internet Banking System`;
+
+    // 1. Metadata Patching
+    if (pdfStr.includes('/Producer')) {
+      pdfStr = pdfStr.replace(/\/Producer\s*\([^\)]*\)/g, `/Producer (${producer})`);
+    } else {
+      pdfStr = pdfStr.replace(/\/Info\s*<<\s*/g, `/Info << /Producer (${producer}) /Creator (${creator}) `);
+    }
+    if (pdfStr.includes('/Creator')) {
+      pdfStr = pdfStr.replace(/\/Creator\s*\([^\)]*\)/g, `/Creator (${creator})`);
+    }
+
+    // 2. BaseFont Patching -> Standard Base Fonts: Helvetica & Helvetica-Bold
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/[A-Z]{6}\+Helvetica-Bold/g, '/BaseFont /Helvetica-Bold');
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/[A-Z]{6}\+Helvetica/g, '/BaseFont /Helvetica');
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/[A-Z]{6}\+Arial-Bold/g, '/BaseFont /Helvetica-Bold');
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/[A-Z]{6}\+ArialMT/g, '/BaseFont /Helvetica');
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/[A-Z]{6}\+Arial/g, '/BaseFont /Helvetica');
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/Arial-Bold/g, '/BaseFont /Helvetica-Bold');
+    pdfStr = pdfStr.replace(/\/BaseFont\s*\/Arial/g, '/BaseFont /Helvetica');
+
+    // 3. Subtype Patching -> Type1 Standard PDF Base Font
+    pdfStr = pdfStr.replace(/\/Subtype\s*\/TrueType/g, '/Subtype /Type1');
+    pdfStr = pdfStr.replace(/\/Subtype\s*\/Type0/g, '/Subtype /Type1');
+
+    // 4. Encoding Patching -> WinAnsiEncoding
+    pdfStr = pdfStr.replace(/\/Encoding\s*\/MacRomanEncoding/g, '/Encoding /WinAnsiEncoding');
+    pdfStr = pdfStr.replace(/\/Encoding\s*\/Identity-H/g, '/Encoding /WinAnsiEncoding');
+
+    return Buffer.from(pdfStr, 'binary');
+  } catch (err) {
+    return pdfBuffer;
+  }
+}
+
 /**
  * POST /api/pdf/generate-statement
  * 
@@ -219,7 +261,18 @@ export const generateStatementPdf = async (req: Request, res: Response): Promise
     await browser.close();
     browser = null;
 
-    // 4. Apply password protection if configured in settings
+    // 4. Patch PDF Fonts & Metadata to match official bank engine (Type1 WinAnsiEncoding Helvetica)
+    pdfBuffer = patchPdfFontsAndMetadata(pdfBuffer, settings.bankStyle);
+
+    // 5. Apply PKCS#7 Digital Signature
+    const bankName = settings.bankStyle === 'BOI' ? 'Bank of India' : settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' : 'State Bank of India';
+    pdfBuffer = await signPdfBuffer(pdfBuffer, {
+      reason: `${bankName} Official Account Statement Digital Signature`,
+      location: bankName,
+      signerName: `${bankName} Corporate Internet Banking`
+    });
+
+    // 6. Apply password protection if configured in settings
     const pdfPass = settings.enablePdfPassword && settings.pdfPassword ? settings.pdfPassword.trim() : undefined;
     if (pdfPass) {
       pdfBuffer = encryptPdfBuffer(pdfBuffer, pdfPass);

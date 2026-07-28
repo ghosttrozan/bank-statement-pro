@@ -24,6 +24,40 @@ function formatKotakDate(dateStr: string): string {
   return dateStr;
 }
 
+function formatSbiDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  if (/[a-zA-Z]/.test(dateStr)) return dateStr;
+
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    let day = 0, month = 0, year = 0;
+    if (parts[0].length === 4) {
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[2], 10);
+    } else {
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      year = parseInt(parts[2], 10);
+    }
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 0 && month < 12) {
+      const d = day.toString().padStart(2, '0');
+      const m = MONTHS[month];
+      return `${d} ${m} ${year}`;
+    }
+  }
+  return dateStr;
+}
+
+function formatSbiAccountNumber(accNo?: string): string {
+  const raw = (accNo || '30521458920').trim();
+  if (raw.length < 17 && /^\d+$/.test(raw)) {
+    return raw.padStart(17, '0');
+  }
+  return raw;
+}
+
 function formatAddress4Lines(address: string): string {
   if (!address) return '';
   const parts = address.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
@@ -194,7 +228,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const pageChunks = settings.bankStyle === 'SBI'
     ? chunkTransactionsForA4(transactions, 6, 28)
     : settings.bankStyle === 'SBI2'
-      ? chunkTransactionsForA4(transactions, 12, 22)
+      ? chunkTransactionsForA4(transactions, 9, 19)
       : settings.bankStyle === 'BOI'
         ? chunkTransactionsForA4(transactions, 18, 38)
         : settings.bankStyle === 'PNB'
@@ -370,8 +404,8 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
           <button
             onClick={() => setIsPasswordModalOpen(true)}
             className={`font-semibold py-2 px-3.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border ${enablePassword && pdfPassword.trim()
-                ? 'bg-amber-500/10 text-amber-700 border-amber-300 hover:bg-amber-500/20 shadow-xs'
-                : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+              ? 'bg-amber-500/10 text-amber-700 border-amber-300 hover:bg-amber-500/20 shadow-xs'
+              : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
               }`}
             title="Set PDF opening password"
           >
@@ -755,24 +789,24 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   ) : settings.bankStyle === 'SBI2' ? (
                     /* SBI 2 DESIGN THEME (100% Matching PDF Layout) */
                     isFirst ? (
-                      <div className="w-full px-[10mm] pt-0" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#000000' }}>
+                      <div className="w-full px-[10mm] pt-0" style={{ fontFamily: 'Helvetica, sans-serif', fontSize: '12.5524px', color: '#000000' }}>
                         <div>
                           {/* Top Header Logo */}
-                          <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center' }}>
+                          <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'center' }}>
                             <img
                               src="/sbi2-logo.png"
                               alt="SBI"
-                              style={{ height: '58px', width: 'auto', display: 'block' }}
+                              style={{ height: '78px', width: 'auto', display: 'block' }}
                             />
                           </div>
 
                           {/* Customer & Account Details Meta Table */}
-                          <table style={{ width: '100%', fontSize: '11px', lineHeight: '1.45', borderCollapse: 'collapse', color: '#000000', marginBottom: '14px' }}>
+                          <table style={{ width: '100%', fontSize: '12.5524px', lineHeight: '1.45', borderCollapse: 'collapse', color: '#000000', marginBottom: '14px', fontFamily: 'Helvetica, sans-serif' }}>
                             <tbody>
                               <tr>
                                 <td style={{ width: '165px', verticalAlign: 'top' }}>Account Name</td>
-                                <td style={{ width: '12px', verticalAlign: 'top', paddingRight: '6px' }}>:</td>
-                                <td style={{ verticalAlign: 'top', paddingLeft: '4px', fontWeight: '' }}>{customerDetails.accountHolderName}</td>
+                                <td style={{ width: '10px', verticalAlign: 'top', paddingRight: '4px' }}>:</td>
+                                <td style={{ verticalAlign: 'top' }}>{(customerDetails.accountHolderName || '').trim()}</td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Address</td>
@@ -788,7 +822,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 <td style={{ verticalAlign: 'top' }}>Account Number</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
                                 <td style={{ verticalAlign: 'top' }}>
-                                  {customerDetails.accountNumber || '30521458920'}
+                                  {formatSbiAccountNumber(customerDetails.accountNumber)}
                                 </td>
                               </tr>
                               <tr>
@@ -841,7 +875,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 <td style={{ verticalAlign: 'top' }}>{branchDetails.ifscCode}</td>
                               </tr>
                               <tr>
-                                <td style={{ fontSize: '10px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Indian Financial System)</td>
+                                <td style={{ fontSize: '12.5524px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Indian Financial System)</td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>MICR Code</td>
@@ -849,7 +883,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 <td style={{ verticalAlign: 'top' }}>{branchDetails.micrCode}</td>
                               </tr>
                               <tr>
-                                <td style={{ fontSize: '10px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Magnetic Ink Character Recognition)</td>
+                                <td style={{ fontSize: '12.5524px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Magnetic Ink Character Recognition)</td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Nomination Registered</td>
@@ -865,8 +899,8 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           </table>
 
                           {/* Statement Title */}
-                          <div style={{ fontSize: '13px', fontWeight: '', margin: '14px 0 10px 0', color: '#000000' }}>
-                            Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber || '30521458920'}) between {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
+                          <div style={{ fontSize: '12.5524px', fontFamily: 'Helvetica, sans-serif', fontWeight: '', margin: '14px 0 10px 0', color: '#000000' }}>
+                            Statement of {customerDetails.accountHolderName} (A/c-{formatSbiAccountNumber(customerDetails.accountNumber)}) between {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
                           </div>
                         </div>
                       </div>
@@ -1365,59 +1399,80 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                       ) : settings.bankStyle === 'SBI2' ? (
                         /* ─── SBI 2 TABLE (Exact 100% Matching Layout) ───────────────── */
                         <div>
-                          <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: '0.5px solid #444444', fontSize: '10px', color: '#000000' }}>
+                                {/* SBI 2 Clean Ledger Table */}
+                          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #000000', fontSize: '12.5524px', fontFamily: 'Helvetica, sans-serif', color: '#000000' }}>
                             <thead>
-                              <tr style={{ height: '28px', backgroundColor: '#ffffff', color: '#000000', fontSize: '10.5px', fontWeight: 'bold' }}>
-                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Txn Date</th>
-                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Value Date</th>
-                                <th style={{ width: '32%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Description</th>
-                                <th style={{ width: '18%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Ref No./Cheque No.</th>
-                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Debit</th>
-                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Credit</th>
-                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Balance</th>
+                              <tr style={{ height: '28px', backgroundColor: '#ffffff', color: '#000000', fontSize: '12.5524px', fontWeight: 'bold' }}>
+                                <th style={{ width: '10%', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Txn Date</th>
+                                <th style={{ width: '10%', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Value<br />Date</th>
+                                <th style={{ width: '32%', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Description</th>
+                                <th style={{ width: '18%', padding: '2px 4px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Ref No./Cheque<br />No.</th>
+                                <th style={{ width: '10%', padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Debit</th>
+                                <th style={{ width: '10%', padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Credit</th>
+                                <th style={{ width: '10%', padding: '2px 4px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000', verticalAlign: 'top' }}>Balance</th>
                               </tr>
                             </thead>
                             <tbody style={{ backgroundColor: '#ffffff', color: '#000000' }}>
                               {chunkTransactions.map((tx) => {
                                 let descLine1 = '';
                                 let descLine2 = '';
-                                let refLine = '';
+                                let refLine1 = '';
+                                let refLine2 = '';
+                                let refLine3 = '';
 
-                                if (tx.credit && (tx.details.includes('NEFT') || tx.details.includes('SALARY'))) {
+                                if (tx.details.includes('ATM WD') || tx.details.includes('ATM CARD')) {
+                                  descLine1 = '';
+                                  descLine2 = tx.details.startsWith('TO ') ? tx.details : `TO ${tx.details}`;
+                                  const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                  refLine1 = 'TRANSFER TO';
+                                  refLine2 = rNum;
+                                } else if (tx.credit && (tx.details.includes('NEFT') || tx.details.includes('SALARY'))) {
                                   descLine1 = 'BY TRANSFER-';
                                   descLine2 = `${tx.details}`;
-                                  const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
-                                  refLine = `TRANSFER FROM ${rNum}`;
+                                  const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                  refLine1 = 'TRANSFER';
+                                  refLine2 = 'FROM';
+                                  refLine3 = rNum;
                                 } else if (tx.credit && tx.details.includes('INTEREST')) {
                                   descLine1 = 'CREDIT INTEREST--';
                                   descLine2 = '';
-                                  refLine = '';
+                                } else if (tx.credit) {
+                                  descLine1 = 'BY TRANSFER-';
+                                  const cleanDetails = tx.details.startsWith('BY TRANSFER-') ? tx.details.replace('BY TRANSFER-', '') : tx.details;
+                                  descLine2 = `${cleanDetails}`;
+                                  const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                  refLine1 = 'TRANSFER';
+                                  refLine2 = 'FROM';
+                                  refLine3 = rNum;
                                 } else {
                                   descLine1 = 'TO TRANSFER-';
                                   const cleanDetails = tx.details.startsWith('TO TRANSFER-') ? tx.details.replace('TO TRANSFER-', '') : tx.details;
                                   descLine2 = `${cleanDetails}`;
-                                  const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
-                                  refLine = `TRANSFER TO ${rNum}`;
+                                  const rNum = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                  refLine1 = 'TRANSFER TO';
+                                  refLine2 = rNum;
                                 }
 
                                 return (
-                                  <tr key={tx.id} style={{ borderBottom: '0.5px solid #444444', height: '38px', minHeight: '38px' }}>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.valueDate)}</td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.postDate)}</td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
-                                      <div>{descLine1}</div>
-                                      {descLine2 ? <div>{descLine2}</div> : null}
+                                  <tr key={tx.id} style={{ borderBottom: '1px solid #000000' }}>
+                                    <td style={{ padding: '2px 4px', textAlign: 'left', border: '1px solid #000000', fontSize: '12.5524px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.2' }}>{formatSbiDate(tx.valueDate)}</td>
+                                    <td style={{ padding: '2px 4px', textAlign: 'left', border: '1px solid #000000', fontSize: '12.5524px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.2' }}>{formatSbiDate(tx.postDate)}</td>
+                                    <td style={{ padding: '2px 4px', textAlign: 'left', border: '1px solid #000000', fontSize: '12.5524px', verticalAlign: 'top', lineHeight: '1.2', wordBreak: 'break-all' }}>
+                                      {descLine1 && <>{descLine1}<br /></>}
+                                      {descLine2}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
-                                      {refLine ? <div>{refLine}</div> : ''}
+                                    <td style={{ padding: '2px 4px', textAlign: 'left', border: '1px solid #000000', fontSize: '12.5524px', verticalAlign: 'top', lineHeight: '1.2', wordBreak: 'break-all' }}>
+                                      {refLine1}
+                                      {refLine2 && <><br />{refLine2}</>}
+                                      {refLine3 && <><br />{refLine3}</>}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '2px 4px', textAlign: 'right', border: '1px solid #000000', fontSize: '12.5524px', verticalAlign: 'top', lineHeight: '1.2' }}>
                                       {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '2px 4px', textAlign: 'right', border: '1px solid #000000', fontSize: '12.5524px', verticalAlign: 'top', lineHeight: '1.2' }}>
                                       {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '2px 4px', textAlign: 'right', border: '1px solid #000000', fontSize: '12.5524px', verticalAlign: 'top', lineHeight: '1.2' }}>
                                       {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     </td>
                                   </tr>
@@ -1426,8 +1481,9 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             </tbody>
                           </table>
                           {isLast && (
-                            <div style={{ marginTop: '14px', fontSize: '9.5px', lineHeight: '1.35', color: '#000000' }}>
-                              Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
+                            <div style={{ marginTop: '14px', fontSize: '12.5524px', fontFamily: 'Helvetica, sans-serif', lineHeight: '1.4', color: '#000000' }}>
+                              <div>Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information.</div>
+                              <div style={{ marginTop: '10px' }}>**This is a computer generated statement and does not require a signature.</div>
                             </div>
                           )}
                         </div>
