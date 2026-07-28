@@ -493,12 +493,13 @@ function generateRawSalariedTransactions(
     : getPageToTxCount(settings.pageCount));
 
   let initialOpening = info.openingBalance;
-  if (initialOpening === 90000.00 || !initialOpening) {
-    initialOpening = getRandomOpeningBalance();
+  if (settings.profile === 'Business' || (info.openingBalance === 90000.00 && !info.openingBalance)) {
+    initialOpening = 90000.00;
   }
 
-  const paiseCarry = getRandomPaise();
-  let runningBal = Math.floor(initialOpening) + paiseCarry;
+  const isBusinessOpening = initialOpening === 90000.00;
+  const paiseCarry = isBusinessOpening ? 0 : getRandomPaise();
+  let runningBal = isBusinessOpening ? 90000.00 : (Math.floor(initialOpening) + paiseCarry);
 
   const monthsList: { start: Date; end: Date }[] = [];
   let mCurr = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate());
@@ -839,7 +840,14 @@ export function generateStatementTransactions(
   customer?: CustomerDetails,
   branch?: BranchDetails
 ): Transaction[] {
-  return generateRawSalariedTransactions(settings, info, localTime, customer, branch);
+  const businessSettings: StatementSettings = { ...settings, profile: 'Business' };
+  const businessInfo: AccountInfo = {
+    ...info,
+    openingBalance: (info.openingBalance && info.openingBalance !== 90000.00 && info.openingBalance > 0)
+      ? info.openingBalance
+      : 90000.00
+  };
+  return generateRawSalariedTransactions(businessSettings, businessInfo, localTime, customer, branch);
 }
 
 export function generateSalariedStatementTransactions(
@@ -849,5 +857,12 @@ export function generateSalariedStatementTransactions(
   customer?: CustomerDetails,
   branch?: BranchDetails
 ): Transaction[] {
-  return generateRawSalariedTransactions(settings, info, localTime, customer, branch);
+  const salariedSettings: StatementSettings = { ...settings, profile: 'Personal' };
+  const salariedInfo: AccountInfo = {
+    ...info,
+    openingBalance: (!info.openingBalance || info.openingBalance === 90000.00)
+      ? getRandomOpeningBalance()
+      : info.openingBalance
+  };
+  return generateRawSalariedTransactions(salariedSettings, salariedInfo, localTime, customer, branch);
 }

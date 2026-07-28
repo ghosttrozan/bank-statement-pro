@@ -248,14 +248,16 @@ export default function GeneratorPage() {
     setToDate(defaultTo);
   }, []);
 
-  // ─── Reset salary config when switching from Salaried to Business ──────────
+  // ─── Reset salary config & toggle opening balance when switching type ────────
   useEffect(() => {
     if (statementType === 'business') {
-      // Reset salary config when business is selected
       setSalaryMode('auto');
       setCompanyName('');
       setMonthlySalary(undefined);
       setSalaryDay('5');
+      setAccount((prev) => ({ ...prev, openingBalance: 90000.00 }));
+    } else {
+      setAccount((prev) => ({ ...prev, openingBalance: getRandomOpeningBalance() }));
     }
   }, [statementType]);
 
