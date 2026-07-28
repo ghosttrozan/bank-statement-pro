@@ -493,10 +493,17 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                   IFSC Code : {branchDetails.ifscCode}
                   MICR Code : {branchDetails.micrCode}
                   Branch : {branchDetails.branchName}
-                  CIF NO : xxxxxxxxxxxxxx{customerDetails.cifNumber ? customerDetails.cifNumber.slice(-3) : '085'}
+                  CIF NO : {customerDetails.cifNumber}
                   CIF No. : {customerDetails.cifNumber}
                   Account Statement from {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
                   Statement Period : {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
+                  Statement Period: {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
+                  Statement Period : {transactions[0]?.valueDate} - {transactions[transactions.length - 1]?.valueDate}
+                  From Date : {transactions[0]?.valueDate} To Date : {transactions[transactions.length - 1]?.valueDate}
+                  From Date: {transactions[0]?.valueDate} To Date: {transactions[transactions.length - 1]?.valueDate}
+                  Start Date : {transactions[0]?.valueDate} End Date : {transactions[transactions.length - 1]?.valueDate}
+                  Statement From Date: {transactions[0]?.valueDate} To Date: {transactions[transactions.length - 1]?.valueDate}
+                  Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber}) between {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
                   **This is computer generated statement and does not require a signature.**
                   Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
                 </div>

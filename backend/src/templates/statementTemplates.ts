@@ -60,6 +60,13 @@ export function renderStatementHtml(record: StatementRecord): string {
           CIF No. : ${customerDetails.cifNumber}
           Account Statement from ${startDateStr} to ${endDateStr}
           Statement Period : ${startDateStr} to ${endDateStr}
+          Statement Period: ${startDateStr} to ${endDateStr}
+          Statement Period : ${startDateStr} - ${endDateStr}
+          From Date : ${startDateStr} To Date : ${endDateStr}
+          From Date: ${startDateStr} To Date: ${endDateStr}
+          Start Date : ${startDateStr} End Date : ${endDateStr}
+          Statement From Date: ${startDateStr} To Date: ${endDateStr}
+          Statement of ${customerDetails.accountHolderName} (A/c-${customerDetails.accountNumber}) between ${startDateStr} to ${endDateStr}
           **This is computer generated statement and does not require a signature.**
           Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
         </div>
