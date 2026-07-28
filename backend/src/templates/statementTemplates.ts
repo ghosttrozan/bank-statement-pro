@@ -51,12 +51,12 @@ export function renderStatementHtml(record: StatementRecord): string {
           STATE BANK OF INDIA State Bank of India SBI
           Account Name : ${customerDetails.accountHolderName}
           Account Number : ${customerDetails.accountNumber}
-          Account Number : xxxxxxxxxxxxxx${customerDetails.accountNumber ? customerDetails.accountNumber.slice(-3) : '371'}
+          Account Number : ${customerDetails.accountNumber}
           IFS Code : ${branchDetails.ifscCode}
           IFSC Code : ${branchDetails.ifscCode}
           MICR Code : ${branchDetails.micrCode}
           Branch : ${branchDetails.branchName}
-          CIF NO : xxxxxxxxxxxxxx${customerDetails.cifNumber ? customerDetails.cifNumber.slice(-3) : '085'}
+          CIF NO : ${customerDetails.cifNumber}
           CIF No. : ${customerDetails.cifNumber}
           Account Statement from ${startDateStr} to ${endDateStr}
           Statement Period : ${startDateStr} to ${endDateStr}
@@ -76,17 +76,17 @@ export function renderStatementHtml(record: StatementRecord): string {
             <tr><td style="width: 165px; vertical-align: top;">Account Name</td><td style="width: 8px; vertical-align: top; padding-right: 2px;">:</td><td style="vertical-align: top;">${customerDetails.accountHolderName}</td></tr>
             <tr><td style="vertical-align: top;">Address</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; white-space: pre-line;">${formatAddress4Lines(customerDetails.address)}</td></tr>
             <tr><td style="vertical-align: top;">Date</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${endDateStr}</td></tr>
-            <tr><td style="vertical-align: top;">Account Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; font-family: monospace;">${customerDetails.accountNumber || ''}</td></tr>
-            <tr><td style="vertical-align: top;">Account Description</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">SBCHQ-SGSP-PUBIND-DIAMOND-INR</td></tr>
+            <tr><td style="vertical-align: top;">Account Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${customerDetails.accountNumber || ''}</td></tr>
+            <tr><td style="vertical-align: top;">Account Description</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">REGULAR SB CHQ-INDIVIDUALS</td></tr>
             <tr><td style="vertical-align: top;">Branch</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.branchName}</td></tr>
             <tr><td style="vertical-align: top;">Drawing Power</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">0.00</td></tr>
             <tr><td style="vertical-align: top;">Interest Rate(% p.a.)</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${accountInfo.interestRate || '2.5'}</td></tr>
             <tr><td style="vertical-align: top;">MOD Balance</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">0.00</td></tr>
-            <tr><td style="vertical-align: top;">CIF No.</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; font-family: monospace;">${customerDetails.cifNumber}</td></tr>
-            <tr><td style="vertical-align: top;">CKYCR Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; font-family: monospace;">${(() => { const val = branchDetails.ckycrNumber || '1234'; const digits = val.replace(/\D/g, ''); const last4 = digits.length >= 4 ? digits.slice(-4) : '1234'; return `XXXXXXXXXXX${last4}`; })()}</td></tr>
+            <tr><td style="vertical-align: top;">CIF No.</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${customerDetails.cifNumber}</td></tr>
+            <tr><td style="vertical-align: top;">CKYCR Number</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${(() => { const val = branchDetails.ckycrNumber || '1234'; const digits = val.replace(/\D/g, ''); const last4 = digits.length >= 4 ? digits.slice(-4) : '1234'; return `XXXXXXXXXXX${last4}`; })()}</td></tr>
             <tr><td style="vertical-align: top;">IFS Code</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.ifscCode}</td></tr>
             <tr><td style="font-size: 10px; color: #000000; padding-bottom: 2px;" colSpan="3">(Indian Financial System)</td></tr>
-            <tr><td style="vertical-align: top;">MICR Code</td><td style="vertical-align: top;">:</td><td style="vertical-align: top; font-family: monospace;">${branchDetails.micrCode}</td></tr>
+            <tr><td style="vertical-align: top;">MICR Code</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${branchDetails.micrCode}</td></tr>
             <tr><td style="font-size: 10px; color: #000000; padding-bottom: 2px;" colSpan="3">(Magnetic Ink Character Recognition)</td></tr>
             <tr><td style="vertical-align: top;">Nomination Registered</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${customerDetails.nomineeName && !customerDetails.nomineeName.toLowerCase().includes('no') ? 'Yes' : 'No'}</td></tr>
             <tr><td style="vertical-align: top;">Balance as on ${startDateStr}</td><td style="vertical-align: top;">:</td><td style="vertical-align: top;">${formatCurrency(accountInfo.openingBalance)}</td></tr>
@@ -94,7 +94,7 @@ export function renderStatementHtml(record: StatementRecord): string {
         </table>
 
         <div style="font-size: 12px; font-weight: bold; margin: 10px 0 8px 0; color: #000000;">
-          Statement of ${customerDetails.accountHolderName} (A/c-${customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between ${startDateStr} to ${endDateStr}
+          Account Statement from ${startDateStr} to ${endDateStr}
         </div>
         ` : ''}
 
