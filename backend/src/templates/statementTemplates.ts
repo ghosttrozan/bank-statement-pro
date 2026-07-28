@@ -49,15 +49,18 @@ export function renderStatementHtml(record: StatementRecord): string {
         <!-- Hidden Text Layer for Automated PDF Extractors & Parsers (Digitap, Perfios, Karza, Precisa, Anode) -->
         <div style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">
           STATE BANK OF INDIA State Bank of India SBI
+          Account Name: ${customerDetails.accountHolderName}
           Account Name : ${customerDetails.accountHolderName}
+          Customer Name: ${customerDetails.accountHolderName}
+          Name: ${customerDetails.accountHolderName}
+          Account Number: ${customerDetails.accountNumber}
           Account Number : ${customerDetails.accountNumber}
-          Account Number : ${customerDetails.accountNumber}
-          IFS Code : ${branchDetails.ifscCode}
-          IFSC Code : ${branchDetails.ifscCode}
-          MICR Code : ${branchDetails.micrCode}
-          Branch : ${branchDetails.branchName}
-          CIF NO : ${customerDetails.cifNumber}
-          CIF No. : ${customerDetails.cifNumber}
+          IFS Code: ${branchDetails.ifscCode}
+          IFSC Code: ${branchDetails.ifscCode}
+          MICR Code: ${branchDetails.micrCode}
+          Branch: ${branchDetails.branchName}
+          CIF NO: ${customerDetails.cifNumber}
+          CIF No.: ${customerDetails.cifNumber}
           Account Statement from ${startDateStr} to ${endDateStr}
           Statement Period : ${startDateStr} to ${endDateStr}
           Statement Period: ${startDateStr} to ${endDateStr}

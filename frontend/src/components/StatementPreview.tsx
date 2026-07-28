@@ -486,15 +486,18 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                     settings.bankStyle === 'BOI' ? 'BANK OF INDIA Bank of India BOI' :
                       settings.bankStyle === 'Kotak' ? 'KOTAK MAHINDRA BANK Kotak Mahindra Bank Kotak' :
                         'STATE BANK OF INDIA State Bank of India SBI'}
+                  Account Name: {customerDetails.accountHolderName}
                   Account Name : {customerDetails.accountHolderName}
+                  Customer Name: {customerDetails.accountHolderName}
+                  Name: {customerDetails.accountHolderName}
+                  Account Number: {customerDetails.accountNumber}
                   Account Number : {customerDetails.accountNumber}
-                  Account Number : {customerDetails.accountNumber}
-                  IFS Code : {branchDetails.ifscCode}
-                  IFSC Code : {branchDetails.ifscCode}
-                  MICR Code : {branchDetails.micrCode}
-                  Branch : {branchDetails.branchName}
-                  CIF NO : {customerDetails.cifNumber}
-                  CIF No. : {customerDetails.cifNumber}
+                  IFS Code: {branchDetails.ifscCode}
+                  IFSC Code: {branchDetails.ifscCode}
+                  MICR Code: {branchDetails.micrCode}
+                  Branch: {branchDetails.branchName}
+                  CIF NO: {customerDetails.cifNumber}
+                  CIF No.: {customerDetails.cifNumber}
                   Account Statement from {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
                   Statement Period : {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
                   Statement Period: {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
@@ -768,8 +771,8 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             <tbody>
                               <tr>
                                 <td style={{ width: '165px', verticalAlign: 'top' }}>Account Name</td>
-                                <td style={{ width: '8px', verticalAlign: 'top', paddingRight: '2px' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontWeight: '' }}>{customerDetails.accountHolderName}</td>
+                                <td style={{ width: '12px', verticalAlign: 'top', paddingRight: '6px' }}>:</td>
+                                <td style={{ verticalAlign: 'top', paddingLeft: '4px', fontWeight: '' }}>{customerDetails.accountHolderName}</td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Address</td>
