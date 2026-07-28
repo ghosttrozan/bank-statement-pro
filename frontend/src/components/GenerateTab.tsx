@@ -52,8 +52,8 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
   const [settings, setSettings] = useState<StatementSettings>({
     bankStyle: 'SBI',
     duration: '3 Months',
-    pageCount: '15 Pages',
-    customTransactionsCount: 380,
+    pageCount: '30 Pages',
+    customTransactionsCount: 820,
     transactionMode: 'Normal',
     profile: 'Personal'
   });
@@ -586,7 +586,8 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
                   <option value="5 Pages">5 Pages (~92 transactions)</option>
                   <option value="10 Pages">10 Pages (~192 transactions)</option>
                   <option value="15 Pages">15 Pages (~380 transactions)</option>
-                  <option value="20 Pages">20 Pages (~392 transactions)</option>
+                  <option value="20 Pages">20 Pages (~544 transactions)</option>
+                  <option value="30 Pages">30 Pages (~820 transactions - Every single date populated)</option>
                   <option value="Custom">Custom Selection (Define exact number below)</option>
                 </select>
               </div>

@@ -45,7 +45,7 @@ export interface StatementSettings {
   fromDate?: string;
   toDate?: string;
 
-  pageCount: '1 Page' | '2 Pages' | '3 Pages' | '5 Pages' | '10 Pages' | '15 Pages' | '20 Pages' | 'Custom';
+  pageCount: '1 Page' | '2 Pages' | '3 Pages' | '5 Pages' | '10 Pages' | '15 Pages' | '20 Pages' | '30 Pages' | 'Custom';
 
   customTransactionsCount: number;
 

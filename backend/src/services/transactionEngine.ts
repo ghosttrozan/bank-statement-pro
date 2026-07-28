@@ -67,17 +67,18 @@ export function getPageToTxCount(pageCount: StatementSettings['pageCount'], cust
     case '10 Pages': return 264;
     case '15 Pages': return 380;
     case '20 Pages': return 544;
-    case 'Custom': return Math.max(5, Math.min(1000, customVal));
-    default: return 380;
+    case '30 Pages': return 820;
+    case 'Custom': return Math.max(5, Math.min(2000, customVal));
+    default: return 820;
   }
 }
 
-// Format date into DD-MM-YYYY
+// Format date into DD/MM/YYYY (matching Digitap / Perfios regex patterns)
 export function formatDate(date: Date): string {
   const d = date.getDate().toString().padStart(2, '0');
   const m = (date.getMonth() + 1).toString().padStart(2, '0');
   const y = date.getFullYear();
-  return `${d}-${m}-${y}`;
+  return `${d}/${m}/${y}`;
 }
 
 const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -310,8 +311,8 @@ function buildSalaryNeftNarrative(bankStyle: string, companyName: string, date: 
   switch (bankStyle) {
     case 'BOI':
       return variant === 1
-        ? `NEFT/ICIC${neftRef}/CR/${companyName}`
-        : `NEFT/UTIB${neftRef}/CR/${companyName} SALARY`;
+        ? `NEFT/ICIC${neftRef}/CR/${companyName} SALARY CREDIT`
+        : `NEFT/UTIB${neftRef}/CR/${companyName} SALARY FOR ${monthStr} ${yearStr}`;
     case 'PNB':
       return `NEFT/PUNB${neftRef}/CR/${companyName} SALARY FOR ${monthStr} ${yearStr}`;
     case 'Kotak':
@@ -492,14 +493,10 @@ function generateRawSalariedTransactions(
     ? settings.customTransactionsCount
     : getPageToTxCount(settings.pageCount));
 
-  let initialOpening = info.openingBalance;
-  if (settings.profile === 'Business' || (info.openingBalance === 90000.00 && !info.openingBalance)) {
-    initialOpening = 90000.00;
-  }
+  let initialOpening = (info.openingBalance && info.openingBalance > 0) ? info.openingBalance : 90000.00;
 
-  const isBusinessOpening = initialOpening === 90000.00;
-  const paiseCarry = isBusinessOpening ? 0 : getRandomPaise();
-  let runningBal = isBusinessOpening ? 90000.00 : (Math.floor(initialOpening) + paiseCarry);
+  // Lock starting running balance to EXACT initialOpening (accountInfo.openingBalance) to prevent header math drift
+  let runningBal = Math.round(initialOpening * 100) / 100;
 
   const monthsList: { start: Date; end: Date }[] = [];
   let mCurr = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate());
@@ -517,7 +514,7 @@ function generateRawSalariedTransactions(
   }
 
   const numMonths = Math.max(1, monthsList.length);
-  const basePerMonth = Math.max(2, Math.floor(targetTxCount / numMonths));
+  const basePerMonth = Math.max(3, Math.floor(targetTxCount / numMonths));
   let remainingTxs = targetTxCount - (basePerMonth * numMonths);
 
   const totalTxs: Transaction[] = [];
@@ -644,30 +641,21 @@ function generateRawSalariedTransactions(
       remainingTxs -= 1;
     }
 
-    const totalDays = Math.max(1, Math.round((mRange.end.getTime() - mRange.start.getTime()) / (1000 * 60 * 60 * 24)));
+    const totalDays = Math.max(1, Math.round((mRange.end.getTime() - mRange.start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
     
-    const activeDaysCount = Math.max(2, Math.min(totalDays, Math.floor(totalDays * 0.65)));
-    const activeOffsets: number[] = [];
-    while (activeOffsets.length < activeDaysCount) {
-      const dayOffset = randRange(0, totalDays - 1);
-      if (!activeOffsets.includes(dayOffset)) activeOffsets.push(dayOffset);
-    }
-    activeOffsets.sort((a, b) => a - b);
+    // Guarantee 100% Every Single Calendar Day Coverage:
+    // Every single date in the month gets AT LEAST 1 transaction!
+    const dailyAllocation = new Array(totalDays).fill(1);
+    let unassigned = Math.max(0, countForThisMonth - totalDays);
 
-    // Strict Daily Allocation: Limit to MAX 3 transactions per normal day (or 4 on rare heavy days)
-    const dailyAllocation = new Array(totalDays).fill(0);
-    let unassigned = countForThisMonth;
     let attempts = 0;
-    while (unassigned > 0 && attempts < 500) {
+    while (unassigned > 0 && attempts < 1000) {
       attempts++;
-      for (const dayOffset of activeOffsets) {
-        if (unassigned <= 0) break;
-        const current = dailyAllocation[dayOffset];
-        const cap = (dayOffset % 7 === 0) ? 4 : 3;
-        if (current < cap) {
-          dailyAllocation[dayOffset]++;
-          unassigned--;
-        }
+      const randomDay = randRange(0, totalDays - 1);
+      const cap = (randomDay % 7 === 0) ? 6 : 4;
+      if (dailyAllocation[randomDay] < cap) {
+        dailyAllocation[randomDay]++;
+        unassigned--;
       }
     }
 
@@ -724,7 +712,17 @@ function generateRawSalariedTransactions(
   while (salaryMonthDate <= endDay) {
     const year = salaryMonthDate.getFullYear();
     const month = salaryMonthDate.getMonth();
-    const salaryDate = getSalaryDateForMonth(year, month, settings);
+    let salaryDate = getSalaryDateForMonth(year, month, settings);
+
+    // Clamp salary date into [startDay, endDay] so edge months are never missing salary credits
+    if (salaryDate < startDay) {
+      salaryDate = new Date(startDay.getTime() + 86400000);
+      salaryDate.setHours(9, 30, 0, 0);
+    }
+    if (salaryDate > endDay) {
+      salaryDate = new Date(endDay.getTime() - 86400000);
+      salaryDate.setHours(10, 15, 0, 0);
+    }
 
     if (salaryDate >= startDay && salaryDate <= endDay) {
       const dateStr = formatDate(salaryDate);
@@ -742,7 +740,7 @@ function generateRawSalariedTransactions(
       }
 
       totalTxs.push({
-        id: `tx_sal_${salaryDate.getTime()}`,
+        id: `tx_sal_${salaryDate.getTime()}_${monthIndex}`,
         valueDate: dateStr,
         postDate: dateStr,
         details: narrative,
@@ -818,13 +816,21 @@ function generateRawSalariedTransactions(
 
   // Sort chronologically and recalculate running balance from opening balance
   function parseDateStr(str: string): number {
-    const [d, m, y] = str.split('-').map(Number);
-    return new Date(y, m - 1, d).getTime();
+    if (!str) return 0;
+    const parts = str.split(/[-/]/).map(Number);
+    if (parts.length < 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return 0;
+    return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
   }
 
-  totalTxs.sort((a, b) => parseDateStr(a.valueDate) - parseDateStr(b.valueDate));
+  totalTxs.sort((a, b) => {
+    const diff = parseDateStr(a.valueDate) - parseDateStr(b.valueDate);
+    if (diff !== 0) return diff;
+    if (a.credit && !b.credit) return -1;
+    if (!a.credit && b.credit) return 1;
+    return 0;
+  });
 
-  let bal = Math.floor(initialOpening) + paiseCarry;
+  let bal = Math.round(initialOpening * 100) / 100;
   return totalTxs.map((tx) => {
     if (tx.credit) bal += tx.credit;
     if (tx.debit) bal -= tx.debit;

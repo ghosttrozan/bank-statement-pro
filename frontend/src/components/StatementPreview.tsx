@@ -14,21 +14,12 @@ interface StatementPreviewProps {
 
 function formatKotakDate(dateStr: string): string {
   if (!dateStr) return '';
-  if (/^\d{2}\s[A-Za-z]{3}\s\d{4}$/.test(dateStr)) {
-    return dateStr;
-  }
   const parts = dateStr.split(/[-/]/);
   if (parts.length === 3) {
     const day = parts[0].padStart(2, '0');
-    if (/^\d+$/.test(parts[1])) {
-      const monthIdx = parseInt(parts[1], 10) - 1;
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      if (monthIdx >= 0 && monthIdx < 12) {
-        return `${day} ${months[monthIdx]} ${parts[2]}`;
-      }
-    } else {
-      return `${day} ${parts[1]} ${parts[2]}`;
-    }
+    const month = parts[1].padStart(2, '0');
+    const year = parts[2];
+    return `${day}/${month}/${year}`;
   }
   return dateStr;
 }
@@ -201,14 +192,14 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
 
   const pageChunks = settings.bankStyle === 'SBI'
-    ? chunkTransactionsForA4(transactions, 6, 28)
+    ? chunkTransactionsForA4(transactions, 6, 20)
     : settings.bankStyle === 'SBI2'
       ? chunkTransactionsForA4(transactions, 14, 24)
       : settings.bankStyle === 'BOI'
-        ? chunkTransactionsForA4(transactions, 16, 30)
+        ? chunkTransactionsForA4(transactions, 8, 18)
         : settings.bankStyle === 'PNB'
-          ? chunkTransactionsForA4(transactions, 15, 30)
-          : chunkTransactionsForA4(transactions, 12, 28);
+          ? chunkTransactionsForA4(transactions, 7, 18)
+          : chunkTransactionsForA4(transactions, 8, 20);
 
   const allPages = (settings.bankStyle === 'BOI' || settings.bankStyle === 'SBI2')
     ? pageChunks
@@ -490,13 +481,26 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                 className={`print-page w-[210mm] min-h-[297mm] h-[297mm] bg-white text-black relative flex flex-col ${(settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 'justify-center' : 'justify-between'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after p-0 pb-0`}
                 style={{ contentVisibility: 'auto', fontFamily: 'sans-serif' }}
               >
-                {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers */}
-                <span style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
-                  {settings.bankStyle === 'PNB' ? 'Punjab National Bank (PNB)' :
-                   settings.bankStyle === 'BOI' ? 'Bank of India (BOI)' :
-                   settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
-                   'State Bank of India (SBI)'}
-                </span>
+                {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers (Digitap, Perfios, Karza, Precisa, Anode) */}
+                <div style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
+                  {settings.bankStyle === 'PNB' ? 'PUNJAB NATIONAL BANK Punjab National Bank PNB' :
+                   settings.bankStyle === 'BOI' ? 'BANK OF INDIA Bank of India BOI' :
+                   settings.bankStyle === 'Kotak' ? 'KOTAK MAHINDRA BANK Kotak Mahindra Bank Kotak' :
+                   'STATE BANK OF INDIA State Bank of India SBI'}
+                  Account Name : {customerDetails.accountHolderName}
+                  Account Number : {customerDetails.accountNumber}
+                  Account Number : xxxxxxxxxxxxxx{customerDetails.accountNumber ? customerDetails.accountNumber.slice(-3) : '371'}
+                  IFS Code : {branchDetails.ifscCode}
+                  IFSC Code : {branchDetails.ifscCode}
+                  MICR Code : {branchDetails.micrCode}
+                  Branch : {branchDetails.branchName}
+                  CIF NO : xxxxxxxxxxxxxx{customerDetails.cifNumber ? customerDetails.cifNumber.slice(-3) : '085'}
+                  CIF No. : {customerDetails.cifNumber}
+                  Account Statement from {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
+                  Statement Period : {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
+                  **This is computer generated statement and does not require a signature.**
+                  Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
+                </div>
 
                 <div className={`${(settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 'flex flex-col h-full justify-center' : 'space-y-4'} print:space-y-0 print:mt-0 print:pt-0`} style={{ marginTop: 0, paddingTop: 0, flex: (settings.bankStyle === 'BOI' || (settings.bankStyle === 'SBI2' && !isFirst)) ? 1 : undefined }}>
 
@@ -733,7 +737,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               borderBottom: '1.5px solid #e2e8f0',
                               margin: 0
                             }}>
-                              Statement From &nbsp; : &nbsp; {transactions[0]?.valueDate || '01-01-2026'} to {transactions[transactions.length - 1]?.valueDate || '22-06-2026'}
+                              Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
                             </div>
                           </div>
                         </div>
@@ -778,7 +782,9 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Account Number</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{customerDetails.accountNumber}</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>
+                                  {customerDetails.accountNumber ? (customerDetails.accountNumber.startsWith('x') ? customerDetails.accountNumber : `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}`) : 'xxxxxxxxxxxxxx371'}
+                                </td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Account Description</td>
@@ -806,9 +812,11 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 <td style={{ verticalAlign: 'top' }}>0.00</td>
                               </tr>
                               <tr>
-                                <td style={{ verticalAlign: 'top' }}>CIF No.</td>
+                                <td style={{ verticalAlign: 'top' }}>CIF NO</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{customerDetails.cifNumber}</td>
+                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>
+                                  {customerDetails.cifNumber ? (customerDetails.cifNumber.startsWith('x') ? customerDetails.cifNumber : `xxxxxxxxxxxxxx${customerDetails.cifNumber.slice(-3)}`) : 'xxxxxxxxxxxxxx085'}
+                                </td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>CKYCR Number</td>
@@ -853,7 +861,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                           {/* Statement Title */}
                           <div style={{ fontSize: '13px', fontWeight: '', margin: '14px 0 10px 0', color: '#000000' }}>
-                            Account Statement from {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
+                            Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
                           </div>
                         </div>
                       ) : (
@@ -893,31 +901,31 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                             <tbody>
                               <tr>
                                 <td className="p-1.5 pt-2.5  w-1/2 align-top">
-                                  <span className="inline-block w-40 font-normal">Account holder name:</span>
+                                  <span className="inline-block w-40 font-normal">Account Name :</span>
                                   <span className="font-normal">{customerDetails.accountHolderName}</span>
                                 </td>
                                 <td className="p-1.5 pt-2.5 w-1/2 align-top">
-                                  <span className="inline-block w-44 font-normal">Account holder address:</span>
+                                  <span className="inline-block w-44 font-normal">Account holder address :</span>
                                   <span className="font-normal">{customerDetails.address?.replace(/\n/g, ' ')}</span>
                                 </td>
                               </tr>
                               <tr>
                                 <td className="p-1.5  align-top">
-                                  <span className="inline-block w-40 font-normal">Customer ID:</span>
+                                  <span className="inline-block w-40 font-normal">Customer ID / CIF :</span>
                                   <span className="font-normal">{customerDetails.cifNumber}</span>
                                 </td>
                                 <td className="p-1.5 align-top">
-                                  <span className="inline-block w-44 font-normal">IFSC:</span>
+                                  <span className="inline-block w-44 font-normal">IFSC Code :</span>
                                   <span className="font-normal">{branchDetails.ifscCode}</span>
                                 </td>
                               </tr>
                               <tr>
                                 <td className="p-1.5  align-top">
-                                  <span className="inline-block w-40 font-normal">Account number:</span>
+                                  <span className="inline-block w-40 font-normal">Account Number :</span>
                                   <span className="font-normal">{customerDetails.accountNumber}</span>
                                 </td>
                                 <td className="p-1.5 align-top">
-                                  <span className="inline-block w-44 font-normal">Branch Name:</span>
+                                  <span className="inline-block w-44 font-normal">Branch Name :</span>
                                   <span className="font-normal">{branchDetails.branchName}</span>
                                 </td>
                               </tr>
@@ -928,7 +936,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           <div className="text-xs leading-relaxed text-black mb-4 space-y-1">
                             <div className="flex">
                               <span className="w-40 font-bold">Transaction Date</span>
-                              <span><strong>from: {transactions[0]?.valueDate?.replace(/\//g, '-') || '01-12-2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </strong> <strong>to: {transactions[transactions.length - 1]?.valueDate?.replace(/\//g, '-') || '31-05-2026'}</strong></span>
+                              <span><strong>from: {transactions[0]?.valueDate || '01/12/2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </strong> <strong>to: {transactions[transactions.length - 1]?.valueDate || '31/05/2026'}</strong></span>
                             </div>
                             <div className="flex">
                               <span className="w-40 font-bold">Amount</span>
@@ -1382,42 +1390,39 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         </table>
                       ) : settings.bankStyle === 'SBI2' ? (
                         /* ─── SBI 2 TABLE (Exact 100% Matching Layout) ───────────────── */
-                        <>
+                        <div>
                           <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: '0.5px solid #444444', fontSize: '10px', color: '#000000' }}>
                             <thead>
                               <tr style={{ height: '28px', backgroundColor: '#ffffff', color: '#000000', fontSize: '10.5px', fontWeight: 'bold' }}>
-                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Txn Date</th>
-                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Value Date</th>
-                                <th style={{ width: '38%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Description</th>
-                                <th style={{ width: '18%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Ref No./Cheque No.</th>
-                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Debit</th>
-                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Credit</th>
-                                <th style={{ width: '8%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Balance</th>
+                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Txn Date</th>
+                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Value Date</th>
+                                <th style={{ width: '46%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Description</th>
+                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Debit</th>
+                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Credit</th>
+                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Balance</th>
                               </tr>
                             </thead>
                             <tbody style={{ backgroundColor: '#ffffff', color: '#000000' }}>
                               {chunkTransactions.map((tx) => {
                                 let descLine1 = '';
                                 let descLine2 = '';
-                                let refLine1 = '';
-                                let refLine2 = '';
+                                let refLine = '';
 
                                 if (tx.credit && (tx.details.includes('NEFT') || tx.details.includes('SALARY'))) {
                                   descLine1 = 'BY TRANSFER-';
-                                  descLine2 = `${tx.details}-`;
-                                  refLine1 = 'TRANSFER FROM';
-                                  refLine2 = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                  descLine2 = `${tx.details}`;
+                                  const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
+                                  refLine = `TRANSFER FROM ${rNum}`;
                                 } else if (tx.credit && tx.details.includes('INTEREST')) {
                                   descLine1 = 'CREDIT INTEREST--';
                                   descLine2 = '';
-                                  refLine1 = '';
-                                  refLine2 = '';
+                                  refLine = '';
                                 } else {
                                   descLine1 = 'TO TRANSFER-';
                                   const cleanDetails = tx.details.startsWith('TO TRANSFER-') ? tx.details.replace('TO TRANSFER-', '') : tx.details;
-                                  descLine2 = `${cleanDetails}-`;
-                                  refLine1 = 'TRANSFER TO';
-                                  refLine2 = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+                                  descLine2 = `${cleanDetails}`;
+                                  const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
+                                  refLine = `TRANSFER TO ${rNum}`;
                                 }
 
                                 return (
@@ -1427,10 +1432,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                     <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       <div>{descLine1}</div>
                                       {descLine2 ? <div>{descLine2}</div> : null}
-                                    </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
-                                      {refLine1 ? <div>{refLine1}</div> : null}
-                                      {refLine2 ? <div>{refLine2}</div> : null}
+                                      {refLine ? <div style={{ fontSize: '9px', color: '#111827' }}>{refLine}</div> : null}
                                     </td>
                                     <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
@@ -1445,14 +1447,13 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 );
                               })}
                             </tbody>
-
                           </table>
                           {isLast && (
                             <div style={{ marginTop: '14px', fontSize: '9.5px', lineHeight: '1.35', color: '#000000' }}>
                               Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
                             </div>
                           )}
-                        </>
+                        </div>
                       ) : settings.bankStyle === 'BOI' ? (
 
                         /* ─── BOI TABLE ─────────────────────────────────────────── */

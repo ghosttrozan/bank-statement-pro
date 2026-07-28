@@ -162,8 +162,8 @@ export default function GeneratorPage() {
   const baseSettings: StatementSettings = {
     bankStyle,
     duration: '6 Months',
-    pageCount: '15 Pages',
-    customTransactionsCount: 380,
+    pageCount: '30 Pages',
+    customTransactionsCount: 820,
     transactionMode: 'Normal',
     profile: 'Personal',
   };
@@ -303,6 +303,7 @@ export default function GeneratorPage() {
     const settings: StatementSettings = {
       ...baseSettings,
       bankStyle,
+      duration: dur === '3months' ? '3 Months' : dur === '1year' ? '12 Months' : '6 Months',
       // Add generation mode and dates if custom
       ...(generationMode === 'custom' && {
         generationMode: 'custom',

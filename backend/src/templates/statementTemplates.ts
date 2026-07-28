@@ -1,7 +1,7 @@
 import { StatementRecord, Transaction } from '../types/statement';
 
 // Helper to chunk transactions into pages for clean A4 printing
-function chunkTransactions(transactions: Transaction[], firstPageSize = 12, nextPageSize = 26): Transaction[][] {
+function chunkTransactions(transactions: Transaction[], firstPageSize = 8, nextPageSize = 20): Transaction[][] {
   const pages: Transaction[][] = [];
   if (transactions.length === 0) return [[]];
   pages.push(transactions.slice(0, firstPageSize));
@@ -36,7 +36,7 @@ export function renderStatementHtml(record: StatementRecord): string {
 
   // If bankStyle is SBI2, render the 100% exact clean SBI2 table layout
   if (bankStyle === 'SBI2') {
-    const pages = chunkTransactions(transactions, 15, 26);
+    const pages = chunkTransactions(transactions, 6, 17);
     const totalPagesCount = pages.length;
 
     const sbi2Pages = pages.map((pageTxs, pageIdx) => {
@@ -45,8 +45,24 @@ export function renderStatementHtml(record: StatementRecord): string {
       const endDateStr = transactions[transactions.length - 1]?.valueDate || '21 Jan 2026';
 
       return `
-      <div class="page" style="page-break-after: always; padding: 15mm 10mm; box-sizing: border-box; min-height: 297mm; font-family: Arial, Helvetica, sans-serif; color: #000000; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-        <div style="width: 100%;">
+        <div style="width: 100%; position: relative;">
+        <!-- Hidden Text Layer for Automated PDF Extractors & Parsers (Digitap, Perfios, Karza, Precisa, Anode) -->
+        <div style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">
+          STATE BANK OF INDIA State Bank of India SBI
+          Account Name : ${customerDetails.accountHolderName}
+          Account Number : ${customerDetails.accountNumber}
+          Account Number : xxxxxxxxxxxxxx${customerDetails.accountNumber ? customerDetails.accountNumber.slice(-3) : '371'}
+          IFS Code : ${branchDetails.ifscCode}
+          IFSC Code : ${branchDetails.ifscCode}
+          MICR Code : ${branchDetails.micrCode}
+          Branch : ${branchDetails.branchName}
+          CIF NO : xxxxxxxxxxxxxx${customerDetails.cifNumber ? customerDetails.cifNumber.slice(-3) : '085'}
+          CIF No. : ${customerDetails.cifNumber}
+          Account Statement from ${startDateStr} to ${endDateStr}
+          Statement Period : ${startDateStr} to ${endDateStr}
+          **This is computer generated statement and does not require a signature.**
+          Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
+        </div>
         ${isFirstPage ? `
         <!-- SBI 2 Header & Logo -->
         <div style="margin-bottom: 10px;">
@@ -78,7 +94,7 @@ export function renderStatementHtml(record: StatementRecord): string {
         </table>
 
         <div style="font-size: 12px; font-weight: bold; margin: 10px 0 8px 0; color: #000000;">
-          Account Statement from ${startDateStr} to ${endDateStr}
+          Statement of ${customerDetails.accountHolderName} (A/c-${customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between ${startDateStr} to ${endDateStr}
         </div>
         ` : ''}
 
@@ -86,60 +102,53 @@ export function renderStatementHtml(record: StatementRecord): string {
         <table style="width: 100%; border-collapse: collapse; border: 0.5px solid #444444; font-size: 10px; color: #000000;">
           <thead>
             <tr style="height: 28px; background-color: #ffffff; color: #000000; font-size: 10.5px; font-weight: bold;">
-              <th style="width: 11%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Txn Date</th>
-              <th style="width: 11%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Value Date</th>
-              <th style="width: 38%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Description</th>
-              <th style="width: 18%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Ref No./Cheque No.</th>
-              <th style="width: 7%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Debit</th>
-              <th style="width: 7%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Credit</th>
-              <th style="width: 8%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Balance</th>
+              <th style="width: 12%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Txn Date</th>
+              <th style="width: 12%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Value Date</th>
+              <th style="width: 46%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Description</th>
+              <th style="width: 10%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Debit</th>
+              <th style="width: 10%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Credit</th>
+              <th style="width: 10%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Balance</th>
             </tr>
           </thead>
           <tbody>
             ${pageTxs.map((tx) => {
         let descLine1 = '';
         let descLine2 = '';
-        let refLine1 = '';
-        let refLine2 = '';
+        let refLine = '';
 
         if (tx.credit && (tx.details.includes('NEFT') || tx.details.includes('SALARY'))) {
           descLine1 = 'BY TRANSFER-';
-          descLine2 = `${tx.details}-`;
-          refLine1 = 'TRANSFER FROM';
-          refLine2 = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+          descLine2 = `${tx.details}`;
+          const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
+          refLine = `TRANSFER FROM ${rNum}`;
         } else if (tx.credit && tx.details.includes('INTEREST')) {
           descLine1 = 'CREDIT INTEREST--';
           descLine2 = '';
-          refLine1 = '';
-          refLine2 = '';
+          refLine = '';
         } else {
           descLine1 = 'TO TRANSFER-';
           const cleanDetails = tx.details.startsWith('TO TRANSFER-') ? tx.details.replace('TO TRANSFER-', '') : tx.details;
-          descLine2 = `${cleanDetails}-`;
-          refLine1 = 'TRANSFER TO';
-          refLine2 = tx.refNo || Array.from({ length: 13 }, () => Math.floor(Math.random() * 10)).join('');
+          descLine2 = `${cleanDetails}`;
+          const rNum = tx.refNo || Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
+          refLine = `TRANSFER TO ${rNum}`;
         }
 
         return `
-              <tr style="border-bottom: 0.5px solid #444444; height: 38px; min-height: 38px;">
-                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.valueDate}</td>
-                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.postDate}</td>
-                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
-                  <div>${descLine1}</div>
-                  ${descLine2 ? `<div>${descLine2}</div>` : ''}
-                </td>
-                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
-                  ${refLine1 ? `<div>${refLine1}</div>` : ''}
-                  ${refLine2 ? `<div>${refLine2}</div>` : ''}
-                </td>
-                <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.debit ? formatCurrency(tx.debit) : ''}</td>
-                <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.credit ? formatCurrency(tx.credit) : ''}</td>
-                <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${formatCurrency(tx.balance)}</td>
-              </tr>
-              `;
+            <tr style="border-bottom: 0.5px solid #444444; height: 38px;">
+              <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.valueDate}</td>
+              <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.postDate}</td>
+              <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
+                <div>${descLine1}</div>
+                ${descLine2 ? `<div>${descLine2}</div>` : ''}
+                ${refLine ? `<div style="font-size: 9px; color: #111827;">${refLine}</div>` : ''}
+              </td>
+              <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.debit ? formatCurrency(tx.debit) : ''}</td>
+              <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.credit ? formatCurrency(tx.credit) : ''}</td>
+              <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${formatCurrency(tx.balance)}</td>
+            </tr>
+            `;
       }).join('')}
           </tbody>
-
         </table>
 
         ${pageIdx === totalPagesCount - 1 ? `
