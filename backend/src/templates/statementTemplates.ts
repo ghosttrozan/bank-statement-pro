@@ -101,7 +101,7 @@ export function renderStatementHtml(record: StatementRecord): string {
         </table>
 
         <div style="font-size: 12px; font-weight: bold; margin: 10px 0 8px 0; color: #000000;">
-          Account Statement from ${startDateStr} to ${endDateStr}
+          Statement of ${customerDetails.accountHolderName} (A/c-${customerDetails.accountNumber || ''}) between ${startDateStr} to ${endDateStr}
         </div>
         ` : ''}
 

@@ -863,7 +863,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                           {/* Statement Title */}
                           <div style={{ fontSize: '13px', fontWeight: '', margin: '14px 0 10px 0', color: '#000000' }}>
-                            Account Statement from {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
+                            Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber || '30521458920'}) between {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
                           </div>
                         </div>
                       </div>
