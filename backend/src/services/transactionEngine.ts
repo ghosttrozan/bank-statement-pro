@@ -28,7 +28,7 @@ function getRandomPaise(): number {
   return pick([0.15, 0.28, 0.35, 0.42, 0.50, 0.64, 0.78, 0.85, 0.92, 0.25, 0.75, 0.40, 0.80, 0.18, 0.67]);
 }
 
-// Generate realistic non-round default opening balances (Issue 1 & 14)
+// Generate realistic non-round default opening balances
 export function getRandomOpeningBalance(): number {
   const baseThousand = pick([47, 53, 68, 72, 87, 91, 104, 118, 132, 145]);
   const oddHundreds = randRange(1, 9) * 100 + randRange(1, 9) * 10 + randRange(1, 9);
@@ -79,6 +79,8 @@ export function formatDate(date: Date): string {
   const y = date.getFullYear();
   return `${d}-${m}-${y}`;
 }
+
+const MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 // Convert YYYY-MM-DD back to DD-MM-YYYY for templates
 export function isoToIndianFormat(isoStr: string): string {
@@ -298,18 +300,33 @@ function buildUpiNarrative(isCredit: boolean, bankStyle: string, customName?: st
   }
 }
 
-function buildSalaryNeftNarrative(bankStyle: string, companyName: string): string {
-  const neftRef = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
+// ─── 100% Authentic Bank Salary NEFT / CMS Bulk Payroll Narratives ────────────
+function buildSalaryNeftNarrative(bankStyle: string, companyName: string, date: Date): string {
+  const neftRef = `N${randRange(20, 25)}${randRange(100, 999)}${Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('')}`;
+  const monthStr = MONTH_NAMES[date.getMonth()];
+  const yearStr = date.getFullYear();
+
+  const variant = randRange(1, 3);
   switch (bankStyle) {
     case 'BOI':
-      return `NEFT/ICIC${neftRef}/CR/${companyName}`;
+      return variant === 1
+        ? `NEFT/ICIC${neftRef}/CR/${companyName}`
+        : `NEFT/UTIB${neftRef}/CR/${companyName} SALARY`;
     case 'PNB':
-      return `NEFT/PUNB${neftRef}/CR/${companyName} SALARY`;
+      return `NEFT/PUNB${neftRef}/CR/${companyName} SALARY FOR ${monthStr} ${yearStr}`;
     case 'Kotak':
-      return `NEFT CR-KKBK${neftRef}-${companyName}-SALARY`;
+      return variant === 1
+        ? `NEFT CR-KKBK${neftRef}-${companyName}-SALARY`
+        : `CMS CR-${companyName}-SALARY PAYROLL-${neftRef.substring(0, 10)}`;
     case 'SBI':
     default:
-      return `BY TRANSFER-NEFT*IN${neftRef}*${companyName}*SALARY CREDIT`;
+      if (variant === 1) {
+        return `BY TRANSFER-NEFT*${neftRef}*${companyName}*SALARY CREDIT`;
+      } else if (variant === 2) {
+        return `BY TRANSFER-CMS/${neftRef}/${companyName}/SALARY FOR ${monthStr}`;
+      } else {
+        return `BY TRANSFER-NEFT*IN${neftRef.substring(1)}*${companyName}*SALARY CREDIT`;
+      }
   }
 }
 
@@ -458,7 +475,7 @@ function getRefundAmount(): number {
   return Math.round((randRange(85, 950) + getRandomPaise()) * 100) / 100;
 }
 
-// Main Salaried Transaction Generator Engine
+// ─── 100% Bank-Grade Salaried Transaction Engine ──────────────────────────────
 function generateRawSalariedTransactions(
   settings: StatementSettings,
   info: AccountInfo,
@@ -586,32 +603,35 @@ function generateRawSalariedTransactions(
         detail: buildUpiNarrative(true, style),
         amount: getContinuousCreditAmount()
       }),
-      weight: 55
+      weight: 50
+    },
+    {
+      detailAndAmount: () => ({
+        detail: pick([
+          `BY TRANSFER-NEFT*N21025${randRange(100000, 999999)}*${companyName}*REIMBURSEMENT`,
+          `UPI/CR/${companyName.split(' ')[0].toLowerCase()}.claim@icici/Paymen`,
+          `BY TRANSFER-NEFT*REFUND*GST*${genRef()}`
+        ]),
+        amount: Math.round((randRange(1250, 4800) + getRandomPaise()) * 100) / 100
+      }),
+      weight: 25
     },
     {
       detailAndAmount: () => ({
         detail: pick([
           `UPI/REFUND/SWIGGY/REF${randRange(100000, 999999)}/CREDIT`,
-          `UPI/FAILED TXN REVERSAL/${genRef()}`,
-          `BY TRANSFER-NEFT*REFUND*GST*${genRef()}`
+          `UPI/FAILED TXN REVERSAL/${genRef()}`
         ]),
         amount: getRefundAmount()
       }),
-      weight: 25
+      weight: 15
     },
     {
       detailAndAmount: () => ({
         detail: buildSOLNarrative(),
         amount: Math.round((randRange(2000, 12000) / 100) * 100)
       }),
-      weight: 15
-    },
-    {
-      detailAndAmount: () => ({
-        detail: `BY CASH DEPOSIT - CDM KIOSK ${randRange(1000, 9999)}`,
-        amount: pick([2000, 4000, 5000, 10000])
-      }),
-      weight: 5
+      weight: 10
     }
   ];
 
@@ -707,7 +727,7 @@ function generateRawSalariedTransactions(
 
     if (salaryDate >= startDay && salaryDate <= endDay) {
       const dateStr = formatDate(salaryDate);
-      const narrative = buildSalaryNeftNarrative(bankStyle, companyName);
+      const narrative = buildSalaryNeftNarrative(bankStyle, companyName, salaryDate);
       
       let monthlySalaryPayout = baseSalaryAmount;
       if (settings.salaryMode !== 'manual') {
