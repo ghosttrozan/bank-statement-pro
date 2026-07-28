@@ -17,9 +17,11 @@ function getLaunchOptions() {
     '--disable-web-security',
     '--allow-file-access-from-files',
     '--no-first-run',
-    '--no-zygote',
-    '--single-process',
   ];
+
+  if (process.platform !== 'win32') {
+    args.push('--no-zygote', '--single-process');
+  }
 
   const options: any = {
     headless: true,
@@ -28,6 +30,9 @@ function getLaunchOptions() {
 
   const possiblePaths = [
     process.env.PUPPETEER_EXECUTABLE_PATH,
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe') : '',
     '/usr/bin/google-chrome',
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',

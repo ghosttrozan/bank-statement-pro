@@ -45,8 +45,8 @@ export function renderStatementHtml(record: StatementRecord): string {
       const endDateStr = transactions[transactions.length - 1]?.valueDate || '21 Jan 2026';
 
       return `
-      <div class="page" style="page-break-after: always; padding: 15mm 10mm; box-sizing: border-box; min-height: 297mm; font-family: Arial, Helvetica, sans-serif; color: #000000; ${!isFirstPage ? 'display: flex; flex-direction: column; justify-content: center;' : ''}">
-        
+      <div class="page" style="page-break-after: always; padding: 15mm 10mm; box-sizing: border-box; min-height: 297mm; font-family: Arial, Helvetica, sans-serif; color: #000000; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <div style="width: 100%;">
         ${isFirstPage ? `
         <!-- SBI 2 Header & Logo -->
         <div style="margin-bottom: 10px;">
@@ -83,16 +83,16 @@ export function renderStatementHtml(record: StatementRecord): string {
         ` : ''}
 
         <!-- SBI 2 Clean Ledger Table -->
-        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; font-size: 10px; color: #000000;">
+        <table style="width: 100%; border-collapse: collapse; border: 0.5px solid #444444; font-size: 10px; color: #000000;">
           <thead>
             <tr style="height: 28px; background-color: #ffffff; color: #000000; font-size: 10.5px; font-weight: bold;">
-              <th style="width: 11%; padding: 4px 6px; text-align: left; font-weight: bold; border: 1px solid #000000;">Txn Date</th>
-              <th style="width: 11%; padding: 4px 6px; text-align: left; font-weight: bold; border: 1px solid #000000;">Value Date</th>
-              <th style="width: 38%; padding: 4px 6px; text-align: left; font-weight: bold; border: 1px solid #000000;">Description</th>
-              <th style="width: 18%; padding: 4px 6px; text-align: left; font-weight: bold; border: 1px solid #000000;">Ref No./Cheque No.</th>
-              <th style="width: 7%; padding: 4px 6px; text-align: right; font-weight: bold; border: 1px solid #000000;">Debit</th>
-              <th style="width: 7%; padding: 4px 6px; text-align: right; font-weight: bold; border: 1px solid #000000;">Credit</th>
-              <th style="width: 8%; padding: 4px 6px; text-align: right; font-weight: bold; border: 1px solid #000000;">Balance</th>
+              <th style="width: 11%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Txn Date</th>
+              <th style="width: 11%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Value Date</th>
+              <th style="width: 38%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Description</th>
+              <th style="width: 18%; padding: 4px 6px; text-align: left; font-weight: bold; border: 0.5px solid #444444;">Ref No./Cheque No.</th>
+              <th style="width: 7%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Debit</th>
+              <th style="width: 7%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Credit</th>
+              <th style="width: 8%; padding: 4px 6px; text-align: right; font-weight: bold; border: 0.5px solid #444444;">Balance</th>
             </tr>
           </thead>
           <tbody>
@@ -121,20 +121,20 @@ export function renderStatementHtml(record: StatementRecord): string {
         }
 
         return `
-              <tr style="border-bottom: 1px solid #000000; height: 38px; min-height: 38px;">
-                <td style="padding: 4px 6px; text-align: left; border: 1px solid #000000; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.valueDate}</td>
-                <td style="padding: 4px 6px; text-align: left; border: 1px solid #000000; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.postDate}</td>
-                <td style="padding: 4px 6px; text-align: left; border: 1px solid #000000; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
+              <tr style="border-bottom: 0.5px solid #444444; height: 38px; min-height: 38px;">
+                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.valueDate}</td>
+                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; white-space: nowrap; vertical-align: top; line-height: 1.25;">${tx.postDate}</td>
+                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
                   <div>${descLine1}</div>
                   ${descLine2 ? `<div>${descLine2}</div>` : ''}
                 </td>
-                <td style="padding: 4px 6px; text-align: left; border: 1px solid #000000; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
+                <td style="padding: 4px 6px; text-align: left; border: 0.5px solid #444444; font-size: 9.5px; word-break: break-all; vertical-align: top; line-height: 1.25;">
                   ${refLine1 ? `<div>${refLine1}</div>` : ''}
                   ${refLine2 ? `<div>${refLine2}</div>` : ''}
                 </td>
-                <td style="padding: 4px 6px; text-align: right; border: 1px solid #000000; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.debit ? formatCurrency(tx.debit) : ''}</td>
-                <td style="padding: 4px 6px; text-align: right; border: 1px solid #000000; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.credit ? formatCurrency(tx.credit) : ''}</td>
-                <td style="padding: 4px 6px; text-align: right; border: 1px solid #000000; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${formatCurrency(tx.balance)}</td>
+                <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.debit ? formatCurrency(tx.debit) : ''}</td>
+                <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${tx.credit ? formatCurrency(tx.credit) : ''}</td>
+                <td style="padding: 4px 6px; text-align: right; border: 0.5px solid #444444; font-size: 9.5px; vertical-align: top; line-height: 1.25;">${formatCurrency(tx.balance)}</td>
               </tr>
               `;
       }).join('')}
@@ -147,6 +147,7 @@ export function renderStatementHtml(record: StatementRecord): string {
           Please do not share your ATM, Debit/Credit card number, PIN (Personal Identification Number) and OTP (One Time Password) with anyone over mail, SMS, phone call or any other media. Bank never asks for such information
         </div>
         ` : ''}
+        </div>
 
       </div>
       `;

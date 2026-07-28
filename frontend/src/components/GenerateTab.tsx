@@ -4,7 +4,7 @@ import {
 } from 'lucide-react';
 import { CustomerDetails, BranchDetails, AccountInfo, StatementSettings, StatementRecord } from '../types';
 import { CUSTOMER_PRESETS, logToSystem } from '../lib/dbBridge';
-import { generateStatementTransactions } from '../lib/transactionEngine';
+import { generateStatementTransactions, getRandomOpeningBalance } from '../lib/transactionEngine';
 import { downloadStatementPdfFromBackend } from '../lib/pdfExport';
 
 
@@ -41,7 +41,7 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
 
   // Step 3: Account Info state
   const [account, setAccount] = useState<AccountInfo>({
-    openingBalance: 50000.00,
+    openingBalance: getRandomOpeningBalance(),
     interestRate: 2.70,
     currency: 'INR',
     accountStatus: 'Active',
@@ -161,7 +161,7 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
       });
 
       // 2. Local fallback sync for preview history
-      const transactions = generateStatementTransactions(settings, account, finalTime);
+      const transactions = generateStatementTransactions(settings, account, finalTime, customer, branch);
       let totalDebits = 0;
       let totalCredits = 0;
       let drCount = 0;
@@ -196,7 +196,7 @@ export default function GenerateTab({ onGenerate, onSetPreset }: GenerateTabProp
       alert(`Backend PDF generation note: ${err.message || 'Connecting fallback'}`);
 
       // Fallback preview record creation
-      const transactions = generateStatementTransactions(settings, account, finalTime);
+      const transactions = generateStatementTransactions(settings, account, finalTime, customer, branch);
       let totalDebits = 0;
       let totalCredits = 0;
       let drCount = 0;

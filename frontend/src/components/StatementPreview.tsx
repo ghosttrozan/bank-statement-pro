@@ -203,7 +203,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
   const pageChunks = settings.bankStyle === 'SBI'
     ? chunkTransactionsForA4(transactions, 6, 28)
     : settings.bankStyle === 'SBI2'
-      ? chunkTransactionsForA4(transactions, 15, 26)
+      ? chunkTransactionsForA4(transactions, 14, 24)
       : settings.bankStyle === 'BOI'
         ? chunkTransactionsForA4(transactions, 16, 30)
         : settings.bankStyle === 'PNB'
@@ -330,17 +330,29 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
       const randCode = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
       const filename = `${bankName}_Statement_${randCode}.pdf`;
 
-      await exportStatementToPdfViaBackend(container, {
-        filename,
-        onProgress: (percent, text) => {
-          setBackendExportProgress({ percent, text });
-        },
-      });
-
-      toast.success('✅ Text PDF downloaded! Text is fully extractable & verifiable.', { theme: 'dark', autoClose: 6000 });
+      try {
+        await exportStatementToPdfViaBackend(container, {
+          filename,
+          onProgress: (percent, text) => {
+            setBackendExportProgress({ percent, text });
+          },
+        });
+        toast.success('✅ Text PDF downloaded! Text is fully extractable & verifiable.', { theme: 'dark', autoClose: 6000 });
+      } catch (backendErr: any) {
+        console.warn('Backend vector PDF failed, falling back to client-side renderer:', backendErr);
+        setBackendExportProgress({ percent: 50, text: 'Falling back to client renderer...' });
+        await exportStatementToPdf(container, {
+          filename,
+          password: (enablePassword && pdfPassword && pdfPassword.trim()) ? pdfPassword.trim() : undefined,
+          onProgress: (percent, text) => {
+            setBackendExportProgress({ percent, text });
+          },
+        });
+        toast.success('📄 PDF downloaded successfully!', { theme: 'dark', autoClose: 6000 });
+      }
     } catch (err: any) {
-      console.error('Backend PDF export error:', err);
-      toast.error('Text PDF failed: ' + (err.message || 'Unknown error') + '. Try Print → Save as PDF instead.', { theme: 'dark', autoClose: 7000 });
+      console.error('PDF export failed:', err);
+      toast.error('PDF export failed: ' + (err.message || 'Unknown error'), { theme: 'dark' });
     } finally {
       setIsBackendExporting(false);
     }
@@ -1371,16 +1383,16 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                       ) : settings.bankStyle === 'SBI2' ? (
                         /* ─── SBI 2 TABLE (Exact 100% Matching Layout) ───────────────── */
                         <>
-                          <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: '1px solid #000000', fontSize: '10px', color: '#000000' }}>
+                          <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: '0.5px solid #444444', fontSize: '10px', color: '#000000' }}>
                             <thead>
                               <tr style={{ height: '28px', backgroundColor: '#ffffff', color: '#000000', fontSize: '10.5px', fontWeight: 'bold' }}>
-                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Txn Date</th>
-                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Value Date</th>
-                                <th style={{ width: '38%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Description</th>
-                                <th style={{ width: '18%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '1px solid #000000' }}>Ref No./Cheque No.</th>
-                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000' }}>Debit</th>
-                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000' }}>Credit</th>
-                                <th style={{ width: '8%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '1px solid #000000' }}>Balance</th>
+                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Txn Date</th>
+                                <th style={{ width: '11%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Value Date</th>
+                                <th style={{ width: '38%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Description</th>
+                                <th style={{ width: '18%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Ref No./Cheque No.</th>
+                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Debit</th>
+                                <th style={{ width: '7%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Credit</th>
+                                <th style={{ width: '8%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Balance</th>
                               </tr>
                             </thead>
                             <tbody style={{ backgroundColor: '#ffffff', color: '#000000' }}>
@@ -1409,24 +1421,24 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 }
 
                                 return (
-                                  <tr key={tx.id} style={{ borderBottom: '1px solid #000000', height: '38px', minHeight: '38px' }}>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.valueDate)}</td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.postDate)}</td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                  <tr key={tx.id} style={{ borderBottom: '0.5px solid #444444', height: '38px', minHeight: '38px' }}>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.valueDate)}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', whiteSpace: 'nowrap', verticalAlign: 'top', lineHeight: '1.25' }}>{formatKotakDate(tx.postDate)}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       <div>{descLine1}</div>
                                       {descLine2 ? <div>{descLine2}</div> : null}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '1px solid #000000', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       {refLine1 ? <div>{refLine1}</div> : null}
                                       {refLine2 ? <div>{refLine2}</div> : null}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '1px solid #000000', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '1px solid #000000', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
                                     </td>
-                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '1px solid #000000', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                    <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                                     </td>
                                   </tr>

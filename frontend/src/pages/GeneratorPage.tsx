@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 // Components, Types & Hooks
 import StatementPreview from '../components/StatementPreview';
-import { generateStatementTransactions, generateSalariedStatementTransactions, formatDate } from '../lib/transactionEngine';
+import { generateStatementTransactions, generateSalariedStatementTransactions, formatDate, getRandomOpeningBalance } from '../lib/transactionEngine';
 import { StatementRecord, CustomerDetails, BranchDetails, AccountInfo, StatementSettings, Transaction } from '../types';
 import { logToSystem } from '../lib/dbBridge';
 import { useAuth } from '../hooks/useAuth';
@@ -151,7 +151,7 @@ export default function GeneratorPage() {
   const [branch, setBranch] = useState<BranchDetails>(SBI_BRANCH_DEFAULTS);
 
   const [account, setAccount] = useState<AccountInfo>({
-    openingBalance: 90000.00,
+    openingBalance: getRandomOpeningBalance(),
     interestRate: 2.50,
     currency: 'INR',
     accountStatus: 'Active',
@@ -323,8 +323,8 @@ export default function GeneratorPage() {
 
       const transactions =
         type === 'salaried'
-          ? generateSalariedStatementTransactions(settings, account, new Date().toISOString())
-          : generateStatementTransactions(settings, account, new Date().toISOString());
+          ? generateSalariedStatementTransactions(settings, account, new Date().toISOString(), customer, branch)
+          : generateStatementTransactions(settings, account, new Date().toISOString(), customer, branch);
 
       // Compute totals
       let totalDebits = 0;
@@ -1215,7 +1215,7 @@ export default function GeneratorPage() {
               <div className="bg-white rounded-xl p-2.5 border border-slate-200/40 col-span-2">
                 <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">OPENING BALANCE</span>
                 <span className="font-extrabold text-emerald-600 font-mono text-xs">
-                  ₹{activeRecord ? activeRecord.accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '90,000.00'} CR
+                  ₹{(activeRecord ? activeRecord.accountInfo.openingBalance : account.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })} CR
                 </span>
               </div>
             </div>
