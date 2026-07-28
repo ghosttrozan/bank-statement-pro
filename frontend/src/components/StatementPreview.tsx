@@ -488,7 +488,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                         'STATE BANK OF INDIA State Bank of India SBI'}
                   Account Name : {customerDetails.accountHolderName}
                   Account Number : {customerDetails.accountNumber}
-                  Account Number : xxxxxxxxxxxxxx{customerDetails.accountNumber ? customerDetails.accountNumber.slice(-3) : '371'}
+                  Account Number : {customerDetails.accountNumber}
                   IFS Code : {branchDetails.ifscCode}
                   IFSC Code : {branchDetails.ifscCode}
                   MICR Code : {branchDetails.micrCode}
@@ -736,7 +736,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               borderBottom: '1.5px solid #e2e8f0',
                               margin: 0
                             }}>
-                              Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
+                              Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber || '30521458920'}) between {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
                             </div>
                           </div>
                         </div>
@@ -777,14 +777,14 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Account Number</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>
-                                  {customerDetails.accountNumber ? (customerDetails.accountNumber.startsWith('x') ? customerDetails.accountNumber : `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}`) : 'xxxxxxxxxxxxxx371'}
+                                <td style={{ verticalAlign: 'top' }}>
+                                  {customerDetails.accountNumber || '30521458920'}
                                 </td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Account Description</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top' }}>SBCHQ-SGSP-PUBIND-DIAMOND-INR</td>
+                                <td style={{ verticalAlign: 'top' }}>REGULAR SB CHQ-INDIVIDUALS</td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>Branch</td>
@@ -809,14 +809,14 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>CIF NO</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>
-                                  {customerDetails.cifNumber ? (customerDetails.cifNumber.startsWith('x') ? customerDetails.cifNumber : `xxxxxxxxxxxxxx${customerDetails.cifNumber.slice(-3)}`) : 'xxxxxxxxxxxxxx085'}
+                                <td style={{ verticalAlign: 'top' }}>
+                                  {customerDetails.cifNumber || '85962145321'}
                                 </td>
                               </tr>
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>CKYCR Number</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>
+                                <td style={{ verticalAlign: 'top' }}>
                                   {(() => {
                                     const val = branchDetails.ckycrNumber || '1234';
                                     const digits = val.replace(/\D/g, '');
@@ -828,7 +828,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>IFS Code</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{branchDetails.ifscCode}</td>
+                                <td style={{ verticalAlign: 'top' }}>{branchDetails.ifscCode}</td>
                               </tr>
                               <tr>
                                 <td style={{ fontSize: '10px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Indian Financial System)</td>
@@ -836,7 +836,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                               <tr>
                                 <td style={{ verticalAlign: 'top' }}>MICR Code</td>
                                 <td style={{ verticalAlign: 'top' }}>:</td>
-                                <td style={{ verticalAlign: 'top', fontFamily: 'monospace' }}>{branchDetails.micrCode}</td>
+                                <td style={{ verticalAlign: 'top' }}>{branchDetails.micrCode}</td>
                               </tr>
                               <tr>
                                 <td style={{ fontSize: '10px', color: '#000000', paddingBottom: '2px' }} colSpan={3}>(Magnetic Ink Character Recognition)</td>
@@ -856,7 +856,7 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
                           {/* Statement Title */}
                           <div style={{ fontSize: '13px', fontWeight: '', margin: '14px 0 10px 0', color: '#000000' }}>
-                            Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber ? `xxxxxxxxxxxxxx${customerDetails.accountNumber.slice(-3)}` : 'xxxxxxxxxxxxxx371'}) between {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
+                            Account Statement from {formatKotakDate(transactions[0]?.valueDate)} to {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
                           </div>
                         </div>
                       </div>
@@ -1333,7 +1333,9 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                 <td style={{ width: '33%', padding: '5.5px 4px', textAlign: 'left', border: '1px solid #e5e7eb', fontSize: '8.5px', lineHeight: '1.2', textTransform: 'uppercase' }}>
                                   <div style={{ wordBreak: 'break-all', lineHeight: '1' }}>{formatSbiDetails(tx.details, tx.refNo)}</div>
                                 </td>
-                                <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px' }}>-</td>
+                                <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'center', border: '1px solid #e5e7eb', fontSize: '8.5px' }}>
+                                  {tx.refNo ? (tx.refNo.startsWith('TRANSFER') ? tx.refNo : (tx.debit ? `TRANSFER TO ${tx.refNo}` : `TRANSFER FROM ${tx.refNo}`)) : '-'}
+                                </td>
                                 <td style={{ width: '12%', padding: '5.5px 4px', textAlign: 'right', border: '1px solid #e5e7eb', fontSize: '8.5px', paddingRight: '6px' }}>
                                   {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '-'}
                                 </td>
@@ -1356,9 +1358,10 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                           <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: '0.5px solid #444444', fontSize: '10px', color: '#000000' }}>
                             <thead>
                               <tr style={{ height: '28px', backgroundColor: '#ffffff', color: '#000000', fontSize: '10.5px', fontWeight: 'bold' }}>
-                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Txn Date</th>
-                                <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Value Date</th>
-                                <th style={{ width: '46%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Description</th>
+                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Txn Date</th>
+                                <th style={{ width: '10%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Value Date</th>
+                                <th style={{ width: '32%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Description</th>
+                                <th style={{ width: '18%', padding: '4px 6px', textAlign: 'left', fontWeight: 'bold', border: '0.5px solid #444444' }}>Ref No./Cheque No.</th>
                                 <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Debit</th>
                                 <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Credit</th>
                                 <th style={{ width: '10%', padding: '4px 6px', textAlign: 'right', fontWeight: 'bold', border: '0.5px solid #444444' }}>Balance</th>
@@ -1394,7 +1397,9 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
                                     <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       <div>{descLine1}</div>
                                       {descLine2 ? <div>{descLine2}</div> : null}
-                                      {refLine ? <div style={{ fontSize: '9px', color: '#111827' }}>{refLine}</div> : null}
+                                    </td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', border: '0.5px solid #444444', fontSize: '9.5px', wordBreak: 'break-all', verticalAlign: 'top', lineHeight: '1.25' }}>
+                                      {refLine ? <div>{refLine}</div> : ''}
                                     </td>
                                     <td style={{ padding: '4px 6px', textAlign: 'right', border: '0.5px solid #444444', fontSize: '9.5px', verticalAlign: 'top', lineHeight: '1.25' }}>
                                       {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
