@@ -155,8 +155,8 @@ public class Sbi2Template implements StatementTemplate {
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
         // Exact pixel-perfect column widths matching authentic SBI statement: Total 523pt
-        // Txn Date (56pt), Value Date (50pt), Description (132pt), Ref No (114pt), Debit (58pt), Credit (58pt), Balance (55pt)
-        Table table = new Table(UnitValue.createPointArray(new float[]{56f, 50f, 132f, 114f, 58f, 58f, 55f})).useAllAvailableWidth();
+        // Txn Date (+6.67% -> 59.73pt), Value Date (50pt), Description (128.27pt), Ref No (114pt), Debit (58pt), Credit (58pt), Balance (55pt)
+        Table table = new Table(UnitValue.createPointArray(new float[]{59.73f, 50f, 128.27f, 114f, 58f, 58f, 55f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
