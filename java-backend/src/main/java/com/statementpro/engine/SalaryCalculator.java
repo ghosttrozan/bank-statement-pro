@@ -36,12 +36,13 @@ public final class SalaryCalculator {
                     ? "NEFT CR-KKBK" + neftRef + "-" + companyName + "-SALARY"
                     : "CMS CR-" + companyName + "-SALARY PAYROLL-" + neftRef.substring(0, Math.min(10, neftRef.length()));
             default -> {
+                String cmsRef = "CMS" + RandomUtils.randRange(1000, 9999) + RandomUtils.randRange(100000, 999999);
                 if (variant == 1) {
-                    yield "BY TRANSFER-NEFT*" + neftRef + "*" + companyName + "*SALARY CREDIT";
+                    yield "BY TRANSFER-NEFT*SBIN0007458*" + cmsRef + "*" + companyName + "*Salary-";
                 } else if (variant == 2) {
-                    yield "BY TRANSFER-CMS/" + neftRef + "/" + companyName + "/SALARY FOR " + monthStr;
+                    yield "BY TRANSFER-CMS/" + cmsRef + "/" + companyName + "/SALARY FOR " + monthStr;
                 } else {
-                    yield "BY TRANSFER-NEFT*IN" + neftRef.substring(1) + "*" + companyName + "*SALARY CREDIT";
+                    yield "BY TRANSFER-NEFT*IN" + neftRef.substring(1) + "*" + companyName + "*Salary-";
                 }
             }
         };
