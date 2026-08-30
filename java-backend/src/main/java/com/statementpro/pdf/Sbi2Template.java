@@ -148,14 +148,14 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        // Guaranteed single-line dates with 65pt width and non-breaking spaces
-        Table table = new Table(UnitValue.createPointArray(new float[]{65f, 65f, 146f, 90f, 51f, 51f, 55f})).useAllAvailableWidth();
+        // Exact pixel-perfect column widths matching authentic SBI statement headers: Total 523pt
+        Table table = new Table(UnitValue.createPointArray(new float[]{58f, 54f, 150f, 105f, 52f, 52f, 52f})).useAllAvailableWidth();
         table.setFontSize(8.5f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Description", TextAlignment.LEFT));
-        table.addHeaderCell(headerCell("Ref No./Cheque\nNo.", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Ref\u00A0No./Cheque\nNo.", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Balance", TextAlignment.RIGHT));
