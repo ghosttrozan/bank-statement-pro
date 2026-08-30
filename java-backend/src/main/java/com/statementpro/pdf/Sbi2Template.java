@@ -36,7 +36,8 @@ public class Sbi2Template implements StatementTemplate {
         try (PdfDocument pdfDoc = new PdfDocument(writer);
              Document doc = new Document(pdfDoc, PageSize.A4)) {
 
-            doc.setMargins(20, 24, 20, 24);
+            // Exact 36pt margins: Left=36pt, Right=36pt, Top=36pt -> Content Width = 523pt
+            doc.setMargins(36f, 36f, 20f, 36f);
 
             pdfDoc.getDocumentInfo()
                     .setAuthor("State Bank of India")
@@ -62,7 +63,7 @@ public class Sbi2Template implements StatementTemplate {
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
                     doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setBold().setFontSize(9.5f).setMarginTop(10).setMarginBottom(6));
+                            .setBold().setFontSize(9.4f).setMarginTop(0f).setMarginBottom(16f));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
@@ -88,9 +89,9 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact natural aspect ratio (232x92) - height 56pt, proportional width ~141pt
-            logo.setHeight(56f);
-            logo.setMarginBottom(12f);
+            // Exact height 54pt, natural width ~136pt, margin bottom 3.8pt so dossier starts exactly at Y = 93.8pt
+            logo.setHeight(54f);
+            logo.setMarginBottom(3.8f);
             return logo;
         } catch (Exception e) {
             return null;
@@ -99,8 +100,8 @@ public class Sbi2Template implements StatementTemplate {
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
         Table table = new Table(UnitValue.createPercentArray(new float[]{28, 2, 70})).useAllAvailableWidth();
-        table.setFontSize(8.5f);
-        table.setMarginBottom(4);
+        table.setFontSize(9.4f);
+        table.setMarginBottom(10f);
 
         addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
         addDossierRow(table, "Address", ": " + TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
@@ -124,12 +125,12 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private void addDossierRow(Table table, String label, String valueWithColon) {
-        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.15f)).setBorder(null).setPadding(1f));
-        table.addCell(new Cell(1, 2).add(new Paragraph(valueWithColon == null ? "" : valueWithColon).setMultipliedLeading(1.15f)).setBorder(null).setPadding(1f));
+        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.35f)).setBorder(null).setPadding(0.5f));
+        table.addCell(new Cell(1, 2).add(new Paragraph(valueWithColon == null ? "" : valueWithColon).setMultipliedLeading(1.35f)).setBorder(null).setPadding(0.5f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
-        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(7.5f).setMultipliedLeading(1.0f)).setBorder(null).setPadding(0));
+        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(8.0f).setMultipliedLeading(1.1f)).setBorder(null).setPadding(0));
     }
 
     private String maskCkycr(String ckycr) {
