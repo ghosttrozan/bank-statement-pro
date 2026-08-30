@@ -95,8 +95,7 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact reference rendered size: 181.5 x 54 pt, 3.8pt margin bottom -> Dossier starts at Y = 93.8pt
-            logo.setWidth(181.5f);
+            // Original purple SBI Account Summary logo
             logo.setHeight(54.0f);
             logo.setMarginBottom(3.8f);
             return logo;
