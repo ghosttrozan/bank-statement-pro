@@ -295,9 +295,9 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell sbi2Cell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(0.82f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(1.5f)
+                .setPadding(1.2f)
                 .setPaddingLeft(2.0f)
                 .setPaddingRight(2.0f)
                 .setTextAlignment(alignment);
