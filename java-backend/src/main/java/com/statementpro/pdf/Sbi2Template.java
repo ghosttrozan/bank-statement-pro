@@ -63,7 +63,7 @@ public class Sbi2Template implements StatementTemplate {
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
                     doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setBold().setFontSize(12.0f).setMarginTop(20f).setMarginBottom(10f));
+                            .setFontSize(12.0f).setMarginTop(20f).setMarginBottom(10f));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
