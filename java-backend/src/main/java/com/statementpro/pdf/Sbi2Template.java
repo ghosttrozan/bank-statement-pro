@@ -155,8 +155,8 @@ public class Sbi2Template implements StatementTemplate {
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
         // Column widths Total 523pt:
-        // Txn Date (64pt), Value Date (50pt), Description (115pt), Ref No (-30% -> 123pt), Debit (58pt), Credit (58pt), Balance (55pt)
-        Table table = new Table(UnitValue.createPointArray(new float[]{64f, 50f, 115f, 123f, 58f, 58f, 55f})).useAllAvailableWidth();
+        // Txn Date (64pt), Value Date (50pt), Description (156pt), Ref No (82pt), Debit (58pt), Credit (58pt), Balance (55pt)
+        Table table = new Table(UnitValue.createPointArray(new float[]{64f, 50f, 156f, 82f, 58f, 58f, 55f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
