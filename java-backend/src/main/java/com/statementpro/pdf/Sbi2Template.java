@@ -195,7 +195,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment, float fontSize) {
-        return new Cell().add(new Paragraph(text).setFontSize(fontSize).setBold().setMultipliedLeading(0.95f))
+        return new Cell().add(new Paragraph(text).setFontSize(fontSize).setMultipliedLeading(0.95f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
                 .setPaddingTop(4.0f)
