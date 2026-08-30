@@ -89,8 +89,7 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact reference specs: 181.5 pt width x 54.0 pt height (source: 242 x 72 px @ 96 PPI)
-            logo.setWidth(181.5f);
+            // Original SBI logo (232x92 px) rendered at 54pt height with 3.8pt bottom margin
             logo.setHeight(54.0f);
             logo.setMarginBottom(3.8f);
             return logo;
