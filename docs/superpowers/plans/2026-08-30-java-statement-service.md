@@ -1444,6 +1444,21 @@ class TransactionEngineTest {
     }
 
     @Test
+    void februaryInterestPostingRollsPeriodFromBackIntoPreviousYear() {
+        // Quarterly interest months are [1,4,7,10] (0-indexed: Feb,May,Aug,Nov). For the February
+        // posting, the 3-month lookback period starts in November of the PRECEDING year — this only
+        // shows up when the date range actually spans a Feb 1 interest posting.
+        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+                settings("auto", null, null), account(90000.0),
+                "2026-02-28T12:00:00", null, null);
+
+        boolean hasCorrectPeriod = txs.stream()
+                .anyMatch(tx -> tx.details().contains("01/11/2025") && tx.details().contains("31/01/2026"));
+        assertTrue(hasCorrectPeriod,
+                "expected an interest narrative with period 01/11/2025 to 31/01/2026 (year must roll back for the Feb posting)");
+    }
+
+    @Test
     void salariedVariantUsesRandomOpeningBalanceWhenNotProvided() {
         List<Transaction> txs = TransactionEngine.generateSalariedStatementTransactions(
                 settings("auto", null, null), account(0.0),
@@ -1771,7 +1786,7 @@ public final class TransactionEngine {
             if (!iDate.isBefore(startDay) && !iDate.isAfter(endDay)) {
                 double interestAmount = Math.round((RandomUtils.randRange(115, 680) + Math.random()) * 100.0) / 100.0;
                 String dateStr = DateUtils.formatDate(iDate);
-                LocalDate periodFromDate = LocalDate.of(iYear, Math.max(1, im - 2), 1);
+                LocalDate periodFromDate = LocalDate.of(iYear, 1, 1).plusMonths(im - 3);
                 LocalDate periodToDate = iDate.minusDays(1);
                 String periodFrom = DateUtils.formatDate(periodFromDate);
                 String periodTo = DateUtils.formatDate(periodToDate);
@@ -2257,7 +2272,7 @@ class Sbi2TemplateTest {
         try (PdfDocument doc = new PdfDocument(new PdfReader(new ByteArrayInputStream(pdfBytes)))) {
             assertTrue(doc.getNumberOfPages() >= 1);
             String text = PdfTextExtractor.getTextFromPage(doc.getPage(1));
-            assertTrue(text.contains("00001234567890"), "expected zero-padded 17-digit account number");
+            assertTrue(text.contains("00000001234567890"), "expected zero-padded 17-digit account number (7 leading zeros + 10-digit input)");
         }
     }
 }
@@ -2801,7 +2816,20 @@ In `StandardBankTemplate.java`, change the method signature and writer construct
              Document doc = new Document(pdfDoc, PageSize.A4)) {
 ```
 
-(the remainder of the method body is unchanged from Task 7). Apply the equivalent change to `Sbi2Template.render`.
+(the remainder of the method body is unchanged from Task 7).
+
+Apply the identical shape of change to `Sbi2Template.java`:
+
+```java
+    @Override
+    public byte[] render(StatementRecord record, com.itextpdf.kernel.pdf.WriterProperties writerProperties) throws java.io.IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PdfWriter writer = writerProperties != null ? new PdfWriter(out, writerProperties) : new PdfWriter(out);
+        try (PdfDocument pdfDoc = new PdfDocument(writer);
+             Document doc = new Document(pdfDoc, PageSize.A4)) {
+```
+
+(the remainder of `Sbi2Template.render`'s body — logo, dossier, ledger table, footer — is unchanged from Task 8; only the method signature and the `PdfWriter`/`PdfDocument` construction lines change).
 
 - [ ] **Step 5: Implement `PdfPipelineService`**
 
