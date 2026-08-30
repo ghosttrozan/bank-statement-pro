@@ -105,7 +105,7 @@ public class Sbi2Template implements StatementTemplate {
         table.setMarginBottom(0);
 
         addDossierRow(table, "Account Name", record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : "");
-        addDossierRow(table, "Address", TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
+        addDossierRow(table, "Address", (record.customerDetails().address() != null ? record.customerDetails().address() : "") + "\n\n\n");
         addDossierRow(table, "Date", endDateStr);
         addDossierRow(table, "Account Number", accountNumber);
         addDossierRow(table, "Account Description", record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank()
