@@ -7,7 +7,6 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.SolidBorder;
-import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
@@ -45,41 +44,30 @@ public class Sbi2Template implements StatementTemplate {
                     .setTitle("State Bank of India - Account Statement");
 
             List<Transaction> transactions = record.transactions();
-            List<List<Transaction>> pages = TemplateUtils.chunkTransactions(transactions, 8, 22);
-            int totalPages = pages.size();
 
             String accountNumber = formatSbiAccountNumber(record.customerDetails().accountNumber());
             String startDateStr = transactions.isEmpty() ? "1 Feb 2026" : formatSbiDateHeader(transactions.get(0).valueDate());
             String endDateStr = transactions.isEmpty() ? "26 Aug 2026" : formatSbiDateHeader(transactions.get(transactions.size() - 1).valueDate());
 
-            for (int pageIdx = 0; pageIdx < totalPages; pageIdx++) {
-                boolean isFirstPage = pageIdx == 0;
-                boolean isLastPage = pageIdx == totalPages - 1;
-
-                if (isFirstPage) {
-                    Image logo = loadLogo();
-                    if (logo != null) {
-                        doc.add(logo);
-                    }
-                    doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
-                    doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setFontSize(12.0f).setMarginTop(20f).setMarginBottom(10f));
-                }
-
-                doc.add(buildLedgerTable(pages.get(pageIdx)));
-
-                if (isLastPage) {
-                    doc.add(new Paragraph("Please do not share your ATM, Debit/Credit card number, PIN "
-                            + "(Personal Identification Number) and OTP (One Time Password) with anyone over "
-                            + "mail, SMS, phone call or any other media. Bank never asks for such information.")
-                            .setFontSize(9.0f).setMarginTop(16f).setMultipliedLeading(1.2f));
-                    doc.add(new Paragraph("**This is a computer generated statement and does not require a signature.")
-                            .setFontSize(9.0f).setMarginTop(8f));
-                }
-                if (!isLastPage) {
-                    doc.add(new AreaBreak());
-                }
+            Image logo = loadLogo();
+            if (logo != null) {
+                doc.add(logo);
             }
+            doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
+            doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
+                    .setFontSize(12.0f).setMarginTop(20f).setMarginBottom(10f));
+
+            // One continuous table for all transactions: iText splits it across pages based on
+            // actual rendered row heights and repeats the header row on every page automatically
+            // (default Table behavior for addHeaderCell) -- no manual chunking or page breaks.
+            doc.add(buildLedgerTable(transactions));
+
+            doc.add(new Paragraph("Please do not share your ATM, Debit/Credit card number, PIN "
+                    + "(Personal Identification Number) and OTP (One Time Password) with anyone over "
+                    + "mail, SMS, phone call or any other media. Bank never asks for such information.")
+                    .setFontSize(9.0f).setMarginTop(16f).setMultipliedLeading(1.2f));
+            doc.add(new Paragraph("**This is a computer generated statement and does not require a signature.")
+                    .setFontSize(9.0f).setMarginTop(8f));
         }
         return out.toByteArray();
     }
