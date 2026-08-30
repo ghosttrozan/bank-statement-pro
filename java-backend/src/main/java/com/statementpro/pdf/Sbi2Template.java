@@ -100,7 +100,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPointArray(new float[]{112f, 4f, 407f})).useAllAvailableWidth();
+        Table table = new Table(UnitValue.createPointArray(new float[]{92f, 4f, 427f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
         table.setMarginBottom(0);
 
@@ -128,24 +128,16 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private void addDossierRow(Table table, String label, String value) {
-        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(":").setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
+        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
+        table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
+        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addAddressRow(Table table, String address) {
         String cleanAddress = (address != null ? address : "").replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
-        table.addCell(new Cell().add(new Paragraph("Address").setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(":").setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-
-        com.itextpdf.layout.element.Text textElement = new com.itextpdf.layout.element.Text(cleanAddress + "\n\n\n");
-        if (cleanAddress.length() > 50) {
-            textElement.setFontSize(7.8f).setHorizontalScaling(0.92f);
-        } else {
-            textElement.setFontSize(8.5f);
-        }
-        Paragraph addrPara = new Paragraph().add(textElement).setMultipliedLeading(1.25f);
-        table.addCell(new Cell().add(addrPara).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
+        table.addCell(new Cell().add(new Paragraph("Address").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
+        table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
+        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
