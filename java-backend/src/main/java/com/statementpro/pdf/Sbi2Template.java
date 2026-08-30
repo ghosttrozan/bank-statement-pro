@@ -104,7 +104,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{26, 2, 72})).useAllAvailableWidth();
+        Table table = new Table(UnitValue.createPercentArray(new float[]{20, 2, 78})).useAllAvailableWidth();
         table.setFontSize(9.0f);
         table.setMarginBottom(0f);
 
@@ -140,8 +140,10 @@ public class Sbi2Template implements StatementTemplate {
         
         // Single line address followed by 3 empty lines
         String cleanSingleLineAddr = (valueWithColon != null ? valueWithColon.replaceAll("[\\r\\n]+", " ").trim() : "");
-        Paragraph p2 = new Paragraph(cleanSingleLineAddr + "\n\n\n")
-                .setFontSize(8.5f)
+        com.itextpdf.layout.element.Text addrText = new com.itextpdf.layout.element.Text(cleanSingleLineAddr + "\n\n\n")
+                .setFontSize(7.8f)
+                .setHorizontalScaling(0.92f);
+        Paragraph p2 = new Paragraph(addrText)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
 
