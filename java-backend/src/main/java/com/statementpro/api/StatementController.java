@@ -19,7 +19,11 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(
+        origins = "*",
+        allowedHeaders = "*",
+        exposedHeaders = {"Content-Disposition", "Content-Type", "Content-Length", "X-Statement-ID", "X-Transactions-Count"}
+)
 public class StatementController {
 
     @PostMapping("/api/statements/generate")

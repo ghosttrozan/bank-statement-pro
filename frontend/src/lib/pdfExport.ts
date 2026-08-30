@@ -313,14 +313,17 @@ export function saveBlobAsFile(blob: Blob, filename: string): void {
   const blobUrl = window.URL.createObjectURL(pdfBlob);
 
   const link = document.createElement('a');
-  link.style.display = 'none';
+  link.style.position = 'fixed';
+  link.style.left = '-9999px';
+  link.style.top = '-9999px';
   link.href = blobUrl;
   link.download = filename;
   link.setAttribute('download', filename);
+  link.rel = 'noopener';
   document.body.appendChild(link);
+
   link.click();
 
-  // Defer revoking the blob URL by 15s so the browser starts & finishes the download stream
   setTimeout(() => {
     try {
       if (document.body.contains(link)) {
@@ -328,7 +331,7 @@ export function saveBlobAsFile(blob: Blob, filename: string): void {
       }
       window.URL.revokeObjectURL(blobUrl);
     } catch {}
-  }, 15000);
+  }, 30000);
 }
 
 /**
@@ -348,14 +351,15 @@ export async function downloadStatementFromJavaBackend(payload: {
 
   if (onProgress) onProgress(20, 'Sending request to Java Vector PDF Engine (Port 8080)...');
 
-  const JAVA_API_BASE_URL = (import.meta as any).env.VITE_JAVA_API_URL || 'http://localhost:8080';
+  // Use proxy /api/statements/download for same-origin reliability or configured URL
+  const endpoint = '/api/statements/download';
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   let response: Response;
   try {
-    response = await fetch(`${JAVA_API_BASE_URL}/api/statements/download`, {
+    response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

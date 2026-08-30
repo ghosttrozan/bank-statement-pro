@@ -169,7 +169,7 @@ public class Sbi2Template implements StatementTemplate {
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
-        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT, 10.0f));
+        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT, 9.0f));
         table.addHeaderCell(headerCell("Ref\u00A0No./Cheque\nNo.", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
@@ -191,20 +191,14 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment) {
-        return headerCell(text, alignment, 10.0f);
+        return headerCell(text, alignment, 9.0f);
     }
 
     private Cell headerCell(String text, TextAlignment alignment, float fontSize) {
-        com.itextpdf.layout.element.Text t = new com.itextpdf.layout.element.Text(text)
-                .setFontSize(fontSize)
-                .setBold()
-                .setStrokeWidth(0.25f)
-                .setTextRenderingMode(com.itextpdf.kernel.pdf.canvas.PdfCanvasConstants.TextRenderingMode.FILL_STROKE);
-
-        return new Cell().add(new Paragraph().add(t).setMultipliedLeading(0.92f))
+        return new Cell().add(new Paragraph(text).setFontSize(fontSize).setBold().setMultipliedLeading(0.95f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
-                .setPaddingTop(5.0f)
+                .setPaddingTop(4.0f)
                 .setPaddingBottom(2.0f)
                 .setTextAlignment(alignment);
     }
