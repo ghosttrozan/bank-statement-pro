@@ -49,7 +49,7 @@ public final class NarrativeBuilder {
                 yield tag + "/" + ref + "/" + direction + "/" + firstName.toUpperCase() + "/" + bank + "/" + accountSuffix + "/Paymen";
             }
             case 2 -> "UPI/" + ref + "/" + direction + "/" + name.toUpperCase() + "/" + vpa;
-            case 3 -> "UPI-TRANSFER-" + ref + "-" + vpa.toUpperCase() + "/" + direction;
+            case 3 -> "UPI-TRANSFER-" + ref + "-" + vpa.toUpperCase();
             default -> "UPI/" + direction + "/" + ref + "/" + name.toUpperCase() + "/" + bank;
         };
     }
