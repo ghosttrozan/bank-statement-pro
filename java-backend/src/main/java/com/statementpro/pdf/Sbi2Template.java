@@ -13,7 +13,6 @@ import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
 import com.statementpro.model.StatementRecord;
 import com.statementpro.model.Transaction;
 
@@ -26,6 +25,9 @@ public class Sbi2Template implements StatementTemplate {
     private static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     private static final float LINE_HEIGHT_PT = 13.5f;
 
+    // Reference Column Widths: Total = 522pt (Bounding box: X=36 to 558pt, margins=36pt)
+    private static final float[] COLUMN_WIDTHS = new float[]{53f, 53f, 132f, 79f, 63f, 63f, 79f};
+
     @Override
     public byte[] render(StatementRecord record) throws java.io.IOException {
         return render(record, null);
@@ -37,7 +39,7 @@ public class Sbi2Template implements StatementTemplate {
         try (PdfDocument pdfDoc = new PdfDocument(writer);
              Document doc = new Document(pdfDoc, PageSize.A4)) {
 
-            // Exact 36pt margins: Left=36pt, Right=36pt, Top=36pt -> Content Width = 523pt
+            // Exact 36pt margins: Left=36pt, Right=36pt, Top=36pt, Bottom=20pt -> Width = 523pt
             doc.setMargins(36f, 36f, 20f, 36f);
 
             pdfDoc.getDocumentInfo()
@@ -46,12 +48,12 @@ public class Sbi2Template implements StatementTemplate {
                     .setTitle("State Bank of India - Account Statement");
 
             List<Transaction> transactions = record.transactions();
-            List<List<Transaction>> pages = TemplateUtils.chunkTransactions(transactions, 8, 22);
+            List<List<Transaction>> pages = TemplateUtils.chunkTransactions(transactions, 11, 23);
             int totalPages = pages.size();
 
             String accountNumber = formatSbiAccountNumber(record.customerDetails().accountNumber());
-            String startDateStr = transactions.isEmpty() ? "1 Apr 2026" : formatSbiDate(transactions.get(0).valueDate());
-            String endDateStr = transactions.isEmpty() ? "30 Apr 2026" : formatSbiDate(transactions.get(transactions.size() - 1).valueDate());
+            String startDateStr = transactions.isEmpty() ? "1 Feb 2026" : formatSbiDate(transactions.get(0).valueDate());
+            String endDateStr = transactions.isEmpty() ? "26 Aug 2026" : formatSbiDate(transactions.get(transactions.size() - 1).valueDate());
 
             for (int pageIdx = 0; pageIdx < totalPages; pageIdx++) {
                 boolean isFirstPage = pageIdx == 0;
@@ -63,12 +65,13 @@ public class Sbi2Template implements StatementTemplate {
                         doc.add(logo);
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
+                    
+                    // Reference Statement Title: Helvetica 12pt regular/semi-bold, left aligned
                     doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setBold()
-                            .setFontSize(9.4f)
+                            .setFontSize(12.0f)
                             .setFixedLeading(LINE_HEIGHT_PT)
-                            .setMarginTop(32.8f)
-                            .setMarginBottom(17.4f));
+                            .setMarginTop(28f)
+                            .setMarginBottom(16f));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
@@ -94,7 +97,8 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact height 54pt, bottom margin 3.8pt -> table starts at Y = 36 + 54 + 3.8 = 93.8pt
+            // Exact reference specifications: Width ≈ 181.5 pt, Height ≈ 54 pt, starting at X=36, Y=36
+            logo.setWidth(181.5f);
             logo.setHeight(54.0f);
             logo.setMarginBottom(3.8f);
             return logo;
@@ -104,8 +108,9 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{18, 2, 80})).useAllAvailableWidth();
-        table.setFontSize(9.4f);
+        // Table with 2 columns: Label width ~135pt, Value width ~388pt
+        Table table = new Table(new float[]{135f, 388f}).setWidth(523f);
+        table.setFontSize(9.0f);
         table.setMarginBottom(0f);
 
         addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
@@ -134,32 +139,33 @@ public class Sbi2Template implements StatementTemplate {
 
     private void addDossierAddressRow(Table table, String label, String valueWithColon) {
         Paragraph p1 = new Paragraph(label == null ? "" : label)
-                .setFontSize(9.4f)
+                .setFontSize(9.0f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
         
-        String cleanSingleLineAddr = (valueWithColon != null ? valueWithColon.replaceAll("[\\r\\n]+", " ").trim() : "");
-        Paragraph p2 = new Paragraph(cleanSingleLineAddr + "\n\n\n")
-                .setFontSize(9.4f)
+        // Single line address followed by 3 blank lines
+        String cleanAddr = (valueWithColon != null ? valueWithColon : "") + "\n\n\n";
+        Paragraph p2 = new Paragraph(cleanAddr)
+                .setFontSize(9.0f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
 
         table.addCell(new Cell().add(p1).setBorder(null).setPadding(0).setMargin(0));
-        table.addCell(new Cell(1, 2).add(p2).setBorder(null).setPadding(0).setMargin(0));
+        table.addCell(new Cell().add(p2).setBorder(null).setPadding(0).setMargin(0));
     }
 
     private void addDossierRow(Table table, String label, String valueWithColon) {
         Paragraph p1 = new Paragraph(label == null ? "" : label)
-                .setFontSize(9.4f)
+                .setFontSize(9.0f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
         Paragraph p2 = new Paragraph(valueWithColon == null ? "" : valueWithColon)
-                .setFontSize(9.4f)
+                .setFontSize(9.0f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
 
         table.addCell(new Cell().add(p1).setBorder(null).setPadding(0).setMargin(0));
-        table.addCell(new Cell(1, 2).add(p2).setBorder(null).setPadding(0).setMargin(0));
+        table.addCell(new Cell().add(p2).setBorder(null).setPadding(0).setMargin(0));
     }
 
     private void addDossierSpanRow(Table table, String note) {
@@ -167,13 +173,13 @@ public class Sbi2Template implements StatementTemplate {
                 .setFontSize(7.5f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
-        table.addCell(new Cell(1, 3).add(p).setBorder(null).setPadding(0).setMargin(0));
+        table.addCell(new Cell(1, 2).add(p).setBorder(null).setPadding(0).setMargin(0));
     }
 
     private String maskCkycr(String ckycr) {
-        String digits = (ckycr == null ? "1234" : ckycr).replaceAll("\\D", "");
-        String last4 = digits.length() >= 4 ? digits.substring(digits.length() - 4) : "1234";
-        return "XXXXXXXXXXX" + last4;
+        String digits = (ckycr == null ? "35104" : ckycr).replaceAll("\\D", "");
+        String last5 = digits.length() >= 5 ? digits.substring(digits.length() - 5) : "35104";
+        return "XXXXXXXXXX" + last5;
     }
 
     private boolean isNominationRegistered(String nomineeName) {
@@ -181,10 +187,10 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        Table table = new Table(new float[]{52.8f, 53.0f, 132.0f, 79.3f, 63.4f, 63.4f, 79.2f}).useAllAvailableWidth();
+        Table table = new Table(COLUMN_WIDTHS).setWidth(523f);
         table.setFontSize(9.0f);
 
-        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./\nCheque\nNo.", "Debit", "Credit", "Balance"}) {
+        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./Cheque\nNo.", "Debit", "Credit", "Balance"}) {
             table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(10.0f).setBold().setMultipliedLeading(1.05f))
                     .setBorder(new SolidBorder(0.5f)).setPaddingLeft(1.5f).setPaddingRight(1.5f).setPaddingTop(2.0f).setPaddingBottom(2.0f));
         }
@@ -263,7 +269,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private String formatSbiAccountNumber(String accNo) {
-        String raw = (accNo == null || accNo.isBlank() ? "30521458920" : accNo).trim();
+        String raw = (accNo == null || accNo.isBlank() ? "00000045012800409" : accNo).trim();
         if (raw.length() < 17 && raw.matches("\\d+")) {
             return "0".repeat(17 - raw.length()) + raw;
         }
