@@ -182,11 +182,11 @@ public class Sbi2Template implements StatementTemplate {
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
         Table table = new Table(new float[]{52.8f, 53.0f, 132.0f, 79.3f, 63.4f, 63.4f, 79.2f}).useAllAvailableWidth();
-        table.setFontSize(8.0f);
+        table.setFontSize(9.0f);
 
-        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./Cheque\nNo.", "Debit", "Credit", "Balance"}) {
-            table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(8.0f).setBold().setMultipliedLeading(1.1f))
-                    .setBorder(new SolidBorder(0.5f)).setPadding(2.5f));
+        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./\nCheque\nNo.", "Debit", "Credit", "Balance"}) {
+            table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(10.0f).setBold().setMultipliedLeading(1.05f))
+                    .setBorder(new SolidBorder(0.5f)).setPaddingLeft(1.5f).setPaddingRight(1.5f).setPaddingTop(2.0f).setPaddingBottom(2.0f));
         }
 
         for (Transaction tx : pageTxs) {
@@ -229,8 +229,8 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell sbi2Cell(String text) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setMultipliedLeading(1.15f))
-                .setBorder(new SolidBorder(0.5f)).setPadding(2.0f);
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.15f))
+                .setBorder(new SolidBorder(0.5f)).setPaddingLeft(1.5f).setPaddingRight(1.5f).setPaddingTop(2.0f).setPaddingBottom(2.0f);
     }
 
     private Cell sbi2CellRight(String text) {
