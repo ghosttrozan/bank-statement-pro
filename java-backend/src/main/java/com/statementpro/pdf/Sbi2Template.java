@@ -57,6 +57,9 @@ public class Sbi2Template implements StatementTemplate {
                 boolean isLastPage = pageIdx == totalPages - 1;
 
                 if (isFirstPage) {
+                    Paragraph mockTag = new Paragraph("SAMPLE / MOCK DOCUMENT - FOR TESTING PURPOSES ONLY")
+                            .setFontSize(7.5f).setFontColor(com.itextpdf.kernel.colors.ColorConstants.GRAY).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2f);
+                    doc.add(mockTag);
                     Image logo = loadLogo();
                     if (logo != null) {
                         doc.add(logo);
@@ -157,12 +160,13 @@ public class Sbi2Template implements StatementTemplate {
         // Fixed exact widths in PDF points (1.6, 1.6, 4.0, 2.4, 1.9, 1.9, 2.4 cm): Total 447.87 pt
         Table table = new Table(UnitValue.createPointArray(new float[]{45.35f, 45.35f, 113.39f, 68.03f, 53.86f, 53.86f, 68.03f}));
         table.setWidth(447.87f);
+        table.setHorizontalAlignment(com.itextpdf.layout.properties.HorizontalAlignment.LEFT);
         table.setFontSize(9.0f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Description", TextAlignment.LEFT));
-        table.addHeaderCell(headerCell("Ref\u00A0No./Cheque\nNo.", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Ref No./Cheque\nNo.", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Balance", TextAlignment.RIGHT));
@@ -183,7 +187,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text).setFontSize(10.0f).setBold().setMultipliedLeading(0.78f))
+        return new Cell().add(new Paragraph(text).setFontSize(8.5f).setBold().setMultipliedLeading(0.85f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
                 .setPaddingTop(1.2f)
@@ -197,22 +201,37 @@ public class Sbi2Template implements StatementTemplate {
         if (isCredit && details.contains("INTEREST")) {
             return "CREDIT INTEREST--";
         }
-        if (details.startsWith("ATM") || details.startsWith("POS") || details.startsWith("NETC")) {
-            return details;
-        }
 
-        String prefix = isCredit ? "BY TRANSFER-\n" : "TO TRANSFER-\n";
+        String prefix = "";
         String clean = details;
-        if (clean.startsWith("BY TRANSFER-") || clean.startsWith("TO TRANSFER-")) {
-            clean = clean.substring(12).trim();
-        } else if (clean.startsWith("BY TRANSFER -") || clean.startsWith("TO TRANSFER -")) {
-            clean = clean.substring(13).trim();
-        } else if (clean.startsWith("BY TRANSFER") || clean.startsWith("TO TRANSFER")) {
-            clean = clean.substring(11).trim();
+        if (!details.startsWith("ATM") && !details.startsWith("POS") && !details.startsWith("NETC") && !details.startsWith("ACH")) {
+            prefix = isCredit ? "BY TRANSFER-\n" : "TO TRANSFER-\n";
+            if (clean.startsWith("BY TRANSFER-") || clean.startsWith("TO TRANSFER-")) {
+                clean = clean.substring(12).trim();
+            } else if (clean.startsWith("BY TRANSFER -") || clean.startsWith("TO TRANSFER -")) {
+                clean = clean.substring(13).trim();
+            } else if (clean.startsWith("BY TRANSFER") || clean.startsWith("TO TRANSFER")) {
+                clean = clean.substring(11).trim();
+            }
         }
 
-        // Allow wrapping at slashes and asterisks just like authentic Lowagie iText
-        clean = clean.replace("/", "/\u200B").replace("*", "*\u200B");
+        // Format multi-part narratives with newline breaks so each line is strictly <= 113.39pt
+        if (clean.startsWith("NEFT*") || clean.startsWith("CMS*")) {
+            clean = clean.replace("*CMS", "*\nCMS").replace("*TATA", "*\nTATA").replace("*Salary", "*\nSalary");
+        } else if (clean.startsWith("UPI/")) {
+            String[] parts = clean.split("/");
+            if (parts.length >= 6) {
+                // UPI/CR/123456789012 \n NAME/BANK/handle \n Payme-
+                clean = parts[0] + "/" + parts[1] + "/" + parts[2] + "/\n"
+                        + parts[3] + "/" + parts[4] + "/" + parts[5] + (parts.length > 6 ? "/" + parts[6] : "");
+            }
+        } else if (clean.startsWith("POS ") || clean.startsWith("ATM ") || clean.startsWith("TO ATM")) {
+            int firstSpace = clean.indexOf(' ', 4);
+            if (firstSpace > 0 && firstSpace + 16 < clean.length()) {
+                clean = clean.substring(0, firstSpace + 16) + "\n" + clean.substring(firstSpace + 16).trim();
+            }
+        }
+
         return prefix + clean;
     }
 
@@ -225,7 +244,7 @@ public class Sbi2Template implements StatementTemplate {
             rNum = rNum + "1234567890123".substring(0, 13 - rNum.length());
         }
         String d = tx.details() != null ? tx.details() : "";
-        if (d.startsWith("ATM") || d.startsWith("POS") || d.startsWith("NETC")) {
+        if (d.startsWith("ATM") || d.startsWith("POS") || d.startsWith("NETC") || d.startsWith("ACH")) {
             return rNum;
         }
         if (tx.credit() != null) {
@@ -236,29 +255,29 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell sbi2DateCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.0f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(1.5f)
-                .setPaddingLeft(2.0f)
+                .setPadding(1.0f)
+                .setPaddingLeft(1.5f)
                 .setPaddingRight(1.5f)
                 .setTextAlignment(alignment);
     }
 
     private Cell sbi2Cell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.0f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(1.5f)
-                .setPaddingLeft(2.0f)
-                .setPaddingRight(2.0f)
+                .setPadding(1.0f)
+                .setPaddingLeft(1.5f)
+                .setPaddingRight(1.5f)
                 .setTextAlignment(alignment);
     }
 
     private Cell sbi2AmountCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.0f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(1.5f)
-                .setPaddingLeft(2.0f)
-                .setPaddingRight(3.0f)
+                .setPadding(1.0f)
+                .setPaddingLeft(1.5f)
+                .setPaddingRight(2.0f)
                 .setTextAlignment(alignment);
     }
 
