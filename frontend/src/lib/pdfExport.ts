@@ -300,16 +300,35 @@ ${containerHtml}
   if (onProgress) onProgress(100, 'Done!');
 
   // Trigger download
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  saveBlobAsFile(blob, filename);
 
   logToSystem('SYSTEM', 'INFO', `Backend PDF (text-layer) downloaded successfully: ${filename}`);
+}
+
+/**
+ * Reliable browser file download trigger for Blobs (PDF, etc.)
+ */
+export function saveBlobAsFile(blob: Blob, filename: string): void {
+  const pdfBlob = blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
+  const blobUrl = window.URL.createObjectURL(pdfBlob);
+
+  const link = document.createElement('a');
+  link.style.display = 'none';
+  link.href = blobUrl;
+  link.download = filename;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+
+  // Defer revoking the blob URL by 15s so the browser starts & finishes the download stream
+  setTimeout(() => {
+    try {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {}
+  }, 15000);
 }
 
 /**
@@ -377,14 +396,7 @@ export async function downloadStatementFromJavaBackend(payload: {
 
   if (onProgress) onProgress(100, 'Download complete!');
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  saveBlobAsFile(blob, filename);
 
   logToSystem('SYSTEM', 'INFO', `Java iText Vector PDF downloaded successfully: ${filename}`);
   return { filename };
@@ -437,14 +449,7 @@ export async function downloadStatementPdfFromBackend(payload: {
 
   if (onProgress) onProgress(100, 'Download complete!');
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  saveBlobAsFile(blob, filename);
 
   logToSystem('SYSTEM', 'INFO', `Backend PDF generated & downloaded successfully: ${filename}`);
 }
