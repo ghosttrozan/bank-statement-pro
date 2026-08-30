@@ -36,7 +36,8 @@ public class Sbi2Template implements StatementTemplate {
         try (PdfDocument pdfDoc = new PdfDocument(writer);
              Document doc = new Document(pdfDoc, PageSize.A4)) {
 
-            doc.setMargins(20, 24, 20, 24);
+            // Exact 36pt (0.5 inch) margins matching authentic SBI core statement
+            doc.setMargins(36, 36, 36, 36);
 
             pdfDoc.getDocumentInfo()
                     .setAuthor("State Bank of India")
@@ -48,8 +49,8 @@ public class Sbi2Template implements StatementTemplate {
             int totalPages = pages.size();
 
             String accountNumber = formatSbiAccountNumber(record.customerDetails().accountNumber());
-            String startDateStr = transactions.isEmpty() ? "1 Apr 2026" : formatSbiDate(transactions.get(0).valueDate());
-            String endDateStr = transactions.isEmpty() ? "30 Apr 2026" : formatSbiDate(transactions.get(transactions.size() - 1).valueDate());
+            String startDateStr = transactions.isEmpty() ? "1 Feb 2026" : formatSbiDate(transactions.get(0).valueDate());
+            String endDateStr = transactions.isEmpty() ? "26 Aug 2026" : formatSbiDate(transactions.get(transactions.size() - 1).valueDate());
 
             for (int pageIdx = 0; pageIdx < totalPages; pageIdx++) {
                 boolean isFirstPage = pageIdx == 0;
@@ -62,7 +63,7 @@ public class Sbi2Template implements StatementTemplate {
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
                     doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setBold().setFontSize(9.5f).setMarginTop(10).setMarginBottom(6));
+                            .setBold().setFontSize(12.0f).setMarginTop(12f).setMarginBottom(10f));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
@@ -71,9 +72,9 @@ public class Sbi2Template implements StatementTemplate {
                     doc.add(new Paragraph("Please do not share your ATM, Debit/Credit card number, PIN "
                             + "(Personal Identification Number) and OTP (One Time Password) with anyone over "
                             + "mail, SMS, phone call or any other media. Bank never asks for such information.")
-                            .setFontSize(8.5f).setMarginTop(12));
+                            .setFontSize(9.0f).setMarginTop(16f).setMultipliedLeading(1.2f));
                     doc.add(new Paragraph("**This is a computer generated statement and does not require a signature.")
-                            .setFontSize(8.5f).setMarginTop(4));
+                            .setFontSize(9.0f).setMarginTop(8f));
                 }
                 if (!isLastPage) {
                     doc.add(new AreaBreak());
@@ -88,9 +89,10 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact natural aspect ratio (232x92) - height 50pt, proportional width ~126pt
-            logo.setHeight(50f);
-            logo.setMarginBottom(12f);
+            // Exact dimensions: 181.5 pt x 54.0 pt (242x72 px @ 96 PPI)
+            logo.setWidth(181.5f);
+            logo.setHeight(54.0f);
+            logo.setMarginBottom(14f);
             return logo;
         } catch (Exception e) {
             return null;
@@ -98,38 +100,41 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{28, 2, 70})).useAllAvailableWidth();
-        table.setFontSize(8.5f);
-        table.setMarginBottom(4);
+        Table table = new Table(UnitValue.createPointArray(new float[]{150f, 15f, 358f})).useAllAvailableWidth();
+        table.setFontSize(9.0f);
+        table.setMarginBottom(0);
 
-        addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
-        addDossierRow(table, "Address", ": " + TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
-        addDossierRow(table, "Date", ": " + endDateStr);
-        addDossierRow(table, "Account Number", ": " + accountNumber);
-        addDossierRow(table, "Account Description", ": " + (record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank() ? record.accountInfo().accountType().toUpperCase() : "REGULAR SAVINGS BANK ACCOUNT"));
-        addDossierRow(table, "Branch", ": " + (record.branchDetails().branchName() != null ? record.branchDetails().branchName() : ""));
-        addDossierRow(table, "Drawing Power", ": 0.00");
-        addDossierRow(table, "Interest Rate(% p.a.)", ": " + record.accountInfo().interestRate());
-        addDossierRow(table, "MOD Balance", ": 0.00");
-        addDossierRow(table, "CIF No.", ": " + (record.customerDetails().cifNumber() != null ? record.customerDetails().cifNumber() : ""));
-        addDossierRow(table, "CKYCR Number", ": " + maskCkycr(record.branchDetails().ckycrNumber()));
-        addDossierRow(table, "IFS Code", ":" + (record.branchDetails().ifscCode() != null ? record.branchDetails().ifscCode() : ""));
+        addDossierRow(table, "Account Name", record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : "");
+        addDossierRow(table, "Address", TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
+        addDossierRow(table, "Date", endDateStr);
+        addDossierRow(table, "Account Number", accountNumber);
+        addDossierRow(table, "Account Description", record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank()
+                ? record.accountInfo().accountType().toUpperCase()
+                : "REGULAR SAVINGS BANK ACCOUNT");
+        addDossierRow(table, "Branch", record.branchDetails().branchName() != null ? record.branchDetails().branchName() : "317");
+        addDossierRow(table, "Drawing Power", "0.00");
+        addDossierRow(table, "Interest Rate(% p.a.)", String.valueOf(record.accountInfo().interestRate()));
+        addDossierRow(table, "MOD Balance", "0.00");
+        addDossierRow(table, "CIF No.", record.customerDetails().cifNumber() != null ? record.customerDetails().cifNumber() : "");
+        addDossierRow(table, "CKYCR Number", maskCkycr(record.branchDetails().ckycrNumber()));
+        addDossierRow(table, "IFS Code", record.branchDetails().ifscCode() != null ? record.branchDetails().ifscCode() : "SBIN0000317");
         addDossierSpanRow(table, "(Indian Financial System)");
-        addDossierRow(table, "MICR Code", ": " + (record.branchDetails().micrCode() != null ? record.branchDetails().micrCode() : ""));
+        addDossierRow(table, "MICR Code", record.branchDetails().micrCode() != null ? record.branchDetails().micrCode() : "466002002");
         addDossierSpanRow(table, "(Magnetic Ink Character Recognition)");
-        addDossierRow(table, "Nomination Registered", ": " + (isNominationRegistered(record.customerDetails().nomineeName()) ? "Yes" : "No"));
-        addDossierRow(table, "Balance as on " + startDateStr, ": " + TemplateUtils.formatCurrency(record.accountInfo().openingBalance()));
+        addDossierRow(table, "Nomination Registered", isNominationRegistered(record.customerDetails().nomineeName()) ? "Yes" : "No");
+        addDossierRow(table, "Balance as on " + startDateStr, TemplateUtils.formatCurrency(record.accountInfo().openingBalance()));
 
         return table;
     }
 
-    private void addDossierRow(Table table, String label, String valueWithColon) {
-        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.15f)).setBorder(null).setPadding(1f));
-        table.addCell(new Cell(1, 2).add(new Paragraph(valueWithColon == null ? "" : valueWithColon).setMultipliedLeading(1.15f)).setBorder(null).setPadding(1f));
+    private void addDossierRow(Table table, String label, String value) {
+        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.25f)).setBorder(null).setPadding(1.0f));
+        table.addCell(new Cell().add(new Paragraph(":").setMultipliedLeading(1.25f)).setBorder(null).setPadding(1.0f));
+        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setMultipliedLeading(1.25f)).setBorder(null).setPadding(1.0f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
-        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(7.5f).setMultipliedLeading(1.0f)).setBorder(null).setPadding(0));
+        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(9.0f).setMultipliedLeading(1.1f)).setBorder(null).setPadding(0).setPaddingLeft(1.0f));
     }
 
     private String maskCkycr(String ckycr) {
@@ -143,27 +148,38 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{10, 10, 32, 18, 10, 10, 10})).useAllAvailableWidth();
-        table.setFontSize(8.0f);
+        // Exact pixel-perfect column point widths from authentic reference PDF (Total 523pt)
+        Table table = new Table(UnitValue.createPointArray(new float[]{53f, 53f, 132f, 112f, 58f, 58f, 57f})).useAllAvailableWidth();
+        table.setFontSize(9.0f);
 
-        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./Cheque\nNo.", "Debit", "Credit", "Balance"}) {
-            table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(8.0f).setBold().setMultipliedLeading(1.1f))
-                    .setBorder(new SolidBorder(0.5f)).setPadding(2.5f));
-        }
+        table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Ref No./Cheque\nNo.", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
+        table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
+        table.addHeaderCell(headerCell("Balance", TextAlignment.RIGHT));
 
         for (Transaction tx : pageTxs) {
             String description = buildDescription(tx);
             String refLine = buildRefLine(tx);
 
-            table.addCell(sbi2Cell(formatSbiDate(tx.valueDate())));
-            table.addCell(sbi2Cell(formatSbiDate(tx.postDate())));
-            table.addCell(sbi2Cell(description));
-            table.addCell(sbi2Cell(refLine));
-            table.addCell(sbi2CellRight(tx.debit() != null ? TemplateUtils.formatCurrency(tx.debit()) : ""));
-            table.addCell(sbi2CellRight(tx.credit() != null ? TemplateUtils.formatCurrency(tx.credit()) : ""));
-            table.addCell(sbi2CellRight(TemplateUtils.formatCurrency(tx.balance())));
+            table.addCell(sbi2Cell(formatSbiDate(tx.valueDate()), TextAlignment.LEFT));
+            table.addCell(sbi2Cell(formatSbiDate(tx.postDate()), TextAlignment.LEFT));
+            table.addCell(sbi2Cell(description, TextAlignment.LEFT));
+            table.addCell(sbi2Cell(refLine, TextAlignment.LEFT));
+            table.addCell(sbi2Cell(tx.debit() != null ? TemplateUtils.formatCurrency(tx.debit()) : "", TextAlignment.RIGHT));
+            table.addCell(sbi2Cell(tx.credit() != null ? TemplateUtils.formatCurrency(tx.credit()) : "", TextAlignment.RIGHT));
+            table.addCell(sbi2Cell(TemplateUtils.formatCurrency(tx.balance()), TextAlignment.RIGHT));
         }
         return table;
+    }
+
+    private Cell headerCell(String text, TextAlignment alignment) {
+        return new Cell().add(new Paragraph(text).setFontSize(10.0f).setBold().setMultipliedLeading(1.1f))
+                .setBorder(new SolidBorder(0.5f))
+                .setPadding(3.0f)
+                .setTextAlignment(alignment);
     }
 
     private String buildDescription(Transaction tx) {
@@ -190,13 +206,11 @@ public class Sbi2Template implements StatementTemplate {
         }
     }
 
-    private Cell sbi2Cell(String text) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setMultipliedLeading(1.15f))
-                .setBorder(new SolidBorder(0.5f)).setPadding(2.0f);
-    }
-
-    private Cell sbi2CellRight(String text) {
-        return sbi2Cell(text).setTextAlignment(TextAlignment.RIGHT);
+    private Cell sbi2Cell(String text, TextAlignment alignment) {
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.1f))
+                .setBorder(new SolidBorder(0.5f))
+                .setPadding(2.5f)
+                .setTextAlignment(alignment);
     }
 
     private String formatSbiDate(String dateStr) {
