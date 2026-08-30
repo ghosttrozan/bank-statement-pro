@@ -193,7 +193,7 @@ public class Sbi2Template implements StatementTemplate {
                 .setStrokeWidth(0.25f)
                 .setTextRenderingMode(com.itextpdf.kernel.pdf.canvas.PdfCanvasConstants.TextRenderingMode.FILL_STROKE);
 
-        return new Cell().add(new Paragraph().add(t).setMultipliedLeading(0.78f))
+        return new Cell().add(new Paragraph().add(t).setMultipliedLeading(0.92f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
                 .setPaddingTop(5.0f)
