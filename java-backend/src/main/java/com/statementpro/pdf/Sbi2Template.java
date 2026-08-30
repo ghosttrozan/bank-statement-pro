@@ -67,7 +67,7 @@ public class Sbi2Template implements StatementTemplate {
                             .setBold()
                             .setFontSize(9.4f)
                             .setFixedLeading(LINE_HEIGHT_PT)
-                            .setMarginTop(12f)
+                            .setMarginTop(32.8f)
                             .setMarginBottom(17.4f));
                 }
 
