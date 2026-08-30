@@ -89,8 +89,8 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            logo.setWidth(110.0f);
-            logo.setHeight(37.0f);
+            logo.setWidth(145.0f);
+            logo.setHeight(43.1f);
             logo.setMarginBottom(2f);
             return logo;
         } catch (Exception e) {
