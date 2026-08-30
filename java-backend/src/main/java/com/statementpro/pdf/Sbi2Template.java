@@ -181,7 +181,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{10, 10, 32, 18, 10, 10, 10})).useAllAvailableWidth();
+        Table table = new Table(new float[]{52.8f, 53.0f, 132.0f, 79.3f, 63.4f, 63.4f, 79.2f}).useAllAvailableWidth();
         table.setFontSize(8.0f);
 
         for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./Cheque\nNo.", "Debit", "Credit", "Balance"}) {
