@@ -100,7 +100,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPointArray(new float[]{140f, 10f, 373f})).useAllAvailableWidth();
+        Table table = new Table(UnitValue.createPointArray(new float[]{112f, 8f, 403f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
         table.setMarginBottom(0);
 
@@ -130,7 +130,7 @@ public class Sbi2Template implements StatementTemplate {
     private void addDossierRow(Table table, String label, String value) {
         table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
         table.addCell(new Cell().add(new Paragraph(":").setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(4.0f));
+        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(2.0f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
