@@ -161,7 +161,7 @@ public class Sbi2Template implements StatementTemplate {
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
-        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT, 8.5f));
+        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT, 10.0f));
         table.addHeaderCell(headerCell("Ref\u00A0No./Cheque\nNo.", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
