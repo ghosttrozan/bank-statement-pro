@@ -104,13 +104,13 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{28, 2, 70})).useAllAvailableWidth();
-        table.setFontSize(9.4f);
+        Table table = new Table(UnitValue.createPercentArray(new float[]{26, 2, 72})).useAllAvailableWidth();
+        table.setFontSize(9.0f);
         table.setMarginBottom(0f);
 
         addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
         
-        String addr = (record.customerDetails().address() != null ? record.customerDetails().address().trim() : "");
+        String addr = (record.customerDetails().address() != null ? record.customerDetails().address().replaceAll("[\\r\\n]+", " ").trim() : "");
         addDossierAddressRow(table, "Address", ": " + addr);
 
         addDossierRow(table, "Date", ": " + endDateStr);
@@ -134,13 +134,14 @@ public class Sbi2Template implements StatementTemplate {
 
     private void addDossierAddressRow(Table table, String label, String valueWithColon) {
         Paragraph p1 = new Paragraph(label == null ? "" : label)
-                .setFontSize(9.4f)
+                .setFontSize(9.0f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
         
-        // Append 3 empty lines underneath address
-        Paragraph p2 = new Paragraph((valueWithColon != null ? valueWithColon : "") + "\n\n\n")
-                .setFontSize(9.4f)
+        // Single line address followed by 3 empty lines
+        String cleanSingleLineAddr = (valueWithColon != null ? valueWithColon.replaceAll("[\\r\\n]+", " ").trim() : "");
+        Paragraph p2 = new Paragraph(cleanSingleLineAddr + "\n\n\n")
+                .setFontSize(8.5f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
 
