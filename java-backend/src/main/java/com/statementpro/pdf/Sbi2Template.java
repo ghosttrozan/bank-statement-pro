@@ -129,14 +129,14 @@ public class Sbi2Template implements StatementTemplate {
     private void addDossierRow(Table table, String label, String value) {
         table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
         table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(3.0f));
+        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addAddressRow(Table table, String address) {
         String cleanAddress = (address != null ? address : "").replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
         table.addCell(new Cell().add(new Paragraph("Address").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
         table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(3.0f));
+        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
@@ -154,14 +154,14 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        // Exact pixel-perfect column widths matching authentic SBI reference PDF (Total 523pt):
-        // Txn Date (54pt), Value Date (48pt), Description (145pt), Ref No (78pt), Debit (64pt), Credit (64pt), Balance (70pt)
-        Table table = new Table(UnitValue.createPointArray(new float[]{54f, 48f, 145f, 78f, 64f, 64f, 70f})).useAllAvailableWidth();
+        // Column widths Total 523pt:
+        // Txn Date (64pt), Value Date (50pt), Description (62pt), Ref No (176pt), Debit (58pt), Credit (58pt), Balance (55pt)
+        Table table = new Table(UnitValue.createPointArray(new float[]{64f, 50f, 62f, 176f, 58f, 58f, 55f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
-        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT, 8.5f));
         table.addHeaderCell(headerCell("Ref\u00A0No./Cheque\nNo.", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
@@ -183,7 +183,11 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text).setFontSize(10.0f).setBold().setMultipliedLeading(0.78f))
+        return headerCell(text, alignment, 10.0f);
+    }
+
+    private Cell headerCell(String text, TextAlignment alignment, float fontSize) {
+        return new Cell().add(new Paragraph(text).setFontSize(fontSize).setBold().setMultipliedLeading(0.78f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
                 .setPaddingTop(1.2f)
@@ -198,10 +202,10 @@ public class Sbi2Template implements StatementTemplate {
             return "CREDIT INTEREST--";
         }
         if (details.startsWith("ATM") || details.startsWith("POS") || details.startsWith("NETC")) {
-            return details;
+            return insertBreakPoints(details);
         }
 
-        String prefix = isCredit ? "BY TRANSFER-\n" : "TO TRANSFER-\n";
+        String prefix = isCredit ? "BY\u00A0TRANSFER-\n" : "TO\u00A0TRANSFER-\n";
         String clean = details;
         if (clean.startsWith("BY TRANSFER-") || clean.startsWith("TO TRANSFER-")) {
             clean = clean.substring(12).trim();
@@ -211,9 +215,49 @@ public class Sbi2Template implements StatementTemplate {
             clean = clean.substring(11).trim();
         }
 
-        // Allow wrapping at slashes and asterisks just like authentic Lowagie iText
-        clean = clean.replace("/", "/\u200B").replace("*", "*\u200B");
-        return prefix + clean;
+        return prefix + insertBreakPoints(clean);
+    }
+
+    private String insertBreakPoints(String str) {
+        if (str == null) return "";
+        StringBuilder sb = new StringBuilder();
+        int lineLength = 0;
+        int consecutive = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            if (c == '\n') {
+                sb.append(c);
+                lineLength = 0;
+                consecutive = 0;
+                continue;
+            }
+
+            if (lineLength >= 24) {
+                sb.append('\n');
+                lineLength = 0;
+                consecutive = 0;
+                if (Character.isWhitespace(c)) {
+                    continue;
+                }
+            }
+
+            sb.append(c);
+            lineLength++;
+
+            if (c == '/' || c == '*' || c == '-' || c == '@' || c == '.' || c == '_' || c == ':') {
+                sb.append('\u200B');
+                consecutive = 0;
+            } else if (Character.isWhitespace(c)) {
+                consecutive = 0;
+            } else {
+                consecutive++;
+                if (consecutive >= 7) {
+                    sb.append('\u200B');
+                    consecutive = 0;
+                }
+            }
+        }
+        return sb.toString();
     }
 
     private String buildRefLine(Transaction tx) {
