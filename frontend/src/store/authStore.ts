@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface DbUser {
   id: string;
@@ -19,22 +20,49 @@ export interface DbUser {
 
 interface AuthState {
   accessToken: string | null;
+  refreshToken: string | null;
   user: DbUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  setTokens: (accessToken: string) => void;
+  setTokens: (accessToken: string, refreshToken?: string) => void;
   setUser: (user: DbUser) => void;
   setIsLoading: (isLoading: boolean) => void;
   clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  accessToken: null,
-  user: null,
-  isAuthenticated: false,
-  isLoading: true, // true until initial silent-refresh resolves
-  setTokens: (accessToken) => set({ accessToken, isAuthenticated: true }),
-  setUser: (user) => set({ user }),
-  setIsLoading: (isLoading) => set({ isLoading }),
-  clearAuth: () => set({ accessToken: null, user: null, isAuthenticated: false }),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      setTokens: (accessToken, refreshToken) =>
+        set((state) => ({
+          accessToken,
+          refreshToken: refreshToken || state.refreshToken,
+          isAuthenticated: true,
+        })),
+      setUser: (user) => set({ user }),
+      setIsLoading: (isLoading) => set({ isLoading }),
+      clearAuth: () =>
+        set({
+          accessToken: null,
+          refreshToken: null,
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        }),
+    }),
+    {
+      name: 'statementpro-auth-storage',
+      partialize: (state) => ({
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+    }
+  )
+);

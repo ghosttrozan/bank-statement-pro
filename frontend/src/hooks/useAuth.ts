@@ -6,8 +6,8 @@ export const useAuth = () => {
 
   const login = async (loginIdentifier: string, password: string): Promise<void> => {
     const res = await api.post('/api/auth/login', { loginIdentifier, password });
-    const { accessToken: token, user: userData } = res.data;
-    setTokens(token);
+    const { accessToken: token, refreshToken: rToken, user: userData } = res.data;
+    setTokens(token, rToken);
     setUser(userData);
   };
 

@@ -70,14 +70,15 @@ api.interceptors.response.use(
 
       try {
         // Attempt silent token refresh via rotation endpoint
+        const currentRefreshToken = useAuthStore.getState().refreshToken;
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/api/auth/refresh`,
-          {},
+          { refreshToken: currentRefreshToken },
           { withCredentials: true }
         );
 
-        const { accessToken } = refreshResponse.data;
-        useAuthStore.getState().setTokens(accessToken);
+        const { accessToken, refreshToken } = refreshResponse.data;
+        useAuthStore.getState().setTokens(accessToken, refreshToken);
 
         // Process any queued requests that failed while refreshing
         processQueue(null, accessToken);

@@ -25,8 +25,8 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/api/auth', // only send to /api/auth routes
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/', // root path so all routes have access
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
   });
 };
@@ -35,8 +35,8 @@ const clearRefreshTokenCookie = (res: Response) => {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/api/auth',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
   });
 };
 
@@ -111,6 +111,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Send response (exclude passwordHash)
     res.json({
       accessToken,
+      refreshToken,
       user: {
         id: user._id,
         fullName: user.fullName,
@@ -131,7 +132,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 // ── Refresh Token Rotation ──
 export const refresh = async (req: Request, res: Response): Promise<void> => {
   try {
-    const rawRefreshToken = req.cookies[COOKIE_NAME];
+    const rawRefreshToken = req.cookies[COOKIE_NAME] || req.body?.refreshToken || (req.headers['x-refresh-token'] as string);
     if (!rawRefreshToken) {
       res.status(401).json({ message: 'Refresh token not found' });
       return;
@@ -174,7 +175,7 @@ export const refresh = async (req: Request, res: Response): Promise<void> => {
     // Set new refresh token cookie
     setRefreshTokenCookie(res, newRefreshToken);
 
-    res.json({ accessToken });
+    res.json({ accessToken, refreshToken: newRefreshToken });
   } catch (error) {
     console.error('[AuthController] Refresh error:', error);
     res.status(500).json({ message: 'Internal server error' });
