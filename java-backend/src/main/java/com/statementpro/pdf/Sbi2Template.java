@@ -137,7 +137,7 @@ public class Sbi2Template implements StatementTemplate {
         String cleanAddress = (address != null ? address : "").replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
         table.addCell(new Cell().add(new Paragraph("Address").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
         table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
+        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
