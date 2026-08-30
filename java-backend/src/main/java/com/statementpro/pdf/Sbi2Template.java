@@ -36,7 +36,7 @@ public class Sbi2Template implements StatementTemplate {
         try (PdfDocument pdfDoc = new PdfDocument(writer);
              Document doc = new Document(pdfDoc, PageSize.A4)) {
 
-            doc.setMargins(20, 28, 20, 28);
+            doc.setMargins(20, 24, 20, 24);
 
             pdfDoc.getDocumentInfo()
                     .setAuthor("State Bank of India")
@@ -48,7 +48,7 @@ public class Sbi2Template implements StatementTemplate {
             int totalPages = pages.size();
 
             String accountNumber = formatSbiAccountNumber(record.customerDetails().accountNumber());
-            String startDateStr = transactions.isEmpty() ? "01 Apr 2026" : formatSbiDate(transactions.get(0).valueDate());
+            String startDateStr = transactions.isEmpty() ? "1 Apr 2026" : formatSbiDate(transactions.get(0).valueDate());
             String endDateStr = transactions.isEmpty() ? "30 Apr 2026" : formatSbiDate(transactions.get(transactions.size() - 1).valueDate());
 
             for (int pageIdx = 0; pageIdx < totalPages; pageIdx++) {
@@ -58,12 +58,11 @@ public class Sbi2Template implements StatementTemplate {
                 if (isFirstPage) {
                     Image logo = loadLogo();
                     if (logo != null) {
-                        doc.add(logo.setMarginBottom(10));
+                        doc.add(logo);
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
-                    doc.add(new Paragraph("Statement of " + record.customerDetails().accountHolderName()
-                            + " (A/c-" + accountNumber + ") between " + startDateStr + " to " + endDateStr)
-                            .setBold().setFontSize(9.5f).setMarginTop(8).setMarginBottom(6));
+                    doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
+                            .setBold().setFontSize(9.5f).setMarginTop(10).setMarginBottom(6));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
@@ -89,8 +88,9 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            logo.setHeight(40);
-            logo.setAutoScaleWidth(true);
+            // Fixed compact dimensions matching authentic SBI statement layout
+            logo.setWidth(90f);
+            logo.setMarginBottom(12f);
             return logo;
         } catch (Exception e) {
             return null;
@@ -98,39 +98,38 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{30, 2, 68})).useAllAvailableWidth();
-        table.setFontSize(9);
-        table.setMarginBottom(6);
+        Table table = new Table(UnitValue.createPercentArray(new float[]{28, 2, 70})).useAllAvailableWidth();
+        table.setFontSize(8.5f);
+        table.setMarginBottom(4);
 
-        addDossierRow(table, "Account Name", record.customerDetails().accountHolderName());
-        addDossierRow(table, "Address", TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
-        addDossierRow(table, "Date", endDateStr);
-        addDossierRow(table, "Account Number", accountNumber);
-        addDossierRow(table, "Account Description", "REGULAR SB CHQ-INDIVIDUALS");
-        addDossierRow(table, "Branch", record.branchDetails().branchName());
-        addDossierRow(table, "Drawing Power", "0.00");
-        addDossierRow(table, "Interest Rate(% p.a.)", String.valueOf(record.accountInfo().interestRate()));
-        addDossierRow(table, "MOD Balance", "0.00");
-        addDossierRow(table, "CIF No.", record.customerDetails().cifNumber());
-        addDossierRow(table, "CKYCR Number", maskCkycr(record.branchDetails().ckycrNumber()));
-        addDossierRow(table, "IFS Code", record.branchDetails().ifscCode());
+        addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
+        addDossierRow(table, "Address", ": " + TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
+        addDossierRow(table, "Date", ": " + endDateStr);
+        addDossierRow(table, "Account Number", ": " + accountNumber);
+        addDossierRow(table, "Account Description", ": " + (record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank() ? record.accountInfo().accountType().toUpperCase() : "REGULAR SAVINGS BANK ACCOUNT"));
+        addDossierRow(table, "Branch", ": " + (record.branchDetails().branchName() != null ? record.branchDetails().branchName() : ""));
+        addDossierRow(table, "Drawing Power", ": 0.00");
+        addDossierRow(table, "Interest Rate(% p.a.)", ": " + record.accountInfo().interestRate());
+        addDossierRow(table, "MOD Balance", ": 0.00");
+        addDossierRow(table, "CIF No.", ": " + (record.customerDetails().cifNumber() != null ? record.customerDetails().cifNumber() : ""));
+        addDossierRow(table, "CKYCR Number", ": " + maskCkycr(record.branchDetails().ckycrNumber()));
+        addDossierRow(table, "IFS Code", ":" + (record.branchDetails().ifscCode() != null ? record.branchDetails().ifscCode() : ""));
         addDossierSpanRow(table, "(Indian Financial System)");
-        addDossierRow(table, "MICR Code", record.branchDetails().micrCode());
+        addDossierRow(table, "MICR Code", ": " + (record.branchDetails().micrCode() != null ? record.branchDetails().micrCode() : ""));
         addDossierSpanRow(table, "(Magnetic Ink Character Recognition)");
-        addDossierRow(table, "Nomination Registered", isNominationRegistered(record.customerDetails().nomineeName()) ? "Yes" : "No");
-        addDossierRow(table, "Balance as on " + startDateStr, TemplateUtils.formatCurrency(record.accountInfo().openingBalance()));
+        addDossierRow(table, "Nomination Registered", ": " + (isNominationRegistered(record.customerDetails().nomineeName()) ? "Yes" : "No"));
+        addDossierRow(table, "Balance as on " + startDateStr, ": " + TemplateUtils.formatCurrency(record.accountInfo().openingBalance()));
 
         return table;
     }
 
-    private void addDossierRow(Table table, String label, String value) {
-        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.1f)).setBorder(null).setPadding(1));
-        table.addCell(new Cell().add(new Paragraph(":").setMultipliedLeading(1.1f)).setBorder(null).setPadding(1));
-        table.addCell(new Cell().add(new Paragraph(value == null ? "" : value).setMultipliedLeading(1.1f)).setBorder(null).setPadding(1));
+    private void addDossierRow(Table table, String label, String valueWithColon) {
+        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.15f)).setBorder(null).setPadding(1f));
+        table.addCell(new Cell(1, 2).add(new Paragraph(valueWithColon == null ? "" : valueWithColon).setMultipliedLeading(1.15f)).setBorder(null).setPadding(1f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
-        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(8).setItalic().setMultipliedLeading(1.1f)).setBorder(null).setPadding(0));
+        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(7.5f).setMultipliedLeading(1.0f)).setBorder(null).setPadding(0));
     }
 
     private String maskCkycr(String ckycr) {
@@ -145,11 +144,11 @@ public class Sbi2Template implements StatementTemplate {
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
         Table table = new Table(UnitValue.createPercentArray(new float[]{10, 10, 32, 18, 10, 10, 10})).useAllAvailableWidth();
-        table.setFontSize(8.5f);
+        table.setFontSize(8.0f);
 
-        for (String header : new String[]{"Txn Date", "Value Date", "Description", "Ref No./Cheque No.", "Debit", "Credit", "Balance"}) {
-            table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(8.5f).setBold().setMultipliedLeading(1.1f))
-                    .setBorder(new SolidBorder(0.5f)).setPadding(3));
+        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./Cheque\nNo.", "Debit", "Credit", "Balance"}) {
+            table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(8.0f).setBold().setMultipliedLeading(1.1f))
+                    .setBorder(new SolidBorder(0.5f)).setPadding(2.5f));
         }
 
         for (Transaction tx : pageTxs) {
@@ -193,7 +192,7 @@ public class Sbi2Template implements StatementTemplate {
 
     private Cell sbi2Cell(String text) {
         return new Cell().add(new Paragraph(text == null ? "" : text).setMultipliedLeading(1.15f))
-                .setBorder(new SolidBorder(0.5f)).setPadding(2.5f);
+                .setBorder(new SolidBorder(0.5f)).setPadding(2.0f);
     }
 
     private Cell sbi2CellRight(String text) {
@@ -218,7 +217,7 @@ public class Sbi2Template implements StatementTemplate {
                     year = Integer.parseInt(parts[2]);
                 }
                 if (month >= 0 && month < 12) {
-                    return String.format("%02d %s %04d", day, MONTHS[month], year);
+                    return String.format("%d %s %04d", day, MONTHS[month], year);
                 }
             } catch (NumberFormatException ignored) {}
         }
