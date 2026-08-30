@@ -7,7 +7,6 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.SolidBorder;
-import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
@@ -25,8 +24,8 @@ public class Sbi2Template implements StatementTemplate {
     private static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     private static final float LINE_HEIGHT_PT = 13.5f;
 
-    // Reference Column Widths: Total = 522pt (Bounding box: X=36 to 558pt, margins=36pt)
-    private static final float[] COLUMN_WIDTHS = new float[]{53f, 53f, 132f, 79f, 63f, 63f, 79f};
+    // Fixed Column Widths totaling exactly 523pt (A4 width 595pt - 36pt left margin - 36pt right margin)
+    private static final float[] COLUMN_WIDTHS = new float[]{55f, 55f, 134f, 78f, 63f, 63f, 75f};
 
     @Override
     public byte[] render(StatementRecord record) throws java.io.IOException {
@@ -48,46 +47,36 @@ public class Sbi2Template implements StatementTemplate {
                     .setTitle("State Bank of India - Account Statement");
 
             List<Transaction> transactions = record.transactions();
-            List<List<Transaction>> pages = TemplateUtils.chunkTransactions(transactions, 11, 23);
-            int totalPages = pages.size();
-
             String accountNumber = formatSbiAccountNumber(record.customerDetails().accountNumber());
             String startDateStr = transactions.isEmpty() ? "1 Feb 2026" : formatSbiDate(transactions.get(0).valueDate());
             String endDateStr = transactions.isEmpty() ? "26 Aug 2026" : formatSbiDate(transactions.get(transactions.size() - 1).valueDate());
 
-            for (int pageIdx = 0; pageIdx < totalPages; pageIdx++) {
-                boolean isFirstPage = pageIdx == 0;
-                boolean isLastPage = pageIdx == totalPages - 1;
-
-                if (isFirstPage) {
-                    Image logo = loadLogo();
-                    if (logo != null) {
-                        doc.add(logo);
-                    }
-                    doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
-                    
-                    // Reference Statement Title: Helvetica 12pt regular/semi-bold, left aligned
-                    doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setFontSize(12.0f)
-                            .setFixedLeading(LINE_HEIGHT_PT)
-                            .setMarginTop(28f)
-                            .setMarginBottom(16f));
-                }
-
-                doc.add(buildLedgerTable(pages.get(pageIdx)));
-
-                if (isLastPage) {
-                    doc.add(new Paragraph("Please do not share your ATM, Debit/Credit card number, PIN "
-                            + "(Personal Identification Number) and OTP (One Time Password) with anyone over "
-                            + "mail, SMS, phone call or any other media. Bank never asks for such information.")
-                            .setFontSize(8.5f).setMarginTop(12));
-                    doc.add(new Paragraph("**This is a computer generated statement and does not require a signature.")
-                            .setFontSize(8.5f).setMarginTop(4));
-                }
-                if (!isLastPage) {
-                    doc.add(new AreaBreak());
-                }
+            // 1. Top SBI Logo (Clean cyan emblem + SBI text, no Account Summary, 181.5 x 54 pt)
+            Image logo = loadLogo();
+            if (logo != null) {
+                doc.add(logo);
             }
+
+            // 2. Account Information Dossier
+            doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
+
+            // 3. Statement Title (Helvetica 12pt, regular/left-aligned)
+            doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
+                    .setFontSize(12.0f)
+                    .setFixedLeading(LINE_HEIGHT_PT)
+                    .setMarginTop(28f)
+                    .setMarginBottom(16f));
+
+            // 4. Continuous Ledger Table (Flows naturally across all pages, repeating header automatically)
+            doc.add(buildContinuousLedgerTable(transactions));
+
+            // 5. Footer Disclaimer (Flows naturally immediately after the final table row)
+            doc.add(new Paragraph("Please do not share your ATM, Debit/Credit card number, PIN "
+                    + "(Personal Identification Number) and OTP (One Time Password) with anyone over "
+                    + "mail, SMS, phone call or any other media. Bank never asks for such information.")
+                    .setFontSize(8.5f).setMarginTop(12f));
+            doc.add(new Paragraph("**This is a computer generated statement and does not require a signature.")
+                    .setFontSize(8.5f).setMarginTop(4f));
         }
         return out.toByteArray();
     }
@@ -97,7 +86,7 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact reference specifications: Width ≈ 181.5 pt, Height ≈ 54 pt, starting at X=36, Y=36
+            // Exact reference specifications: Width ≈ 181.5 pt, Height ≈ 54 pt
             logo.setWidth(181.5f);
             logo.setHeight(54.0f);
             logo.setMarginBottom(3.8f);
@@ -108,7 +97,6 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        // Table with 2 columns: Label width ~135pt, Value width ~388pt
         Table table = new Table(new float[]{135f, 388f}).setWidth(523f);
         table.setFontSize(9.0f);
         table.setMarginBottom(0f);
@@ -186,16 +174,18 @@ public class Sbi2Template implements StatementTemplate {
         return nomineeName != null && !nomineeName.isBlank() && !nomineeName.toLowerCase().contains("no");
     }
 
-    private Table buildLedgerTable(List<Transaction> pageTxs) {
-        Table table = new Table(COLUMN_WIDTHS).setWidth(523f);
+    private Table buildContinuousLedgerTable(List<Transaction> transactions) {
+        Table table = new Table(COLUMN_WIDTHS);
         table.setFontSize(9.0f);
 
-        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./Cheque\nNo.", "Debit", "Credit", "Balance"}) {
+        // Header cells repeated on every page
+        for (String header : new String[]{"Txn Date", "Value\nDate", "Description", "Ref No./\nCheque\nNo.", "Debit", "Credit", "Balance"}) {
             table.addHeaderCell(new Cell().add(new Paragraph(header).setFontSize(10.0f).setBold().setMultipliedLeading(1.05f))
                     .setBorder(new SolidBorder(0.5f)).setPaddingLeft(1.5f).setPaddingRight(1.5f).setPaddingTop(2.0f).setPaddingBottom(2.0f));
         }
 
-        for (Transaction tx : pageTxs) {
+        // All rows added continuously so iText handles natural pagination
+        for (Transaction tx : transactions) {
             String description = buildDescription(tx);
             String refLine = buildRefLine(tx);
 

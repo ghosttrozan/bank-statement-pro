@@ -50,6 +50,12 @@ public class GenerateSampleStatementTest {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
             fos.write(pdfBytes);
         }
-        System.out.println("GENERATION_SUCCESS: " + outputPath + " | TxCount=" + txs.size() + " | Bytes=" + pdfBytes.length);
+
+        int pagesCount;
+        try (com.itextpdf.kernel.pdf.PdfReader reader = new com.itextpdf.kernel.pdf.PdfReader(outputPath);
+             com.itextpdf.kernel.pdf.PdfDocument pdfDoc = new com.itextpdf.kernel.pdf.PdfDocument(reader)) {
+            pagesCount = pdfDoc.getNumberOfPages();
+        }
+        System.out.println("GENERATION_SUCCESS: " + outputPath + " | TxCount=" + txs.size() + " | Pages=" + pagesCount + " | Bytes=" + pdfBytes.length);
     }
 }
