@@ -148,8 +148,8 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        // Exact column distribution: Txn Date (62pt), Value Date (62pt), Description (152pt), Ref No (92pt), Debit (51pt), Credit (51pt), Balance (53pt) = 523pt
-        Table table = new Table(UnitValue.createPointArray(new float[]{62f, 62f, 152f, 92f, 51f, 51f, 53f})).useAllAvailableWidth();
+        // Guaranteed single-line dates with 65pt width and non-breaking spaces
+        Table table = new Table(UnitValue.createPointArray(new float[]{65f, 65f, 146f, 90f, 51f, 51f, 55f})).useAllAvailableWidth();
         table.setFontSize(8.5f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
@@ -164,8 +164,8 @@ public class Sbi2Template implements StatementTemplate {
             String description = buildDescription(tx);
             String refLine = buildRefLine(tx);
 
-            table.addCell(sbi2Cell(formatSbiDate(tx.valueDate()), TextAlignment.LEFT));
-            table.addCell(sbi2Cell(formatSbiDate(tx.postDate()), TextAlignment.LEFT));
+            table.addCell(sbi2DateCell(formatSbiDate(tx.valueDate()), TextAlignment.LEFT));
+            table.addCell(sbi2DateCell(formatSbiDate(tx.postDate()), TextAlignment.LEFT));
             table.addCell(sbi2Cell(description, TextAlignment.LEFT));
             table.addCell(sbi2Cell(refLine, TextAlignment.LEFT));
             table.addCell(sbi2Cell(tx.debit() != null ? TemplateUtils.formatCurrency(tx.debit()) : "", TextAlignment.RIGHT));
@@ -226,6 +226,15 @@ public class Sbi2Template implements StatementTemplate {
         }
     }
 
+    private Cell sbi2DateCell(String text, TextAlignment alignment) {
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.1f))
+                .setBorder(new SolidBorder(0.5f))
+                .setPadding(2.5f)
+                .setPaddingLeft(2.0f)
+                .setPaddingRight(1.5f)
+                .setTextAlignment(alignment);
+    }
+
     private Cell sbi2Cell(String text, TextAlignment alignment) {
         return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.1f))
                 .setBorder(new SolidBorder(0.5f))
@@ -235,7 +244,9 @@ public class Sbi2Template implements StatementTemplate {
 
     private String formatSbiDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) return "";
-        if (dateStr.matches(".*[a-zA-Z].*")) return dateStr;
+        if (dateStr.matches(".*[a-zA-Z].*")) {
+            return dateStr.replace(" ", "\u00A0");
+        }
 
         String[] parts = dateStr.split("[-/]");
         if (parts.length == 3) {
@@ -251,11 +262,11 @@ public class Sbi2Template implements StatementTemplate {
                     year = Integer.parseInt(parts[2]);
                 }
                 if (month >= 0 && month < 12) {
-                    return String.format("%d %s %04d", day, MONTHS[month], year);
+                    return String.format("%d\u00A0%s\u00A0%04d", day, MONTHS[month], year);
                 }
             } catch (NumberFormatException ignored) {}
         }
-        return dateStr;
+        return dateStr.replace(" ", "\u00A0");
     }
 
     private String formatSbiAccountNumber(String accNo) {
