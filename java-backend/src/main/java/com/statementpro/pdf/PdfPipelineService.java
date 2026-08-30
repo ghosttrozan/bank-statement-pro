@@ -11,6 +11,10 @@ public final class PdfPipelineService {
     private PdfPipelineService() {}
 
     public static byte[] generate(StatementRecord record, String password) throws Exception {
+        return generate(record, password, false);
+    }
+
+    public static byte[] generate(StatementRecord record, String password, boolean signPdf) throws Exception {
         String bankStyle = record.settings() != null ? record.settings().bankStyle() : "SBI";
         StatementTemplate template = PdfTemplateFactory.forBankStyle(bankStyle);
 
@@ -25,6 +29,10 @@ public final class PdfPipelineService {
         }
 
         byte[] rendered = template.render(record, writerProperties);
+
+        if (!signPdf) {
+            return rendered;
+        }
 
         String bankName = switch (bankStyle != null ? bankStyle : "SBI") {
             case "BOI" -> "Bank of India";
