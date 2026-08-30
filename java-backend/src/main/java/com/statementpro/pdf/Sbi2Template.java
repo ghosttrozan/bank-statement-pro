@@ -92,7 +92,7 @@ public class Sbi2Template implements StatementTemplate {
             // Exact dimensions from reference PDF: 181.5 pt x 54.0 pt (242x72 px @ 96 PPI)
             logo.setWidth(181.5f);
             logo.setHeight(54.0f);
-            logo.setMarginBottom(14f);
+            logo.setMarginBottom(2f);
             return logo;
         } catch (Exception e) {
             return null;
