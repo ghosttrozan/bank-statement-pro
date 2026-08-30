@@ -109,7 +109,10 @@ public class Sbi2Template implements StatementTemplate {
         table.setMarginBottom(0f);
 
         addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
-        addDossierRow(table, "Address", ": " + (record.customerDetails().address() != null ? record.customerDetails().address().trim() : ""));
+        
+        String addr = (record.customerDetails().address() != null ? record.customerDetails().address().trim() : "");
+        addDossierAddressRow(table, "Address", ": " + addr);
+
         addDossierRow(table, "Date", ": " + endDateStr);
         addDossierRow(table, "Account Number", ": " + accountNumber);
         addDossierRow(table, "Account Description", ": " + (record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank() ? record.accountInfo().accountType().toUpperCase() : "REGULAR SAVINGS BANK ACCOUNT"));
@@ -127,6 +130,22 @@ public class Sbi2Template implements StatementTemplate {
         addDossierRow(table, "Balance as on " + startDateStr, ": " + TemplateUtils.formatCurrency(record.accountInfo().openingBalance()));
 
         return table;
+    }
+
+    private void addDossierAddressRow(Table table, String label, String valueWithColon) {
+        Paragraph p1 = new Paragraph(label == null ? "" : label)
+                .setFontSize(9.4f)
+                .setFixedLeading(LINE_HEIGHT_PT)
+                .setMargin(0);
+        
+        // Append 3 empty lines underneath address
+        Paragraph p2 = new Paragraph((valueWithColon != null ? valueWithColon : "") + "\n\n\n")
+                .setFontSize(9.4f)
+                .setFixedLeading(LINE_HEIGHT_PT)
+                .setMargin(0);
+
+        table.addCell(new Cell().add(p1).setBorder(null).setPadding(0).setMargin(0));
+        table.addCell(new Cell(1, 2).add(p2).setBorder(null).setPadding(0).setMargin(0));
     }
 
     private void addDossierRow(Table table, String label, String valueWithColon) {
