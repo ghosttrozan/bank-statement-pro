@@ -187,11 +187,17 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment, float fontSize) {
-        return new Cell().add(new Paragraph(text).setFontSize(fontSize).setBold().setMultipliedLeading(0.78f))
+        com.itextpdf.layout.element.Text t = new com.itextpdf.layout.element.Text(text)
+                .setFontSize(fontSize)
+                .setBold()
+                .setStrokeWidth(0.25f)
+                .setTextRenderingMode(com.itextpdf.kernel.pdf.canvas.PdfCanvasConstants.TextRenderingMode.FILL_STROKE);
+
+        return new Cell().add(new Paragraph().add(t).setMultipliedLeading(0.78f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
-                .setPaddingTop(3.5f)
-                .setPaddingBottom(1.5f)
+                .setPaddingTop(5.0f)
+                .setPaddingBottom(2.0f)
                 .setTextAlignment(alignment);
     }
 
