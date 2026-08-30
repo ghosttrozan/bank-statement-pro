@@ -89,7 +89,7 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact dimensions: 181.5 pt x 54.0 pt (242x72 px @ 96 PPI)
+            // Exact dimensions from reference PDF: 181.5 pt x 54.0 pt (242x72 px @ 96 PPI)
             logo.setWidth(181.5f);
             logo.setHeight(54.0f);
             logo.setMarginBottom(14f);
@@ -148,9 +148,9 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        // Exact pixel-perfect column point widths from authentic reference PDF (Total 523pt)
-        Table table = new Table(UnitValue.createPointArray(new float[]{53f, 53f, 132f, 112f, 58f, 58f, 57f})).useAllAvailableWidth();
-        table.setFontSize(9.0f);
+        // Exact column distribution: Txn Date (62pt), Value Date (62pt), Description (152pt), Ref No (92pt), Debit (51pt), Credit (51pt), Balance (53pt) = 523pt
+        Table table = new Table(UnitValue.createPointArray(new float[]{62f, 62f, 152f, 92f, 51f, 51f, 53f})).useAllAvailableWidth();
+        table.setFontSize(8.5f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
@@ -176,29 +176,49 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text).setFontSize(10.0f).setBold().setMultipliedLeading(1.1f))
+        return new Cell().add(new Paragraph(text).setFontSize(9.5f).setBold().setMultipliedLeading(1.1f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(3.0f)
+                .setPadding(2.5f)
                 .setTextAlignment(alignment);
     }
 
     private String buildDescription(Transaction tx) {
         boolean isCredit = tx.credit() != null;
-        if (isCredit && tx.details().contains("INTEREST")) {
+        String details = tx.details() != null ? tx.details() : "";
+        if (isCredit && details.contains("INTEREST")) {
             return "CREDIT INTEREST--";
         }
         if (isCredit) {
-            return "BY TRANSFER-\n" + tx.details();
+            String clean = details;
+            if (clean.startsWith("BY TRANSFER-")) {
+                clean = clean.substring("BY TRANSFER-".length()).trim();
+            } else if (clean.startsWith("BY TRANSFER -")) {
+                clean = clean.substring("BY TRANSFER -".length()).trim();
+            } else if (clean.startsWith("BY TRANSFER")) {
+                clean = clean.substring("BY TRANSFER".length()).trim();
+            }
+            return "BY TRANSFER-\n" + clean;
+        } else {
+            String clean = details;
+            if (clean.startsWith("TO TRANSFER-")) {
+                clean = clean.substring("TO TRANSFER-".length()).trim();
+            } else if (clean.startsWith("TO TRANSFER -")) {
+                clean = clean.substring("TO TRANSFER -".length()).trim();
+            } else if (clean.startsWith("TO TRANSFER")) {
+                clean = clean.substring("TO TRANSFER".length()).trim();
+            }
+            return "TO TRANSFER-\n" + clean;
         }
-        String cleanDetails = tx.details().startsWith("TO TRANSFER-") ? tx.details().substring("TO TRANSFER-".length()) : tx.details();
-        return "TO TRANSFER-\n" + cleanDetails;
     }
 
     private String buildRefLine(Transaction tx) {
-        if (tx.credit() != null && tx.details().contains("INTEREST")) {
+        if (tx.credit() != null && tx.details() != null && tx.details().contains("INTEREST")) {
             return "";
         }
-        String rNum = tx.refNo() != null && !tx.refNo().isBlank() ? tx.refNo() : "1234567890123";
+        String rNum = tx.refNo() != null && !tx.refNo().isBlank() ? tx.refNo() : "2567877902099";
+        if (rNum.length() < 13 && rNum.matches("\\d+")) {
+            rNum = rNum + "1234567890123".substring(0, 13 - rNum.length());
+        }
         if (tx.credit() != null) {
             return "TRANSFER\nFROM\n" + rNum;
         } else {
@@ -207,7 +227,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell sbi2Cell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.1f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.1f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(2.5f)
                 .setTextAlignment(alignment);

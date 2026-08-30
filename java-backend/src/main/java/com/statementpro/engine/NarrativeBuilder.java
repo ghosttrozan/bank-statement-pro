@@ -13,9 +13,11 @@ public final class NarrativeBuilder {
         String ss = pad2(RandomUtils.randRange(0, 59));
         String direction = isCredit ? "CR" : "DR";
 
-        if ("BOI".equals(bankStyle)) {
+        if ("SBI2".equalsIgnoreCase(bankStyle) || "SBI".equalsIgnoreCase(bankStyle)) {
+            return "UPI/" + direction + "/" + ref + "/" + merch.name().toUpperCase() + "/" + bank + "/" + merch.handle() + "/Payme-";
+        } else if ("BOI".equalsIgnoreCase(bankStyle)) {
             return "UPI/" + ref + "/" + hh + ":" + mm + ":" + ss + "/UPI/" + merch.handle() + "/" + direction;
-        } else if ("Kotak".equals(bankStyle)) {
+        } else if ("Kotak".equalsIgnoreCase(bankStyle)) {
             return "UPI/" + direction + "/" + ref + "/" + merch.name() + "/" + merch.handle();
         }
         String tag = isCredit ? "UPIAB" : "UPIAR";
@@ -33,20 +35,25 @@ public final class NarrativeBuilder {
 
         String name = customName != null ? customName
                 : RandomUtils.pick(isCredit ? MerchantData.CREDIT_ONLY_NAMES : MerchantData.DEBIT_ONLY_NAMES);
-        String firstName = name.split(" ")[0];
-        String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
+        String firstName = name.split(" ")[0].toUpperCase();
+        String vpaHandle = firstName.toLowerCase() + RandomUtils.randRange(10, 99);
 
-        int styleSelector = RandomUtils.randRange(1, 4);
-        if ("BOI".equals(bankStyle)) {
+        if ("SBI2".equalsIgnoreCase(bankStyle) || "SBI".equalsIgnoreCase(bankStyle)) {
+            return "UPI/" + direction + "/" + ref + "/" + firstName + "/" + bank + "/" + vpaHandle + "/Payme-";
+        } else if ("BOI".equalsIgnoreCase(bankStyle)) {
+            String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
             return "UPI/" + ref + "/" + hh + ":" + mm + ":" + ss + "/UPI/" + vpa + "/" + direction;
-        } else if ("Kotak".equals(bankStyle)) {
-            return "UPI/" + direction + "/" + ref + "/" + firstName.toUpperCase() + "/" + vpa;
+        } else if ("Kotak".equalsIgnoreCase(bankStyle)) {
+            String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
+            return "UPI/" + direction + "/" + ref + "/" + firstName + "/" + vpa;
         }
 
+        String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
+        int styleSelector = RandomUtils.randRange(1, 4);
         return switch (styleSelector) {
             case 1 -> {
                 String tag = isCredit ? "UPIAB" : "UPIAR";
-                yield tag + "/" + ref + "/" + direction + "/" + firstName.toUpperCase() + "/" + bank + "/" + accountSuffix + "/Paymen";
+                yield tag + "/" + ref + "/" + direction + "/" + firstName + "/" + bank + "/" + accountSuffix + "/Paymen";
             }
             case 2 -> "UPI/" + ref + "/" + direction + "/" + name.toUpperCase() + "/" + vpa;
             case 3 -> "UPI-TRANSFER-" + ref + "-" + vpa.toUpperCase();
