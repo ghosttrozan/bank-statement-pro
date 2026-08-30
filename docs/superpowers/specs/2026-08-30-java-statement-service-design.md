@@ -210,10 +210,8 @@ needed).
 
 - **iText licensing**: iText 7/8's core library is AGPL v3 (free) or
   commercial-licensed. AGPL requires the service's own source to be
-  disclosed if distributed/offered as a network service. Confirm this is
-  acceptable, or budget for a commercial license, before implementation —
-  otherwise fall back to Apache-licensed OpenPDF (an iText 4 fork) for the
-  native-PDF approach at a slight feature/API cost.
+  disclosed if distributed/offered as a network service. **Resolved:** AGPL
+  accepted — proceed with iText under AGPL v3.
 - **Build tool**: Maven assumed for `java-backend/`; swap for Gradle if
   preferred — no impact on the design above.
 - **Java/Spring Boot version**: not pinned here; the implementation plan
