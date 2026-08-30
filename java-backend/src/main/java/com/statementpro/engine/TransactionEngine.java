@@ -273,33 +273,34 @@ public final class TransactionEngine {
                 String dateStr = DateUtils.formatDate(finalSalaryDate);
                 String narrative = SalaryCalculator.buildSalaryNeftNarrative(bankStyle, salaryInfo.company(), finalSalaryDate);
 
-                double netSalary = SalaryCalculator.applyRaise(salaryInfo.amount(), monthIndex, raiseMonth, raiseFactor);
-                netSalary = SalaryCalculator.applyMonthlyVariance(netSalary, isManualSalary);
-                netSalary = SalaryCalculator.applyBonus(netSalary, monthIndex, bonusMonth, bonusAmount);
-
-                SalaryDeductions deductions = isManualSalary
-                        ? new SalaryDeductions(0.0, 0.0, 0.0)
-                        : SalaryCalculator.computeDeductions(netSalary);
-                double grossSalary = Math.round((netSalary + deductions.total()) * 100.0) / 100.0;
+                double salaryCreditAmount = salaryInfo.amount();
+                if (!isManualSalary) {
+                    salaryCreditAmount = SalaryCalculator.applyRaise(salaryCreditAmount, monthIndex, raiseMonth, raiseFactor);
+                    salaryCreditAmount = SalaryCalculator.applyMonthlyVariance(salaryCreditAmount, false);
+                    salaryCreditAmount = SalaryCalculator.applyBonus(salaryCreditAmount, monthIndex, bonusMonth, bonusAmount);
+                }
 
                 totalTxs.add(new Transaction("tx_sal_" + finalSalaryDate + "_" + monthIndex,
-                        dateStr, dateStr, narrative, generateRefNo(bankStyle), null, grossSalary, 0));
+                        dateStr, dateStr, narrative, generateRefNo(bankStyle), null, salaryCreditAmount, 0));
 
                 String monthYear = SalaryCalculator.monthAbbrev(finalSalaryDate.getMonthValue()) + finalSalaryDate.getYear();
-                if (deductions.professionalTax() > 0) {
-                    totalTxs.add(new Transaction("tx_sal_pt_" + finalSalaryDate + "_" + monthIndex,
-                            dateStr, dateStr, "PROFESSIONAL TAX-" + monthYear, generateRefNo(bankStyle),
-                            deductions.professionalTax(), null, 0));
-                }
-                if (deductions.pfEmployeeContribution() > 0) {
-                    totalTxs.add(new Transaction("tx_sal_pf_" + finalSalaryDate + "_" + monthIndex,
-                            dateStr, dateStr, "PF EMPLOYEE CONTRIBUTION-" + monthYear, generateRefNo(bankStyle),
-                            deductions.pfEmployeeContribution(), null, 0));
-                }
-                if (deductions.tds() > 0) {
-                    totalTxs.add(new Transaction("tx_sal_tds_" + finalSalaryDate + "_" + monthIndex,
-                            dateStr, dateStr, "TDS ON SALARY U/S 192-" + monthYear, generateRefNo(bankStyle),
-                            deductions.tds(), null, 0));
+                if (!isManualSalary) {
+                    SalaryDeductions deductions = SalaryCalculator.computeDeductions(salaryCreditAmount);
+                    if (deductions.professionalTax() > 0) {
+                        totalTxs.add(new Transaction("tx_sal_pt_" + finalSalaryDate + "_" + monthIndex,
+                                dateStr, dateStr, "PROFESSIONAL TAX-" + monthYear, generateRefNo(bankStyle),
+                                deductions.professionalTax(), null, 0));
+                    }
+                    if (deductions.pfEmployeeContribution() > 0) {
+                        totalTxs.add(new Transaction("tx_sal_pf_" + finalSalaryDate + "_" + monthIndex,
+                                dateStr, dateStr, "PF EMPLOYEE CONTRIBUTION-" + monthYear, generateRefNo(bankStyle),
+                                deductions.pfEmployeeContribution(), null, 0));
+                    }
+                    if (deductions.tds() > 0) {
+                        totalTxs.add(new Transaction("tx_sal_tds_" + finalSalaryDate + "_" + monthIndex,
+                                dateStr, dateStr, "TDS ON SALARY U/S 192-" + monthYear, generateRefNo(bankStyle),
+                                deductions.tds(), null, 0));
+                    }
                 }
             }
             salaryMonthDate = salaryMonthDate.plusMonths(1);

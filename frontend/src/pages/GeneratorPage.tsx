@@ -369,8 +369,8 @@ export default function GeneratorPage() {
       }),
       ...(type === 'salaried' && {
         salaryMode,
-        companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
-        monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
+        companyName: companyName && companyName.trim() ? companyName.trim() : undefined,
+        monthlySalary: typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined,
         salaryDay,
       }),
     };
@@ -518,8 +518,8 @@ export default function GeneratorPage() {
       }),
       ...(statementType === 'salaried' && {
         salaryMode,
-        companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
-        monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
+        companyName: companyName && companyName.trim() ? companyName.trim() : undefined,
+        monthlySalary: typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined,
         salaryDay,
       }),
     };

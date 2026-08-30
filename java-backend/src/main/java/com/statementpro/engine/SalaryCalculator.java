@@ -60,11 +60,15 @@ public final class SalaryCalculator {
     }
 
     public static SalaryInfo getSalaryInfo(StatementSettings settings) {
-        if ("manual".equals(settings.salaryMode()) && settings.companyName() != null
-                && settings.monthlySalary() != null && settings.monthlySalary() > 0) {
-            return new SalaryInfo(settings.companyName().trim().toUpperCase(), Math.round(settings.monthlySalary()));
-        }
-        return new SalaryInfo(RandomUtils.pick(SALARY_COMPANIES), getRandomSalaryAmount());
+        String company = settings.companyName() != null && !settings.companyName().isBlank()
+                ? settings.companyName().trim().toUpperCase()
+                : RandomUtils.pick(SALARY_COMPANIES);
+
+        double amount = settings.monthlySalary() != null && settings.monthlySalary() > 0
+                ? settings.monthlySalary()
+                : getRandomSalaryAmount();
+
+        return new SalaryInfo(company, amount);
     }
 
     private static double getRandomSalaryAmount() {
