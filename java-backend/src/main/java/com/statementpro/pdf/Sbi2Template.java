@@ -161,7 +161,7 @@ public class Sbi2Template implements StatementTemplate {
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
-        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT));
+        table.addHeaderCell(headerCell("Description", TextAlignment.LEFT, 8.5f));
         table.addHeaderCell(headerCell("Ref\u00A0No./Cheque\nNo.", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Debit", TextAlignment.RIGHT));
         table.addHeaderCell(headerCell("Credit", TextAlignment.RIGHT));
@@ -183,7 +183,11 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell headerCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text).setFontSize(10.0f).setBold().setMultipliedLeading(0.78f))
+        return headerCell(text, alignment, 10.0f);
+    }
+
+    private Cell headerCell(String text, TextAlignment alignment, float fontSize) {
+        return new Cell().add(new Paragraph(text).setFontSize(fontSize).setBold().setMultipliedLeading(0.78f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(1.0f)
                 .setPaddingTop(1.2f)
@@ -198,10 +202,10 @@ public class Sbi2Template implements StatementTemplate {
             return "CREDIT INTEREST--";
         }
         if (details.startsWith("ATM") || details.startsWith("POS") || details.startsWith("NETC")) {
-            return details;
+            return insertBreakPoints(details);
         }
 
-        String prefix = isCredit ? "BY TRANSFER-\n" : "TO TRANSFER-\n";
+        String prefix = isCredit ? "BY\u00A0TRANSFER-\n" : "TO\u00A0TRANSFER-\n";
         String clean = details;
         if (clean.startsWith("BY TRANSFER-") || clean.startsWith("TO TRANSFER-")) {
             clean = clean.substring(12).trim();
@@ -211,9 +215,30 @@ public class Sbi2Template implements StatementTemplate {
             clean = clean.substring(11).trim();
         }
 
-        // Allow wrapping at slashes and asterisks just like authentic Lowagie iText
-        clean = clean.replace("/", "/\u200B").replace("*", "*\u200B");
-        return prefix + clean;
+        return prefix + insertBreakPoints(clean);
+    }
+
+    private String insertBreakPoints(String str) {
+        if (str == null) return "";
+        StringBuilder sb = new StringBuilder();
+        int consecutive = 0;
+        for (int i = 0; i < str.length(); i++) {
+            char c = str.charAt(i);
+            sb.append(c);
+            if (c == '/' || c == '*' || c == '-' || c == '@' || c == '.' || c == '_' || c == ':') {
+                sb.append('\u200B');
+                consecutive = 0;
+            } else if (Character.isWhitespace(c)) {
+                consecutive = 0;
+            } else {
+                consecutive++;
+                if (consecutive >= 7) {
+                    sb.append('\u200B');
+                    consecutive = 0;
+                }
+            }
+        }
+        return sb.toString();
     }
 
     private String buildRefLine(Transaction tx) {
