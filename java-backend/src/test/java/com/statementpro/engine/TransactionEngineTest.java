@@ -94,6 +94,78 @@ class TransactionEngineTest {
         assertFalse(txs.isEmpty());
     }
 
+    @Test
+    void autoSalaryModeAddsProfessionalTaxAndPfDeductionLines() {
+        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+                settings("auto", null, null), account(90000.0),
+                "2026-06-30T12:00:00", null, null);
+
+        boolean hasPt = txs.stream().anyMatch(tx -> tx.details().startsWith("PROFESSIONAL TAX-") && tx.debit() != null);
+        boolean hasPf = txs.stream().anyMatch(tx -> tx.details().startsWith("PF EMPLOYEE CONTRIBUTION-") && tx.debit() != null);
+
+        assertTrue(hasPt, "expected a professional tax deduction line");
+        assertTrue(hasPf, "expected a PF employee contribution deduction line");
+    }
+
+    @Test
+    void manualSalaryModeHasNoDeductionLines() {
+        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+                settings("manual", "ACME CORP", 60000.0), account(90000.0),
+                "2026-06-30T12:00:00", null, null);
+
+        boolean hasAnyDeduction = txs.stream().anyMatch(tx ->
+                tx.details().startsWith("PROFESSIONAL TAX-")
+                        || tx.details().startsWith("PF EMPLOYEE CONTRIBUTION-")
+                        || tx.details().startsWith("TDS ON SALARY"));
+
+        assertFalse(hasAnyDeduction, "manual salary mode must not add deduction lines");
+    }
+
+    @Test
+    void deductionLinesShareSameDateAsALargeSalaryCredit() {
+        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+                settings("auto", null, null), account(90000.0),
+                "2026-06-30T12:00:00", null, null);
+
+        List<Transaction> deductionLines = txs.stream()
+                .filter(tx -> tx.details().startsWith("PROFESSIONAL TAX-") || tx.details().startsWith("PF EMPLOYEE CONTRIBUTION-"))
+                .toList();
+
+        assertFalse(deductionLines.isEmpty());
+
+        for (Transaction deduction : deductionLines) {
+            boolean hasMatchingSalaryCredit = txs.stream().anyMatch(tx ->
+                    tx.valueDate().equals(deduction.valueDate()) && tx.credit() != null && tx.credit() >= 20000);
+            assertTrue(hasMatchingSalaryCredit,
+                    "expected a same-date salary credit >= 20000 for deduction: " + deduction.details());
+        }
+    }
+
+    @Test
+    void runningBalanceStaysConsistentAcrossManyRandomSalariedGenerations() {
+        List<String> durations = List.of("1 Month", "3 Months", "6 Months", "12 Months");
+        List<String> pageCounts = List.of("1 Page", "5 Pages", "12 Pages", "20 Pages");
+
+        for (int i = 0; i < 200; i++) {
+            StatementSettings settings = new StatementSettings("SBI",
+                    durations.get(i % durations.size()), "duration", null, null,
+                    pageCounts.get(i % pageCounts.size()), 0, "Normal", "Personal",
+                    "auto", null, null, "1", null, false);
+
+            List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+                    settings, account(90000.0), "2026-06-30T12:00:00", null, null);
+
+            double expectedBalance = 90000.0;
+            for (Transaction tx : txs) {
+                if (tx.credit() != null) expectedBalance += tx.credit();
+                if (tx.debit() != null) expectedBalance -= tx.debit();
+                expectedBalance = Math.round(expectedBalance * 100.0) / 100.0;
+                assertEquals(expectedBalance, tx.balance(), 0.01,
+                        "balance mismatch on iteration " + i + " for tx " + tx.id());
+            }
+        }
+    }
+
     private LocalDate parseDdMmYyyy(String str) {
         String[] parts = str.split("/");
         return LocalDate.of(Integer.parseInt(parts[2]), Integer.parseInt(parts[1]), Integer.parseInt(parts[0]));

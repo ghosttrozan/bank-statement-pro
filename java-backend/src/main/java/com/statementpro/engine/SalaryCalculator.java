@@ -115,4 +115,69 @@ public final class SalaryCalculator {
         for (int i = 0; i < length; i++) sb.append(RandomUtils.randRange(0, 9));
         return sb.toString();
     }
+
+    private static final double PF_RATE = 0.06;
+    private static final double PF_CAP = 4200.0;
+    private static final double PROFESSIONAL_TAX = 200.0;
+    private static final double DEDUCTION_FLOOR = 20000.0;
+    private static final double TDS_THRESHOLD = 70000.0;
+    private static final double TDS_RATE = 0.05;
+
+    public static SalaryDeductions computeDeductions(double netSalary) {
+        if (netSalary < DEDUCTION_FLOOR) {
+            return new SalaryDeductions(0.0, 0.0, 0.0);
+        }
+        double pf = round2(Math.min(netSalary * PF_RATE, PF_CAP));
+        double tds = netSalary > TDS_THRESHOLD ? round2(netSalary * TDS_RATE) : 0.0;
+        return new SalaryDeductions(PROFESSIONAL_TAX, pf, tds);
+    }
+
+    public static double applyRaise(double baseSalary, int monthIndex, int raiseMonth, double raiseFactor) {
+        if (raiseMonth < 0 || monthIndex < raiseMonth) {
+            return baseSalary;
+        }
+        return Math.round(baseSalary * raiseFactor / 10.0) * 10.0;
+    }
+
+    public static double applyMonthlyVariance(double amount, boolean isManual) {
+        if (isManual) {
+            return amount;
+        }
+        int roll = RandomUtils.randRange(0, 99);
+        if (roll < 12) {
+            return round2(amount + RandomUtils.randRange(500, 2500));
+        }
+        if (roll < 22) {
+            return round2(amount - RandomUtils.randRange(300, 1800));
+        }
+        return round2(amount);
+    }
+
+    public static double applyBonus(double amount, int monthIndex, int bonusMonth, double bonusAmount) {
+        return monthIndex == bonusMonth ? round2(amount + bonusAmount) : amount;
+    }
+
+    public static int pickRaiseMonth(int numMonths) {
+        return numMonths >= 6 ? RandomUtils.randRange(2, numMonths - 1) : -1;
+    }
+
+    public static int pickBonusMonth(int numMonths) {
+        return numMonths >= 4 ? RandomUtils.randRange(0, numMonths - 1) : -1;
+    }
+
+    public static double pickRaiseFactor() {
+        return 1.0 + RandomUtils.randRange(5, 12) / 100.0;
+    }
+
+    public static double pickBonusAmount() {
+        return RandomUtils.pick(List.of(3000.0, 5000.0, 6500.0, 8000.0, 10000.0));
+    }
+
+    public static String monthAbbrev(int monthValue) {
+        return MONTH_NAMES[monthValue - 1];
+    }
+
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
 }
