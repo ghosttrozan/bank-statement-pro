@@ -104,8 +104,8 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{20, 2, 78})).useAllAvailableWidth();
-        table.setFontSize(9.0f);
+        Table table = new Table(UnitValue.createPercentArray(new float[]{18, 2, 80})).useAllAvailableWidth();
+        table.setFontSize(9.4f);
         table.setMarginBottom(0f);
 
         addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
@@ -134,16 +134,13 @@ public class Sbi2Template implements StatementTemplate {
 
     private void addDossierAddressRow(Table table, String label, String valueWithColon) {
         Paragraph p1 = new Paragraph(label == null ? "" : label)
-                .setFontSize(9.0f)
+                .setFontSize(9.4f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
         
-        // Single line address followed by 3 empty lines
         String cleanSingleLineAddr = (valueWithColon != null ? valueWithColon.replaceAll("[\\r\\n]+", " ").trim() : "");
-        com.itextpdf.layout.element.Text addrText = new com.itextpdf.layout.element.Text(cleanSingleLineAddr + "\n\n\n")
-                .setFontSize(7.8f)
-                .setHorizontalScaling(0.92f);
-        Paragraph p2 = new Paragraph(addrText)
+        Paragraph p2 = new Paragraph(cleanSingleLineAddr + "\n\n\n")
+                .setFontSize(9.4f)
                 .setFixedLeading(LINE_HEIGHT_PT)
                 .setMargin(0);
 
