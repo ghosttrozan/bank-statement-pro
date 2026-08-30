@@ -46,7 +46,8 @@ import { useAuth } from '../hooks/useAuth';
 import {
   exportStatementToPdf,
   exportStatementToPdfViaBackend,
-  downloadStatementPdfFromBackend
+  downloadStatementPdfFromBackend,
+  downloadStatementFromJavaBackend
 } from '../lib/pdfExport';
 import api from '../lib/api';
 
@@ -490,77 +491,86 @@ export default function GeneratorPage() {
     handleGenerateStatement(customer, statementType, dur, false);
   };
 
-  // ── High Performance PDF Export ──
+  // ── High Performance Java PDF Export ──
   const handleDownloadPdf = async (mode: 'vector' | 'standard' = 'vector') => {
     await handlePrintCheck();
 
     setIsDownloadingPdf(true);
-    setDownloadProgress({ percent: 15, text: 'Preparing statement payload...' });
+    setDownloadProgress({ percent: 15, text: 'Preparing statement data...' });
 
     const passToUse = enablePassword && pdfPassword.trim() ? pdfPassword.trim() : undefined;
     const randCode =
       Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
     const filename = `${bankStyle}_Statement_${randCode}.pdf`;
 
-    try {
-      const container = document.querySelector('.print-container-target') as HTMLElement;
+    const settings: StatementSettings = {
+      ...baseSettings,
+      bankStyle,
+      duration: duration === '3months' ? '3 Months' : duration === '1year' ? '12 Months' : '6 Months',
+      pageCount: duration === '3months' ? '6 Pages' : duration === '1year' ? '30 Pages' : '15 Pages',
+      customTransactionsCount: duration === '3months' ? 130 : duration === '1year' ? 700 : 350,
+      enablePdfPassword: Boolean(passToUse),
+      pdfPassword: passToUse,
+      ...(generationMode === 'custom' && {
+        generationMode: 'custom',
+        fromDate,
+        toDate,
+      }),
+      ...(statementType === 'salaried' && {
+        salaryMode,
+        companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
+        monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
+        salaryDay,
+      }),
+    };
 
-      if (container) {
-        setDownloadProgress({ percent: 35, text: 'Compiling high-fidelity vector PDF...' });
-        try {
+    try {
+      setDownloadProgress({ percent: 30, text: 'Connecting to Java Vector PDF Engine (Port 8080)...' });
+
+      // 1. Primary: Generate & Download from Java Spring Boot Backend (Port 8080)
+      await downloadStatementFromJavaBackend({
+        customerDetails: customer,
+        branchDetails: branch,
+        accountInfo: account,
+        settings,
+        transactions: activeRecord?.transactions,
+        onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
+      });
+
+      toast.success(
+        passToUse
+          ? `🔐 Password-protected PDF generated via Java Engine! Password: "${passToUse}"`
+          : '📄 Statement PDF generated via Java Engine successfully!',
+        { theme: 'dark' }
+      );
+    } catch (javaErr: any) {
+      console.warn('Java backend generation failed, attempting Node/Client fallback:', javaErr);
+      setDownloadProgress({ percent: 50, text: 'Attempting fallback PDF generator...' });
+
+      try {
+        const container = document.querySelector('.print-container-target') as HTMLElement;
+        if (container) {
           await exportStatementToPdfViaBackend(container, {
             filename,
             password: passToUse,
             onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
           });
-          toast.success(
-            passToUse
-              ? `🔐 Password-protected PDF downloaded! Password: "${passToUse}"`
-              : '📄 Statement PDF downloaded successfully!',
-            { theme: 'dark' }
-          );
-        } catch (backendErr) {
-          console.warn('Backend vector PDF fallback to client canvas PDF:', backendErr);
-          setDownloadProgress({ percent: 60, text: 'Rendering via client PDF engine...' });
-          await exportStatementToPdf(container, {
-            filename,
-            password: passToUse,
+        } else {
+          await downloadStatementPdfFromBackend({
+            customerDetails: customer,
+            branchDetails: branch,
+            accountInfo: account,
+            settings,
             onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
           });
-          toast.success('📄 Statement PDF downloaded successfully!', { theme: 'dark' });
         }
-      } else {
-        // Fallback directly to backend statement generator
-        const settings: StatementSettings = {
-          ...baseSettings,
-          bankStyle,
-          enablePdfPassword: Boolean(passToUse),
-          pdfPassword: passToUse,
-          ...(generationMode === 'custom' && {
-            generationMode: 'custom',
-            fromDate,
-            toDate,
-          }),
-          ...(statementType === 'salaried' && {
-            salaryMode,
-            companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
-            monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
-            salaryDay,
-          }),
-        };
-
-        await downloadStatementPdfFromBackend({
-          customerDetails: customer,
-          branchDetails: branch,
-          accountInfo: account,
-          settings,
-          onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
+        toast.success('📄 Statement PDF downloaded successfully (Fallback)!', { theme: 'dark' });
+      } catch (fallbackErr: any) {
+        console.error('All PDF download engines failed:', fallbackErr);
+        toast.error(`Download failed: ${fallbackErr.message || javaErr.message || 'Unknown error'}`, {
+          theme: 'dark',
         });
-        toast.success('📄 Statement PDF downloaded successfully!', { theme: 'dark' });
       }
-    } catch (err: any) {
-      console.error('PDF download failed:', err);
-      toast.error(`Download failed: ${err.message || 'Unknown error'}`, { theme: 'dark' });
     } finally {
       setIsDownloadingPdf(false);
       setDownloadProgress({ percent: 0, text: '' });

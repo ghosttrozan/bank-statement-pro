@@ -313,8 +313,85 @@ ${containerHtml}
 }
 
 /**
- * Sends user inputs to the backend (/api/pdf/generate-statement) to generate
- * transactions, populate backend HTML statement template, render PDF, and download directly.
+ * Directly calls Java Spring Boot backend (Port 8080) to generate transactions,
+ * compile high-performance iText 8 vector PDF with authentic fonts and security,
+ * and download directly to client.
+ */
+export async function downloadStatementFromJavaBackend(payload: {
+  customerDetails: any;
+  branchDetails: any;
+  accountInfo: any;
+  settings: any;
+  transactions?: any[];
+  onProgress?: (percent: number, text: string) => void;
+}): Promise<{ filename: string; record?: any }> {
+  const { customerDetails, branchDetails, accountInfo, settings, transactions, onProgress } = payload;
+
+  if (onProgress) onProgress(20, 'Sending request to Java Vector PDF Engine (Port 8080)...');
+
+  const JAVA_API_BASE_URL = (import.meta as any).env.VITE_JAVA_API_URL || 'http://localhost:8080';
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${JAVA_API_BASE_URL}/api/statements/download`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        customerDetails,
+        branchDetails,
+        accountInfo,
+        settings,
+        transactions,
+      }),
+    });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Java backend request timed out (30s).');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    let errMsg = `Java PDF generation failed (${response.status})`;
+    try {
+      const errData = await response.json();
+      if (errData?.message) errMsg = errData.message;
+    } catch {}
+    throw new Error(errMsg);
+  }
+
+  if (onProgress) onProgress(80, 'Receiving high-fidelity vector PDF from Java Engine...');
+
+  const blob = await response.blob();
+  const randCode = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+  const filename = `${settings.bankStyle || 'Bank'}_Statement_${randCode}.pdf`;
+
+  if (onProgress) onProgress(100, 'Download complete!');
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  logToSystem('SYSTEM', 'INFO', `Java iText Vector PDF downloaded successfully: ${filename}`);
+  return { filename };
+}
+
+/**
+ * Sends user inputs to the Node backend (/api/pdf/generate-statement) as fallback
  */
 export async function downloadStatementPdfFromBackend(payload: {
   customerDetails: any;
@@ -371,4 +448,5 @@ export async function downloadStatementPdfFromBackend(payload: {
 
   logToSystem('SYSTEM', 'INFO', `Backend PDF generated & downloaded successfully: ${filename}`);
 }
+
 
