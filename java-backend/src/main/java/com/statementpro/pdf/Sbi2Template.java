@@ -99,7 +99,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPointArray(new float[]{124f, 4f, 395f})).useAllAvailableWidth();
+        Table table = new Table(UnitValue.createPointArray(new float[]{112f, 4f, 407f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
         table.setMarginBottom(0);
 
@@ -136,7 +136,27 @@ public class Sbi2Template implements StatementTemplate {
         String cleanAddress = (address != null ? address : "").replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
         table.addCell(new Cell().add(new Paragraph("Address").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
         table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
+
+        float availableWidth = 405f;
+        float hScale = 1.0f;
+        try {
+            float textWidth = com.itextpdf.kernel.font.PdfFontFactory.createFont(com.itextpdf.io.font.constants.StandardFonts.HELVETICA).getWidth(cleanAddress, 9.0f);
+            if (textWidth > availableWidth) {
+                hScale = (availableWidth / textWidth) * 0.98f;
+            }
+        } catch (Exception ignored) {}
+
+        com.itextpdf.layout.element.Text t = new com.itextpdf.layout.element.Text(cleanAddress)
+                .setFontSize(9.0f)
+                .setHorizontalScaling(hScale);
+
+        Paragraph addrPara = new Paragraph()
+                .add(t)
+                .add(new com.itextpdf.layout.element.Text("\n\n\n\n").setFontSize(9.0f))
+                .setFontSize(9.0f)
+                .setMultipliedLeading(1.25f);
+
+        table.addCell(new Cell().add(addrPara).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
