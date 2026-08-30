@@ -148,9 +148,10 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        // Exact pixel-perfect column widths matching authentic SBI statement headers: Total 523pt
-        Table table = new Table(UnitValue.createPointArray(new float[]{58f, 54f, 150f, 105f, 52f, 52f, 52f})).useAllAvailableWidth();
-        table.setFontSize(8.5f);
+        // Exact pixel-perfect column widths matching authentic SBI statement: Total 523pt
+        // Txn Date (53pt), Value Date (53pt), Description (132pt), Ref No (114pt), Debit (59.5pt), Credit (59.5pt), Balance (52pt)
+        Table table = new Table(UnitValue.createPointArray(new float[]{53f, 53f, 132f, 114f, 59.5f, 59.5f, 52f})).useAllAvailableWidth();
+        table.setFontSize(9.0f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
         table.addHeaderCell(headerCell("Value\nDate", TextAlignment.LEFT));
@@ -168,17 +169,19 @@ public class Sbi2Template implements StatementTemplate {
             table.addCell(sbi2DateCell(formatSbiDate(tx.postDate()), TextAlignment.LEFT));
             table.addCell(sbi2Cell(description, TextAlignment.LEFT));
             table.addCell(sbi2Cell(refLine, TextAlignment.LEFT));
-            table.addCell(sbi2Cell(tx.debit() != null ? TemplateUtils.formatCurrency(tx.debit()) : "", TextAlignment.RIGHT));
-            table.addCell(sbi2Cell(tx.credit() != null ? TemplateUtils.formatCurrency(tx.credit()) : "", TextAlignment.RIGHT));
-            table.addCell(sbi2Cell(TemplateUtils.formatCurrency(tx.balance()), TextAlignment.RIGHT));
+            table.addCell(sbi2AmountCell(tx.debit() != null ? TemplateUtils.formatCurrency(tx.debit()) : "", TextAlignment.RIGHT));
+            table.addCell(sbi2AmountCell(tx.credit() != null ? TemplateUtils.formatCurrency(tx.credit()) : "", TextAlignment.RIGHT));
+            table.addCell(sbi2AmountCell(TemplateUtils.formatCurrency(tx.balance()), TextAlignment.RIGHT));
         }
         return table;
     }
 
     private Cell headerCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text).setFontSize(9.5f).setBold().setMultipliedLeading(1.1f))
+        return new Cell().add(new Paragraph(text).setFontSize(10.0f).setBold().setMultipliedLeading(1.05f))
                 .setBorder(new SolidBorder(0.5f))
                 .setPadding(2.5f)
+                .setPaddingTop(3.0f)
+                .setPaddingBottom(3.0f)
                 .setTextAlignment(alignment);
     }
 
@@ -227,18 +230,29 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Cell sbi2DateCell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.1f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(2.5f)
+                .setPadding(1.5f)
                 .setPaddingLeft(2.0f)
                 .setPaddingRight(1.5f)
                 .setTextAlignment(alignment);
     }
 
     private Cell sbi2Cell(String text, TextAlignment alignment) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8.5f).setMultipliedLeading(1.1f))
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
                 .setBorder(new SolidBorder(0.5f))
-                .setPadding(2.5f)
+                .setPadding(1.5f)
+                .setPaddingLeft(2.5f)
+                .setPaddingRight(2.0f)
+                .setTextAlignment(alignment);
+    }
+
+    private Cell sbi2AmountCell(String text, TextAlignment alignment) {
+        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(9.0f).setMultipliedLeading(1.05f))
+                .setBorder(new SolidBorder(0.5f))
+                .setPadding(1.5f)
+                .setPaddingLeft(2.0f)
+                .setPaddingRight(3.0f)
                 .setTextAlignment(alignment);
     }
 
