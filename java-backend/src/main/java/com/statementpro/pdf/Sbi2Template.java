@@ -89,8 +89,9 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact height 54pt, natural width ~136pt, margin bottom 3.8pt so dossier starts exactly at Y = 93.8pt
-            logo.setHeight(54f);
+            // Exact reference specs: 181.5 pt width x 54.0 pt height (source: 242 x 72 px @ 96 PPI)
+            logo.setWidth(181.5f);
+            logo.setHeight(54.0f);
             logo.setMarginBottom(3.8f);
             return logo;
         } catch (Exception e) {
