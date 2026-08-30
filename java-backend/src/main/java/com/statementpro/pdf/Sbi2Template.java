@@ -63,7 +63,7 @@ public class Sbi2Template implements StatementTemplate {
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
                     doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setBold().setFontSize(12.0f).setMarginTop(12f).setMarginBottom(10f));
+                            .setFontSize(10.0f).setMarginTop(10f).setMarginBottom(8f));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
@@ -89,9 +89,8 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact dimensions from reference PDF: 181.5 pt x 54.0 pt (242x72 px @ 96 PPI)
-            logo.setWidth(181.5f);
-            logo.setHeight(54.0f);
+            logo.setWidth(158.0f);
+            logo.setHeight(47.0f);
             logo.setMarginBottom(2f);
             return logo;
         } catch (Exception e) {
@@ -100,7 +99,7 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
-        Table table = new Table(UnitValue.createPointArray(new float[]{140f, 4f, 379f})).useAllAvailableWidth();
+        Table table = new Table(UnitValue.createPointArray(new float[]{124f, 4f, 395f})).useAllAvailableWidth();
         table.setFontSize(9.0f);
         table.setMarginBottom(0);
 
@@ -137,15 +136,7 @@ public class Sbi2Template implements StatementTemplate {
         String cleanAddress = (address != null ? address : "").replaceAll("[\\r\\n]+", " ").replaceAll("\\s+", " ").trim();
         table.addCell(new Cell().add(new Paragraph("Address").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
         table.addCell(new Cell().add(new Paragraph(":").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f));
-
-        com.itextpdf.layout.element.Text textElement = new com.itextpdf.layout.element.Text(cleanAddress + "\n\n\n\n");
-        if (cleanAddress.length() > 40) {
-            textElement.setFontSize(7.5f).setHorizontalScaling(0.86f);
-        } else {
-            textElement.setFontSize(9.0f);
-        }
-        Paragraph addrPara = new Paragraph().add(textElement).setMultipliedLeading(1.25f);
-        table.addCell(new Cell().add(addrPara).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
+        table.addCell(new Cell().add(new Paragraph(cleanAddress + "\n\n\n\n").setFontSize(9.0f).setMultipliedLeading(1.25f)).setBorder(null).setPadding(0.5f).setPaddingLeft(0.5f));
     }
 
     private void addDossierSpanRow(Table table, String note) {
