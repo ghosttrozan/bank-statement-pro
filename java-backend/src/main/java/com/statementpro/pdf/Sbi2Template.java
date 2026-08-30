@@ -88,10 +88,9 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact dimensions: 181.5 pt x 54.0 pt (242x72 px @ 96 PPI)
-            logo.setWidth(181.5f);
-            logo.setHeight(54.0f);
-            logo.setMarginBottom(12f);
+            // Exact natural aspect ratio (232x92) - height 36pt, proportional width ~90.8pt
+            logo.setHeight(36f);
+            logo.setMarginBottom(10f);
             return logo;
         } catch (Exception e) {
             return null;
