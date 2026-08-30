@@ -89,9 +89,8 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Exact 3.2 cm x 1.0 cm (1 cm = 28.3465 pt) -> 90.71 pt x 28.35 pt
-            logo.setWidth(90.71f);
-            logo.setHeight(28.35f);
+            logo.setWidth(130.0f);
+            logo.setHeight(38.6f);
             logo.setMarginBottom(2f);
             return logo;
         } catch (Exception e) {
