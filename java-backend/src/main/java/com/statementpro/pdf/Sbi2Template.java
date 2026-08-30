@@ -24,6 +24,7 @@ import java.util.List;
 public class Sbi2Template implements StatementTemplate {
 
     private static final String[] MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    private static final float LINE_HEIGHT_PT = 13.5f;
 
     @Override
     public byte[] render(StatementRecord record) throws java.io.IOException {
@@ -63,7 +64,11 @@ public class Sbi2Template implements StatementTemplate {
                     }
                     doc.add(buildDossier(record, accountNumber, startDateStr, endDateStr));
                     doc.add(new Paragraph("Account Statement from " + startDateStr + " to " + endDateStr)
-                            .setBold().setFontSize(9.4f).setMarginTop(0f).setMarginBottom(16f));
+                            .setBold()
+                            .setFontSize(9.4f)
+                            .setFixedLeading(LINE_HEIGHT_PT)
+                            .setMarginTop(12f)
+                            .setMarginBottom(17.4f));
                 }
 
                 doc.add(buildLedgerTable(pages.get(pageIdx)));
@@ -89,7 +94,7 @@ public class Sbi2Template implements StatementTemplate {
             if (in == null) return null;
             byte[] logoBytes = in.readAllBytes();
             Image logo = new Image(ImageDataFactory.create(logoBytes));
-            // Original SBI logo (232x92 px) rendered at 54pt height with 3.8pt bottom margin
+            // Exact height 54pt, bottom margin 3.8pt -> table starts at Y = 36 + 54 + 3.8 = 93.8pt
             logo.setHeight(54.0f);
             logo.setMarginBottom(3.8f);
             return logo;
@@ -101,7 +106,7 @@ public class Sbi2Template implements StatementTemplate {
     private Table buildDossier(StatementRecord record, String accountNumber, String startDateStr, String endDateStr) {
         Table table = new Table(UnitValue.createPercentArray(new float[]{28, 2, 70})).useAllAvailableWidth();
         table.setFontSize(9.4f);
-        table.setMarginBottom(10f);
+        table.setMarginBottom(0f);
 
         addDossierRow(table, "Account Name", ": " + (record.customerDetails().accountHolderName() != null ? record.customerDetails().accountHolderName() : ""));
         addDossierRow(table, "Address", ": " + TemplateUtils.formatAddress4Lines(record.customerDetails().address()));
@@ -125,12 +130,25 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private void addDossierRow(Table table, String label, String valueWithColon) {
-        table.addCell(new Cell().add(new Paragraph(label == null ? "" : label).setMultipliedLeading(1.35f)).setBorder(null).setPadding(0.5f));
-        table.addCell(new Cell(1, 2).add(new Paragraph(valueWithColon == null ? "" : valueWithColon).setMultipliedLeading(1.35f)).setBorder(null).setPadding(0.5f));
+        Paragraph p1 = new Paragraph(label == null ? "" : label)
+                .setFontSize(9.4f)
+                .setFixedLeading(LINE_HEIGHT_PT)
+                .setMargin(0);
+        Paragraph p2 = new Paragraph(valueWithColon == null ? "" : valueWithColon)
+                .setFontSize(9.4f)
+                .setFixedLeading(LINE_HEIGHT_PT)
+                .setMargin(0);
+
+        table.addCell(new Cell().add(p1).setBorder(null).setPadding(0).setMargin(0));
+        table.addCell(new Cell(1, 2).add(p2).setBorder(null).setPadding(0).setMargin(0));
     }
 
     private void addDossierSpanRow(Table table, String note) {
-        table.addCell(new Cell(1, 3).add(new Paragraph(note).setFontSize(8.0f).setMultipliedLeading(1.1f)).setBorder(null).setPadding(0));
+        Paragraph p = new Paragraph(note)
+                .setFontSize(7.5f)
+                .setFixedLeading(LINE_HEIGHT_PT)
+                .setMargin(0);
+        table.addCell(new Cell(1, 3).add(p).setBorder(null).setPadding(0).setMargin(0));
     }
 
     private String maskCkycr(String ckycr) {
