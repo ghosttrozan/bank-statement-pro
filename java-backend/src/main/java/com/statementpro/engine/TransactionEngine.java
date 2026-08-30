@@ -71,6 +71,15 @@ public final class TransactionEngine {
                 ? settings.customTransactionsCount()
                 : DateUtils.getPageToTxCount(settings.pageCount(), 20));
 
+        // For 3 Months statement, ensure at least 125 transactions so that the PDF is minimum 6 pages
+        if ("3 Months".equalsIgnoreCase(settings.duration()) && targetTxCount < 125) {
+            targetTxCount = 128;
+        } else if ("6 Months".equalsIgnoreCase(settings.duration()) && targetTxCount < 240) {
+            targetTxCount = 250;
+        } else if ("12 Months".equalsIgnoreCase(settings.duration()) && targetTxCount < 480) {
+            targetTxCount = 500;
+        }
+
         double initialOpening = info.openingBalance() > 0 ? info.openingBalance() : 90000.00;
         double[] runningBal = { Math.round(initialOpening * 100.0) / 100.0 };
 
@@ -190,13 +199,13 @@ public final class TransactionEngine {
             while (unassigned > 0 && attempts < 1000 && !activeDays.isEmpty()) {
                 attempts++;
                 int randomDay = RandomUtils.pick(activeDays);
-                if (dailyAllocation[randomDay] < 3) {
+                if (dailyAllocation[randomDay] < 4) {
                     dailyAllocation[randomDay]++;
                     unassigned--;
                 }
             }
 
-            List<Integer> availableHours = new ArrayList<>(List.of(9, 11, 13, 15, 18, 20, 21));
+            List<Integer> availableHours = new ArrayList<>(List.of(8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22));
 
             for (int dayOffset = 0; dayOffset < totalDays; dayOffset++) {
                 int dayTxCount = dailyAllocation[dayOffset];

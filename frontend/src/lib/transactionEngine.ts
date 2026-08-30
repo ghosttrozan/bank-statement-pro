@@ -467,12 +467,13 @@ function getP2pDebitAmount(isMicro: boolean): number {
 function getContinuousCreditAmount(): number {
   const r = Math.random();
   const paise = getRandomPaise();
-  if (r < 0.45) {
-    return Math.round((randRange(120, 1850) + paise) * 100) / 100;
-  } else if (r < 0.80) {
-    return Math.round((randRange(1900, 6800) + paise) * 100) / 100;
+  // Keep P2P credits realistic — mostly small, rarely above 5k
+  if (r < 0.55) {
+    return Math.round((randRange(120, 1500) + paise) * 100) / 100;
+  } else if (r < 0.90) {
+    return Math.round((randRange(1600, 4800) + paise) * 100) / 100;
   } else {
-    return Math.round((randRange(7200, 18500) + paise) * 100) / 100;
+    return Math.round((randRange(5000, 8500) + paise) * 100) / 100;
   }
 }
 
@@ -507,7 +508,7 @@ function generateRawSalariedTransactions(
   while (mCurr <= endDay) {
     const mStart = new Date(mCurr.getFullYear(), mCurr.getMonth(), 1);
     const mEnd = new Date(mCurr.getFullYear(), mCurr.getMonth() + 1, 0, 23, 59, 59, 999);
-    
+
     const actualStart = mStart < startDay ? startDay : mStart;
     const actualEnd = mEnd > endDay ? endDay : mEnd;
 
@@ -601,39 +602,33 @@ function generateRawSalariedTransactions(
 
   const SALARIED_CREDIT_TEMPLATES = [
     {
+      // Normal UPI P2P credit from friends/family
       detailAndAmount: (style: string) => ({
         detail: buildUpiNarrative(true, style),
         amount: getContinuousCreditAmount()
       }),
-      weight: 50
+      weight: 60
     },
     {
+      // Small refund from merchant (very common, low amount)
       detailAndAmount: () => ({
         detail: pick([
-          `BY TRANSFER-NEFT*N21025${randRange(100000, 999999)}*${companyName}*REIMBURSEMENT`,
-          `UPI/CR/${companyName.split(' ')[0].toLowerCase()}.claim@icici/Paymen`,
-          `BY TRANSFER-NEFT*REFUND*GST*${genRef()}`
+          `UPI/REFUND/SWIGGY/REF${randRange(100000, 999999)}/CREDIT`,
+          `UPI/FAILED TXN REVERSAL/${genRef()}`,
+          `UPI/REFUND/ZOMATO/REF${randRange(100000, 999999)}/CREDIT`,
+          `UPI/REFUND/BLINKIT/REF${randRange(100000, 999999)}/CREDIT`
         ]),
-        amount: Math.round((randRange(1250, 4800) + getRandomPaise()) * 100) / 100
+        amount: getRefundAmount()
       }),
       weight: 25
     },
     {
-      detailAndAmount: () => ({
-        detail: pick([
-          `UPI/REFUND/SWIGGY/REF${randRange(100000, 999999)}/CREDIT`,
-          `UPI/FAILED TXN REVERSAL/${genRef()}`
-        ]),
-        amount: getRefundAmount()
+      // Occasional reimbursement — low frequency, small amounts only
+      detailAndAmount: (style: string) => ({
+        detail: buildUpiNarrative(true, style),
+        amount: Math.round((randRange(500, 2500) + getRandomPaise()) * 100) / 100
       }),
       weight: 15
-    },
-    {
-      detailAndAmount: () => ({
-        detail: buildSOLNarrative(),
-        amount: Math.round((randRange(2000, 12000) / 100) * 100)
-      }),
-      weight: 10
     }
   ];
 
@@ -646,11 +641,11 @@ function generateRawSalariedTransactions(
     }
 
     const totalDays = Math.max(1, Math.round((mRange.end.getTime() - mRange.start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
-    
+
     // Create authentic human activity allocation with a 4-day dormant window (Max Dormant Days = 4):
     const dailyAllocation = new Array(totalDays).fill(0);
     const restDayIndices = new Set<number>();
-    
+
     // For one middle month, inject a 4-day contiguous dormant window (e.g. Max Dormant Days = 4)
     if (idx === Math.floor(monthsList.length / 2)) {
       const blockStart = randRange(10, Math.max(10, totalDays - 6));
@@ -707,7 +702,8 @@ function generateRawSalariedTransactions(
         const txTime = new Date(txDate.getTime());
         txTime.setHours(hour, randRange(0, 59), randRange(0, 59));
 
-        const isCredit = Math.random() < 0.30;
+        // Lower credit ratio — salaried accounts spend more than they receive P2P
+        const isCredit = Math.random() < 0.18;
         const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
         const { detail, amount: rawAmt } = tmpl.detailAndAmount(bankStyle);
         const amount = Math.round(rawAmt * 100) / 100;
@@ -757,7 +753,7 @@ function generateRawSalariedTransactions(
     if (salaryDate >= startDay && salaryDate <= endDay) {
       const dateStr = formatDate(salaryDate);
       const narrative = buildSalaryNeftNarrative(bankStyle, companyName, salaryDate);
-      
+
       let monthlySalaryPayout = baseSalaryAmount;
       if (settings.salaryMode !== 'manual') {
         if (monthIndex % 3 === 1) {

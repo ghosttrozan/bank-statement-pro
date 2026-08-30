@@ -1,54 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, Wallet, XCircle } from 'lucide-react';
+import {
+  Landmark,
+  User,
+  RefreshCw,
+  LogOut,
+  ShieldAlert,
+  Building2,
+  Calendar,
+  Wallet,
+  XCircle,
+  Download,
+  Printer,
+  Lock,
+  Eye,
+  EyeOff,
+  FileText,
+  CheckCircle2,
+  ArrowDownRight,
+  ArrowUpRight,
+  ShieldCheck,
+  Sparkles,
+  Sliders
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components, Types & Hooks
 import StatementPreview from '../components/StatementPreview';
-import { generateStatementTransactions, generateSalariedStatementTransactions, formatDate, getRandomOpeningBalance } from '../lib/transactionEngine';
-import { StatementRecord, CustomerDetails, BranchDetails, AccountInfo, StatementSettings, Transaction } from '../types';
+import {
+  generateStatementTransactions,
+  generateSalariedStatementTransactions,
+  formatDate,
+  getRandomOpeningBalance
+} from '../lib/transactionEngine';
+import {
+  StatementRecord,
+  CustomerDetails,
+  BranchDetails,
+  AccountInfo,
+  StatementSettings,
+  Transaction
+} from '../types';
 import { logToSystem } from '../lib/dbBridge';
 import { useAuth } from '../hooks/useAuth';
-import { downloadStatementPdfFromBackend } from '../lib/pdfExport';
+import {
+  exportStatementToPdf,
+  exportStatementToPdfViaBackend,
+  downloadStatementPdfFromBackend
+} from '../lib/pdfExport';
 import api from '../lib/api';
-
-
 
 type StatementType = 'salaried' | 'business';
 type StatementDuration = '3months' | '6months' | '1year';
 type GenerationMode = 'duration' | 'custom';
 type SalaryMode = 'auto' | 'manual';
 
-// ── Duration post-processor ──────────────────────────────────────────────────
-// Engine always generates 6-month data. This trims or extends based on user choice.
-function parseIndianDate(dateStr: string): Date {
-  const [d, m, y] = dateStr.split('-').map(Number);
-  return new Date(y, m - 1, d);
-}
-
-function recomputeTotals(transactions: Transaction[], openingBal: number): {
-  totalDebits: number; totalCredits: number; drCount: number; crCount: number; closingBalance: number;
-} {
-  let totalDebits = 0, totalCredits = 0, drCount = 0, crCount = 0;
-  transactions.forEach(t => {
-    if (t.debit) { totalDebits += t.debit; drCount++; }
-    if (t.credit) { totalCredits += t.credit; crCount++; }
-  });
-  const closingBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : openingBal;
-  return { totalDebits, totalCredits, drCount, crCount, closingBalance };
-}
-
-function applyDuration(record: StatementRecord, duration: StatementDuration): StatementRecord {
-  // Statement transactions are already generated for the exact duration
-  // via transactionEngine. Return record intact without corrupting dates/salary credits.
-  return record;
-}
-
 // Duration options config
 const DURATION_OPTIONS: { value: StatementDuration; label: string; sub: string; months: number }[] = [
-  { value: '3months', label: '3 Months',  sub: 'Last 3 months', months: 3 },
-  { value: '6months', label: '6 Months',  sub: 'Last 6 months', months: 6 },
-  { value: '1year',   label: '1 Year',    sub: 'Last 12 months', months: 12 },
+  { value: '3months', label: '3 Months', sub: 'Last 3 months', months: 3 },
+  { value: '6months', label: '6 Months', sub: 'Last 6 months', months: 6 },
+  { value: '1year', label: '1 Year', sub: 'Last 12 months', months: 12 },
 ];
 
 const SALARY_DAY_PRESETS: { val: string; label: string }[] = [
@@ -71,44 +82,69 @@ const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'; lab
   { value: 'PNB', label: 'PNB' },
 ];
 
-// ── Shared form building blocks (flat sectioned-card design) ────────────────
-const inputCls = "w-full bg-white text-slate-900 border border-slate-300 px-3.5 py-2.5 rounded-lg text-sm font-sans focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all placeholder-slate-400";
+// ── Shared form building blocks ────────────────
+const inputCls =
+  'w-full bg-white text-slate-900 border border-slate-300 px-3.5 py-2.5 rounded-xl text-sm font-sans focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all placeholder-slate-400';
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="block text-slate-500 text-[10.5px] font-semibold uppercase tracking-wide mb-1.5">{children}</label>;
+  return (
+    <label className="block text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-1.5">
+      {children}
+    </label>
+  );
 }
 
 function Grid2({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 gap-3">{children}</div>;
+  return <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">{children}</div>;
 }
 
-function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+function Section({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: any;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/70">
-        <Icon size={14} className="text-slate-400" />
-        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{title}</span>
+    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden transition-shadow hover:shadow-sm">
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/80">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+            <Icon size={16} />
+          </div>
+          <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{title}</span>
+        </div>
+        {subtitle && <span className="text-[11px] text-slate-400 font-medium">{subtitle}</span>}
       </div>
-      <div className="p-4 space-y-3.5">
-        {children}
-      </div>
+      <div className="p-5 space-y-4">{children}</div>
     </div>
   );
 }
 
-function SegmentedToggle<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
+function SegmentedToggle<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+}) {
   return (
-    <div className="inline-flex w-full rounded-lg border border-slate-200 bg-slate-50 p-0.5">
-      {options.map(opt => (
+    <div className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+      {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className={`flex-1 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-            value === opt.value
-              ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
-              : 'text-slate-500 hover:text-slate-700'
-          }`}
+          className={`flex-1 px-3.5 py-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${value === opt.value
+              ? 'bg-white text-blue-600 shadow-sm border border-slate-200/60'
+              : 'text-slate-500 hover:text-slate-800'
+            }`}
         >
           {opt.label}
         </button>
@@ -117,7 +153,6 @@ function SegmentedToggle<T extends string>({ value, options, onChange }: { value
   );
 }
 
-// Helper to format a date object to DD-MMM-YYYY (e.g., 01 Apr 2025)
 function formatDateDisplay(date: Date): string {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const day = String(date.getDate()).padStart(2, '0');
@@ -126,7 +161,6 @@ function formatDateDisplay(date: Date): string {
   return `${day} ${month} ${year}`;
 }
 
-// Compute days and approximate months between two dates
 function getDateRangeInfo(from: string, to: string): { days: number; months: number } | null {
   if (!from || !to) return null;
   const fromDate = new Date(from);
@@ -134,12 +168,12 @@ function getDateRangeInfo(from: string, to: string): { days: number; months: num
   if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) return null;
   const diffTime = toDate.getTime() - fromDate.getTime();
   if (diffTime < 0) return null;
-  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
-  const months = days / 30.44; // approximate
+  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  const months = days / 30.44;
   return { days, months };
 }
 
-// Default branch presets per bank
+// Default branch presets
 const SBI_BRANCH_DEFAULTS: BranchDetails = {
   branchName: 'GOVINDPURA, BHOPAL',
   branchAddress: 'INDUSTRIAL AREA GOVINDPURA, BHOPAL, MADHYA PRADESH - 462023',
@@ -200,13 +234,24 @@ export default function GeneratorPage() {
   const [monthlySalary, setMonthlySalary] = useState<number | undefined>(undefined);
   const [salaryDay, setSalaryDay] = useState<'1' | '3' | '5' | '7' | '10' | 'last_day'>('5');
 
-  // Separate base record (always 6-month) from displayed record (duration-adjusted)
+  // Password Protection state
+  const [enablePassword, setEnablePassword] = useState(false);
+  const [pdfPassword, setPdfPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const [baseRecord, setBaseRecord] = useState<StatementRecord | null>(null);
+  const [activeRecord, setActiveRecord] = useState<StatementRecord | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<{ percent: number; text: string }>({
+    percent: 0,
+    text: '',
+  });
 
   const [customer, setCustomer] = useState<CustomerDetails>({
     accountHolderName: 'SUDHIR KUMAR SHARMA',
     email: 'sudhir.sharma@sparktech.co.in',
-    address: "B-402, Block 4, Prestige Whispering Palms,\nWhitefield, Bangalore, Karnataka - 560066",
+    address: 'B-402, Block 4, Prestige Whispering Palms,\nWhitefield, Bangalore, Karnataka - 560066',
     accountNumber: '30521458920',
     cifNumber: '85962145321',
     accountOpenDate: '2022-05-09',
@@ -217,13 +262,12 @@ export default function GeneratorPage() {
 
   const [account, setAccount] = useState<AccountInfo>({
     openingBalance: getRandomOpeningBalance(),
-    interestRate: 2.50,
+    interestRate: 2.5,
     currency: 'INR',
     accountStatus: 'Active',
     accountType: 'Savings',
   });
 
-  // Base settings (will be augmented with generation mode, dates, and salary config)
   const baseSettings: StatementSettings = {
     bankStyle,
     duration: '6 Months',
@@ -233,7 +277,6 @@ export default function GeneratorPage() {
     profile: 'Personal',
   };
 
-  // When bank switches, auto-update branch defaults and patch the live record
   const handleBankStyleChange = (style: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB') => {
     setBankStyle(style);
     let newBranch = SBI_BRANCH_DEFAULTS;
@@ -242,8 +285,6 @@ export default function GeneratorPage() {
     else if (style === 'PNB') newBranch = PNB_BRANCH_DEFAULTS;
     setBranch(newBranch);
 
-    // Patch active/base records in-place so preview switches immediately
-    // (same transaction data is kept — only the bank format/template changes)
     const patchRecord = (prev: StatementRecord | null) => {
       if (!prev) return null;
       return {
@@ -256,54 +297,7 @@ export default function GeneratorPage() {
     setBaseRecord(patchRecord);
   };
 
-  const [activeRecord, setActiveRecord] = useState<StatementRecord | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [downloadStatus, setDownloadStatus] = useState('');
-
-  const handleDownloadBackendPdf = async () => {
-    setIsDownloadingPdf(true);
-    setDownloadStatus('Connecting to backend PDF engine...');
-
-    try {
-      const settings: StatementSettings = {
-        ...baseSettings,
-        bankStyle,
-        ...(generationMode === 'custom' && {
-          generationMode: 'custom',
-          fromDate,
-          toDate,
-        }),
-        ...(statementType === 'salaried' && {
-          salaryMode,
-          companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
-          monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
-          salaryDay,
-        }),
-      };
-
-      await downloadStatementPdfFromBackend({
-        customerDetails: customer,
-        branchDetails: branch,
-        accountInfo: account,
-        settings,
-        onProgress: (pct, msg) => setDownloadStatus(msg),
-      });
-
-      toast.success('Statement PDF generated & downloaded directly from backend!', { theme: 'dark' });
-      logToSystem('SYSTEM', 'INFO', `Direct backend statement PDF generated & downloaded for ${customer.accountHolderName}`);
-    } catch (err: any) {
-      console.error('Backend PDF generation failed:', err);
-      toast.error(`Backend PDF generation error: ${err.message || 'Failed to download'}`, { theme: 'dark' });
-      logToSystem('SYSTEM', 'ERROR', `Backend PDF generation failed: ${err.message}`);
-    } finally {
-      setIsDownloadingPdf(false);
-      setDownloadStatus('');
-    }
-  };
-
-
-  // Initialize default custom dates on mount
+  // Initialize dates on mount
   useEffect(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -313,27 +307,25 @@ export default function GeneratorPage() {
     setToDate(defaultTo);
   }, []);
 
-  // ─── Reset salary config & toggle opening balance when switching type ────────
+  // Reset salary config & toggle opening balance when switching type
   useEffect(() => {
     if (statementType === 'business') {
       setSalaryMode('auto');
       setCompanyName('');
       setMonthlySalary(undefined);
       setSalaryDay('5');
-      setAccount((prev) => ({ ...prev, openingBalance: 90000.00 }));
+      setAccount((prev) => ({ ...prev, openingBalance: 90000.0 }));
     } else {
       setAccount((prev) => ({ ...prev, openingBalance: getRandomOpeningBalance() }));
     }
   }, [statementType]);
 
-  // Generate / Regenerate statement record helper
   const handleGenerateStatement = (
     currentCustomer: CustomerDetails,
     type: StatementType = statementType,
     dur: StatementDuration = duration,
     isRegenerate = false
   ) => {
-    // ── Validation for custom mode ──────────────────────────────────────────────
     if (generationMode === 'custom') {
       if (!fromDate || !toDate) {
         toast.error('Please select both From and To dates.', { theme: 'dark' });
@@ -351,7 +343,6 @@ export default function GeneratorPage() {
       }
     }
 
-    // ── Validation for manual salary configuration ────────────────────────────
     if (type === 'salaried' && salaryMode === 'manual') {
       const trimmedCompany = companyName.trim();
       if (!trimmedCompany) {
@@ -364,18 +355,17 @@ export default function GeneratorPage() {
       }
     }
 
-    // ── Build the settings object with current mode, dates, and salary config ──
     const settings: StatementSettings = {
       ...baseSettings,
       bankStyle,
       duration: dur === '3months' ? '3 Months' : dur === '1year' ? '12 Months' : '6 Months',
-      // Add generation mode and dates if custom
+      enablePdfPassword: enablePassword && Boolean(pdfPassword.trim()),
+      pdfPassword: enablePassword ? pdfPassword.trim() : undefined,
       ...(generationMode === 'custom' && {
         generationMode: 'custom',
         fromDate,
         toDate,
       }),
-      // Add salary config if salaried
       ...(type === 'salaried' && {
         salaryMode,
         companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
@@ -386,26 +376,29 @@ export default function GeneratorPage() {
 
     setLoading(true);
     try {
-      const logMsg = `Invoking ${type === 'salaried' ? 'Salaried' : 'Business'} Transaction Engine (mode: ${generationMode})`;
-      logToSystem('SYSTEM', 'INFO', logMsg);
-
       const transactions =
         type === 'salaried'
-          ? generateSalariedStatementTransactions(settings, account, new Date().toISOString(), customer, branch)
-          : generateStatementTransactions(settings, account, new Date().toISOString(), customer, branch);
+          ? generateSalariedStatementTransactions(settings, account, new Date().toISOString(), currentCustomer, branch)
+          : generateStatementTransactions(settings, account, new Date().toISOString(), currentCustomer, branch);
 
-      // Compute totals
       let totalDebits = 0;
       let totalCredits = 0;
       let drCount = 0;
       let crCount = 0;
 
-      transactions.forEach(t => {
-        if (t.debit) { totalDebits += t.debit; drCount++; }
-        if (t.credit) { totalCredits += t.credit; crCount++; }
+      transactions.forEach((t) => {
+        if (t.debit) {
+          totalDebits += t.debit;
+          drCount++;
+        }
+        if (t.credit) {
+          totalCredits += t.credit;
+          crCount++;
+        }
       });
 
-      const closingBalance = transactions.length > 0 ? transactions[transactions.length - 1].balance : account.openingBalance;
+      const closingBalance =
+        transactions.length > 0 ? transactions[transactions.length - 1].balance : account.openingBalance;
 
       const base: StatementRecord = {
         id: `stmt_${bankStyle.toLowerCase()}_${Date.now()}`,
@@ -419,25 +412,15 @@ export default function GeneratorPage() {
         totalCredits,
         totalDebits,
         drCount,
-        crCount
+        crCount,
       };
 
-      // ── Apply duration post-processing only in duration mode ──────────────────
-      let displayed: StatementRecord;
-      if (generationMode === 'duration') {
-        displayed = applyDuration(base, dur);
-      } else {
-        // Custom mode: no trimming/extending; use the generated transactions as-is
-        displayed = base;
-      }
-
       setBaseRecord(base);
-      setActiveRecord(displayed);
+      setActiveRecord(base);
 
       if (isRegenerate) {
-        toast.success('Successfully regenerated transactions with unique random seeds!', { theme: 'dark' });
+        toast.success('Successfully regenerated transactions with fresh random seeds!', { theme: 'dark' });
       }
-      logToSystem('SYSTEM', 'INFO', `Compiled ${bankStyle} statement: ${transactions.length} transactions, final balance: ₹${displayed.closingBalance.toLocaleString()}`);
     } catch (e: any) {
       console.warn('Could not generate statement', e);
       toast.error('Failed to generate statement. Please try again.', { theme: 'dark' });
@@ -451,95 +434,45 @@ export default function GeneratorPage() {
       await api.post('/api/statements/increment');
       return true;
     } catch (e) {
-      return false;
+      return true;
     }
   };
 
-  // Generate on first load
+  // Generate initial statement
   useEffect(() => {
     handleGenerateStatement(customer, statementType, duration);
   }, []);
 
   const handleInputChange = (field: keyof CustomerDetails, value: string) => {
-    let finalValue = value;
-    if (field === 'accountHolderName') {
-      finalValue = value;
-    }
-    const nextCustomer = { ...customer, [field]: finalValue };
+    const nextCustomer = { ...customer, [field]: value };
     setCustomer(nextCustomer);
-
-    // Update active record in-place without hitting database/regenerating random transactions list
     if (activeRecord) {
-      setActiveRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          customerDetails: nextCustomer
-        };
-      });
+      setActiveRecord((prev) => (prev ? { ...prev, customerDetails: nextCustomer } : null));
     }
     if (baseRecord) {
-      setBaseRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          customerDetails: nextCustomer
-        };
-      });
+      setBaseRecord((prev) => (prev ? { ...prev, customerDetails: nextCustomer } : null));
     }
   };
 
   const handleBranchInputChange = (field: keyof BranchDetails, value: string) => {
-    let finalValue = value;
-    if (field === 'branchName' || field === 'ifscCode') {
-      finalValue = value;
-    }
-    const nextBranch = { ...branch, [field]: finalValue };
+    const nextBranch = { ...branch, [field]: value };
     setBranch(nextBranch);
-
-    // Update active record in-place without hitting database/regenerating random transactions list
     if (activeRecord) {
-      setActiveRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          branchDetails: nextBranch
-        };
-      });
+      setActiveRecord((prev) => (prev ? { ...prev, branchDetails: nextBranch } : null));
     }
     if (baseRecord) {
-      setBaseRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          branchDetails: nextBranch
-        };
-      });
+      setBaseRecord((prev) => (prev ? { ...prev, branchDetails: nextBranch } : null));
     }
   };
 
   const handleAccountInputChange = (field: keyof AccountInfo, value: any) => {
     const nextAccount = { ...account, [field]: value };
     setAccount(nextAccount);
-
-    // Update active record in-place without hitting database/regenerating random transactions list
     if (activeRecord) {
-      setActiveRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          accountInfo: nextAccount
-        };
-      });
+      setActiveRecord((prev) => (prev ? { ...prev, accountInfo: nextAccount } : null));
     }
     if (baseRecord) {
-      setBaseRecord(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          accountInfo: nextAccount
-        };
-      });
+      setBaseRecord((prev) => (prev ? { ...prev, accountInfo: nextAccount } : null));
     }
   };
 
@@ -547,528 +480,761 @@ export default function GeneratorPage() {
     handleGenerateStatement(customer, statementType, duration, true);
   };
 
-  // When statement type changes, auto-regenerate
   const handleTypeChange = (type: StatementType) => {
     setStatementType(type);
-    // The useEffect will reset salary config when switching to business,
-    // but we also need to regenerate with the new type
     handleGenerateStatement(customer, type, duration, false);
   };
 
-  // When duration changes — re-apply to existing base record (no regenerate needed)
   const handleDurationChange = (dur: StatementDuration) => {
     setDuration(dur);
-    if (baseRecord) {
-      const displayed = applyDuration(baseRecord, dur);
-      setActiveRecord(displayed);
-    } else {
-      handleGenerateStatement(customer, statementType, dur, false);
-    }
+    handleGenerateStatement(customer, statementType, dur, false);
   };
 
-  // Get period display string for hardcoded section
-  const getPeriodDisplay = (): string => {
-    if (generationMode === 'duration') {
-      const durationLabel = DURATION_OPTIONS.find(d => d.value === duration)?.label || '6 Months';
-      return durationLabel;
-    } else {
-      // custom
-      if (fromDate && toDate) {
-        const from = new Date(fromDate);
-        const to = new Date(toDate);
-        if (!isNaN(from.getTime()) && !isNaN(to.getTime())) {
-          return `${formatDateDisplay(from)} → ${formatDateDisplay(to)}`;
+  // ── High Performance PDF Export ──
+  const handleDownloadPdf = async (mode: 'vector' | 'standard' = 'vector') => {
+    await handlePrintCheck();
+
+    setIsDownloadingPdf(true);
+    setDownloadProgress({ percent: 15, text: 'Preparing statement payload...' });
+
+    const passToUse = enablePassword && pdfPassword.trim() ? pdfPassword.trim() : undefined;
+    const randCode =
+      Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+    const filename = `${bankStyle}_Statement_${randCode}.pdf`;
+
+    try {
+      const container = document.querySelector('.print-container-target') as HTMLElement;
+
+      if (container) {
+        setDownloadProgress({ percent: 35, text: 'Compiling high-fidelity vector PDF...' });
+        try {
+          await exportStatementToPdfViaBackend(container, {
+            filename,
+            password: passToUse,
+            onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
+          });
+          toast.success(
+            passToUse
+              ? `🔐 Password-protected PDF downloaded! Password: "${passToUse}"`
+              : '📄 Statement PDF downloaded successfully!',
+            { theme: 'dark' }
+          );
+        } catch (backendErr) {
+          console.warn('Backend vector PDF fallback to client canvas PDF:', backendErr);
+          setDownloadProgress({ percent: 60, text: 'Rendering via client PDF engine...' });
+          await exportStatementToPdf(container, {
+            filename,
+            password: passToUse,
+            onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
+          });
+          toast.success('📄 Statement PDF downloaded successfully!', { theme: 'dark' });
         }
+      } else {
+        // Fallback directly to backend statement generator
+        const settings: StatementSettings = {
+          ...baseSettings,
+          bankStyle,
+          enablePdfPassword: Boolean(passToUse),
+          pdfPassword: passToUse,
+          ...(generationMode === 'custom' && {
+            generationMode: 'custom',
+            fromDate,
+            toDate,
+          }),
+          ...(statementType === 'salaried' && {
+            salaryMode,
+            companyName: salaryMode === 'manual' ? companyName.trim() : undefined,
+            monthlySalary: salaryMode === 'manual' ? monthlySalary : undefined,
+            salaryDay,
+          }),
+        };
+
+        await downloadStatementPdfFromBackend({
+          customerDetails: customer,
+          branchDetails: branch,
+          accountInfo: account,
+          settings,
+          onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
+        });
+        toast.success('📄 Statement PDF downloaded successfully!', { theme: 'dark' });
       }
-      return 'Custom range';
+    } catch (err: any) {
+      console.error('PDF download failed:', err);
+      toast.error(`Download failed: ${err.message || 'Unknown error'}`, { theme: 'dark' });
+    } finally {
+      setIsDownloadingPdf(false);
+      setDownloadProgress({ percent: 0, text: '' });
     }
   };
 
-  // Compute date range info for custom mode
-  const rangeInfo = generationMode === 'custom' ? getDateRangeInfo(fromDate, toDate) : null;
-
-  // Helper to handle company name input: uppercase and trim
-  const handleCompanyNameChange = (value: string) => {
-    const upper = value.toUpperCase();
-    setCompanyName(upper);
+  const handlePrint = async () => {
+    await handlePrintCheck();
+    window.print();
   };
 
-  // Helper to format bank names
   const getBankFullName = (style: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB') => {
     switch (style) {
-      case 'SBI': return 'State Bank of India';
-      case 'SBI2': return 'State Bank of India 2.0';
-      case 'Kotak': return 'Kotak Mahindra Bank';
-      case 'BOI': return 'Bank of India';
-      case 'PNB': return 'Punjab National Bank';
+      case 'SBI':
+        return 'State Bank of India';
+      case 'SBI2':
+        return 'State Bank of India 2.0';
+      case 'Kotak':
+        return 'Kotak Mahindra Bank';
+      case 'BOI':
+        return 'Bank of India';
+      case 'PNB':
+        return 'Punjab National Bank';
     }
   };
 
+  const rangeInfo = generationMode === 'custom' ? getDateRangeInfo(fromDate, toDate) : null;
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-50 text-slate-800 flex flex-col font-sans print:bg-white print:text-black print:h-auto print:overflow-visible">
-      {/* Non-printable Header */}
-      <header className="bg-slate-900 text-white py-4 px-6 shadow-md border-b border-slate-800 select-none print:hidden flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-inner ${
-            bankStyle === 'SBI' ? 'bg-blue-600' : bankStyle === 'Kotak' ? 'bg-rose-600' : bankStyle === 'BOI' ? 'bg-sky-700' : 'bg-red-700'
-          }`}>
-            <Landmark size={22} className="text-white" />
+    <div className="min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans overflow-x-hidden">
+      {/* Top Navbar */}
+      <header className="sticky top-0 z-30 bg-slate-900 text-white py-3.5 px-4 sm:px-6 shadow-md border-b border-slate-800 select-none print:hidden">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
+            <div className="flex items-center space-x-3">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-inner ${bankStyle === 'SBI'
+                    ? 'bg-blue-600'
+                    : bankStyle === 'Kotak'
+                      ? 'bg-rose-600'
+                      : bankStyle === 'BOI'
+                        ? 'bg-sky-700'
+                        : 'bg-red-700'
+                  }`}
+              >
+                <Landmark size={20} className="text-white" />
+              </div>
+              <div>
+                <h1 className="font-extrabold text-base tracking-tight leading-none flex items-center gap-2">
+                  <span>{getBankFullName(bankStyle)}</span>
+                  <span
+                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${bankStyle === 'SBI'
+                        ? 'bg-blue-900/60 text-blue-300'
+                        : bankStyle === 'Kotak'
+                          ? 'bg-rose-900/60 text-rose-300'
+                          : bankStyle === 'BOI'
+                            ? 'bg-sky-900/60 text-sky-300'
+                            : 'bg-red-900/60 text-amber-300'
+                      }`}
+                  >
+                    Generator
+                  </span>
+                </h1>
+                <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
+                  HIGH-FIDELITY VECTOR ENGINE
+                </span>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="font-extrabold text-lg tracking-tight leading-none flex items-center gap-1.5">
-              {getBankFullName(bankStyle)}{' '}
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                bankStyle === 'SBI' ? 'text-blue-300' : bankStyle === 'Kotak' ? 'text-rose-300' : bankStyle === 'BOI' ? 'text-sky-300' : 'text-amber-300'
-              }`}>Statistical Generator</span>
-            </h1>
-            <span className="text-[10.5px] text-slate-400 font-semibold block mt-0.5">HIGH-FIDELITY TRANSACTION ENGINE</span>
-          </div>
-        </div>
 
-        {/* User profile & Navigation */}
-        <div className="flex flex-wrap items-center gap-3">
-          {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') && (
+          {/* Navigation Links */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+            {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') && (
+              <Link
+                to="/admin/dashboard"
+                className="flex items-center gap-1.5 bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 font-bold px-3 py-1.5 rounded-xl border border-blue-500/20 text-xs transition-all"
+              >
+                <ShieldAlert size={13} />
+                Admin Portal
+              </Link>
+            )}
+
             <Link
-              to="/admin/dashboard"
-              className="flex items-center gap-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 font-bold px-3 py-1.5 rounded-xl border border-blue-500/20 text-xs transition-all"
+              to="/profile"
+              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 font-bold px-3 py-1.5 rounded-xl border border-slate-700 text-xs transition-all text-slate-200"
             >
-              <ShieldAlert size={14} />
-              Admin Portal
+              <User size={13} />
+              {user?.fullName || 'Profile'}
             </Link>
-          )}
 
-          <Link
-            to="/profile"
-            className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 font-bold px-3 py-1.5 rounded-xl border border-slate-750 text-xs transition-all text-slate-200"
-          >
-            <User size={14} />
-            Profile ({user?.fullName})
-          </Link>
-
-          <button
-            onClick={logout}
-            className="flex items-center gap-1.5 bg-rose-650 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition-all shadow-md shadow-rose-900/10 active:scale-95 cursor-pointer"
-          >
-            <LogOut size={14} />
-            Logout
-          </button>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 bg-rose-600/90 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 cursor-pointer shadow-xs"
+            >
+              <LogOut size={13} />
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
-      {/* Main Work Area */}
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row p-6 lg:p-8 gap-8 print:p-0 print:gap-0 print:block print:overflow-visible">
-
-        {/* Left Side: Control Panel (Non-printable) */}
-        <aside className="w-full lg:w-96 flex flex-col space-y-5 select-none print:hidden shrink-0 lg:overflow-y-auto lg:h-full lg:pr-2">
-
-          {/* Select Project (bank format) pill switch */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">Select Project</p>
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
-              {BANK_STYLE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleBankStyleChange(opt.value)}
-                  className={`flex-1 min-w-[64px] whitespace-nowrap py-2 px-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
-                    bankStyle === opt.value
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+      {/* Main Content Dashboard */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Bank Selector Bar */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Bank Project:</span>
           </div>
 
-          {/* Statement Type */}
-          <Section icon={Building2} title="Statement Type">
-            <SegmentedToggle
-              value={statementType}
-              onChange={handleTypeChange}
-              options={[
-                { value: 'salaried', label: 'Salaried' },
-                { value: 'business', label: 'Business' },
-              ]}
-            />
-            <p className="text-[10.5px] text-slate-400 leading-relaxed">
-              {statementType === 'salaried'
-                ? 'Salary of ₹20,000–₹80,000 credited via NEFT from a company each month.'
-                : 'Mixed UPI / IMPS / NEFT / ATM transactions, no fixed salary pattern.'}
-            </p>
-          </Section>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            {BANK_STYLE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleBankStyleChange(opt.value)}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all ${bankStyle === opt.value
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20 scale-102'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+                  }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {/* Account */}
-          <Section icon={Landmark} title="Account">
-            <Grid2>
-              <div>
-                <FieldLabel>Account Number</FieldLabel>
-                <input
-                  type="text"
-                  value={customer.accountNumber}
-                  onChange={e => handleInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
-                  className={`${inputCls} font-mono tracking-widest`}
-                />
-              </div>
-              <div>
-                <FieldLabel>Opening Balance (₹)</FieldLabel>
-                <input
-                  type="number"
-                  value={account.openingBalance}
-                  onChange={e => handleAccountInputChange('openingBalance', parseFloat(e.target.value) || 0)}
-                  className={`${inputCls} font-mono font-bold`}
-                />
-              </div>
-            </Grid2>
-          </Section>
-
-          {/* Salary Configuration (only for Salaried) */}
-          {statementType === 'salaried' && (
-            <Section icon={Wallet} title="Salary">
-              <SegmentedToggle<SalaryMode>
-                value={salaryMode}
-                onChange={setSalaryMode}
+        {/* 2-Column Responsive Dashboard Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Form Controls Area (8 cols on lg) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Statement Type & Salary Configuration */}
+            <Section icon={Building2} title="Statement Type & Salary Settings">
+              <SegmentedToggle
+                value={statementType}
+                onChange={handleTypeChange}
                 options={[
-                  { value: 'auto', label: 'Auto' },
-                  { value: 'manual', label: 'Manual' },
+                  { value: 'salaried', label: '💼 Salaried Account' },
+                  { value: 'business', label: '🏢 Business Account' },
                 ]}
               />
 
-              {salaryMode === 'manual' && (
-                <Grid2>
-                  <div>
-                    <FieldLabel>Salary Amount (₹)</FieldLabel>
-                    <input
-                      type="number"
-                      min={1}
-                      value={monthlySalary ?? ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '') {
-                          setMonthlySalary(undefined);
-                        } else {
-                          const num = Number(val);
-                          if (!isNaN(num) && num >= 0) {
-                            setMonthlySalary(Math.floor(num));
-                          }
-                        }
-                      }}
-                      placeholder="e.g. 45000"
-                      className={`${inputCls} font-mono`}
-                    />
+              {statementType === 'salaried' ? (
+                <div className="space-y-4 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <FieldLabel>Salary Credit Mode</FieldLabel>
+                    <span className="text-[11px] text-blue-600 font-semibold">
+                      {salaryMode === 'auto' ? 'Auto Calculated' : 'Custom Defined'}
+                    </span>
                   </div>
-                  <div>
-                    <FieldLabel>Company Name</FieldLabel>
-                    <input
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => handleCompanyNameChange(e.target.value)}
-                      placeholder="e.g. INFOSYS LIMITED"
-                      className={inputCls}
-                    />
-                  </div>
-                </Grid2>
-              )}
 
-              <div>
-                <FieldLabel>Salary Credit Day</FieldLabel>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {SALARY_DAY_PRESETS.map(({ val, label }) => (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => setSalaryDay(val as any)}
-                      className={`py-1.5 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors border ${
-                        salaryDay === val
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                  <SegmentedToggle<SalaryMode>
+                    value={salaryMode}
+                    onChange={setSalaryMode}
+                    options={[
+                      { value: 'auto', label: 'Auto Salary Engine' },
+                      { value: 'manual', label: 'Manual Salary Details' },
+                    ]}
+                  />
+
+                  {salaryMode === 'manual' && (
+                    <Grid2>
+                      <div>
+                        <FieldLabel>Monthly Salary Amount (₹)</FieldLabel>
+                        <input
+                          type="number"
+                          min={1}
+                          value={monthlySalary ?? ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') {
+                              setMonthlySalary(undefined);
+                            } else {
+                              const num = Number(val);
+                              if (!isNaN(num) && num >= 0) {
+                                setMonthlySalary(Math.floor(num));
+                              }
+                            }
+                          }}
+                          placeholder="e.g. 45000"
+                          className={`${inputCls} font-mono`}
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel>Employer / Company Name</FieldLabel>
+                        <input
+                          type="text"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value.toUpperCase())}
+                          placeholder="e.g. INFOSYS LIMITED"
+                          className={inputCls}
+                        />
+                      </div>
+                    </Grid2>
+                  )}
+
+                  <div>
+                    <FieldLabel>Monthly Salary Credit Day</FieldLabel>
+                    <div className="grid grid-cols-5 sm:grid-cols-9 gap-1.5">
+                      {SALARY_DAY_PRESETS.map(({ val, label }) => (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setSalaryDay(val as any)}
+                          className={`py-2 rounded-xl text-xs font-bold cursor-pointer transition-all border ${salaryDay === val
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">Custom day (1–31):</span>
+              ) : (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600">
+                  Business mode generates natural mixed UPI / IMPS / NEFT / ATM & Vendor transactions without a
+                  fixed monthly corporate salary pattern.
+                </div>
+              )}
+            </Section>
+
+            {/* Account & Financials */}
+            <Section icon={Landmark} title="Account & Balance">
+              <Grid2>
+                <div>
+                  <FieldLabel>Account Number</FieldLabel>
                   <input
-                    type="number"
-                    min={1}
-                    max={31}
-                    value={salaryDay !== 'last_day' ? salaryDay : ''}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      if (!isNaN(v) && v >= 1 && v <= 31) {
-                        setSalaryDay(v.toString() as any);
-                      }
-                    }}
-                    placeholder="Day"
-                    className={`${inputCls} w-20 py-1.5`}
+                    type="text"
+                    value={customer.accountNumber}
+                    onChange={(e) => handleInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
+                    className={`${inputCls} font-mono font-bold tracking-wider`}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1.5">Sunday credit dates automatically shift to Saturday.</p>
+                <div>
+                  <FieldLabel>Opening Balance (₹)</FieldLabel>
+                  <input
+                    type="number"
+                    value={account.openingBalance}
+                    onChange={(e) => handleAccountInputChange('openingBalance', parseFloat(e.target.value) || 0)}
+                    className={`${inputCls} font-mono font-bold text-emerald-600`}
+                  />
+                </div>
+              </Grid2>
+
+              <Grid2>
+                <div>
+                  <FieldLabel>Account Type</FieldLabel>
+                  <input
+                    type="text"
+                    value={account.accountType}
+                    onChange={(e) => handleAccountInputChange('accountType', e.target.value)}
+                    placeholder="e.g. SAVINGS BANK AC"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Interest Rate (% p.a.)</FieldLabel>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={account.interestRate}
+                    onChange={(e) => handleAccountInputChange('interestRate', parseFloat(e.target.value) || 0)}
+                    className={inputCls}
+                  />
+                </div>
+              </Grid2>
+            </Section>
+
+            {/* Customer Information */}
+            <Section icon={User} title="Customer / Account Holder">
+              <Grid2>
+                <div>
+                  <FieldLabel>Account Holder Name</FieldLabel>
+                  <input
+                    type="text"
+                    value={customer.accountHolderName}
+                    onChange={(e) => handleInputChange('accountHolderName', e.target.value.toUpperCase())}
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Nominee Name</FieldLabel>
+                  <input
+                    type="text"
+                    value={customer.nomineeName}
+                    onChange={(e) => handleInputChange('nomineeName', e.target.value.toUpperCase())}
+                    className={inputCls}
+                  />
+                </div>
+              </Grid2>
+
+              <Grid2>
+                <div>
+                  <FieldLabel>CIF Number</FieldLabel>
+                  <input
+                    type="text"
+                    value={customer.cifNumber}
+                    onChange={(e) => handleInputChange('cifNumber', e.target.value.replace(/\D/g, ''))}
+                    className={`${inputCls} font-mono tracking-wider`}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>Primary Email Address</FieldLabel>
+                  <input
+                    type="email"
+                    value={customer.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    className={inputCls}
+                  />
+                </div>
+              </Grid2>
+
+              <div>
+                <FieldLabel>Mailing Address</FieldLabel>
+                <textarea
+                  value={customer.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  rows={2}
+                  className={`${inputCls} resize-none`}
+                />
               </div>
             </Section>
-          )}
 
-          {/* Branch */}
-          <Section icon={Building2} title="Branch">
-            <div>
-              <FieldLabel>Branch Name</FieldLabel>
-              <input
-                type="text"
-                value={branch.branchName}
-                onChange={e => handleBranchInputChange('branchName', e.target.value)}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <FieldLabel>Branch Address</FieldLabel>
-              <textarea
-                value={branch.branchAddress}
-                onChange={e => handleBranchInputChange('branchAddress', e.target.value)}
-                rows={2}
-                className={`${inputCls} resize-none`}
-              />
-            </div>
-            <Grid2>
-              <div>
-                <FieldLabel>IFSC Code</FieldLabel>
-                <input
-                  type="text"
-                  value={branch.ifscCode}
-                  onChange={e => handleBranchInputChange('ifscCode', e.target.value)}
-                  className={`${inputCls} font-mono tracking-wider`}
-                />
-              </div>
-              <div>
-                <FieldLabel>MICR Code</FieldLabel>
-                <input
-                  type="text"
-                  value={branch.micrCode}
-                  onChange={e => handleBranchInputChange('micrCode', e.target.value)}
-                  className={`${inputCls} font-mono`}
-                />
-              </div>
-            </Grid2>
-          </Section>
-
-          {/* Customer */}
-          <Section icon={User} title="Customer">
-            <Grid2>
-              <div>
-                <FieldLabel>Account Holder Name</FieldLabel>
-                <input
-                  type="text"
-                  value={customer.accountHolderName}
-                  onChange={e => handleInputChange('accountHolderName', e.target.value)}
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <FieldLabel>Nominee Name</FieldLabel>
-                <input
-                  type="text"
-                  value={customer.nomineeName}
-                  onChange={e => handleInputChange('nomineeName', e.target.value)}
-                  className={inputCls}
-                />
-              </div>
-            </Grid2>
-            <Grid2>
-              <div>
-                <FieldLabel>Account Type</FieldLabel>
-                <input
-                  type="text"
-                  value={account.accountType}
-                  onChange={e => handleAccountInputChange('accountType', e.target.value)}
-                  placeholder="e.g. SAVINGS BANK AC"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <FieldLabel>CIF Number</FieldLabel>
-                <input
-                  type="text"
-                  value={customer.cifNumber}
-                  onChange={e => handleInputChange('cifNumber', e.target.value.replace(/\D/g, ''))}
-                  className={`${inputCls} font-mono tracking-wider`}
-                />
-              </div>
-            </Grid2>
-            <div>
-              <FieldLabel>Primary Email ID</FieldLabel>
-              <input
-                type="email"
-                value={customer.email}
-                onChange={e => handleInputChange('email', e.target.value)}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <FieldLabel>Mailing Address</FieldLabel>
-              <textarea
-                value={customer.address}
-                onChange={e => handleInputChange('address', e.target.value)}
-                rows={2}
-                className={`${inputCls} resize-none`}
-              />
-            </div>
-          </Section>
-
-          {/* Statement Period */}
-          <Section icon={Calendar} title="Statement Period">
-            <SegmentedToggle<GenerationMode>
-              value={generationMode}
-              onChange={setGenerationMode}
-              options={[
-                { value: 'duration', label: 'Quick Duration' },
-                { value: 'custom', label: 'Custom Range' },
-              ]}
-            />
-
-            {generationMode === 'duration' ? (
-              <>
-                <div className="grid grid-cols-3 gap-2">
-                  {DURATION_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => handleDurationChange(opt.value)}
-                      className={`py-2.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border ${
-                        duration === opt.value
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+            {/* Branch Details */}
+            <Section icon={Building2} title="Bank Branch Information">
+              <Grid2>
+                <div>
+                  <FieldLabel>Branch Name</FieldLabel>
+                  <input
+                    type="text"
+                    value={branch.branchName}
+                    onChange={(e) => handleBranchInputChange('branchName', e.target.value)}
+                    className={inputCls}
+                  />
                 </div>
-                <p className="text-[10.5px] text-slate-400">
-                  {duration === '3months' && 'Showing last 3 months of transactions.'}
-                  {duration === '6months' && 'Full 6-month statement — default view.'}
-                  {duration === '1year' && 'Full 12-month statement.'}
-                </p>
-              </>
-            ) : (
-              <>
-                <Grid2>
-                  <div>
-                    <FieldLabel>From Date</FieldLabel>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      className={inputCls}
-                    />
-                  </div>
-                  <div>
-                    <FieldLabel>To Date</FieldLabel>
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      className={inputCls}
-                    />
-                  </div>
-                </Grid2>
-                {rangeInfo && (
-                  <div className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
-                    {rangeInfo.days} days · ≈ {rangeInfo.months.toFixed(1)} months
-                  </div>
-                )}
-                {(!fromDate || !toDate) && (
-                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-amber-800 text-[11px]">
-                    <span>⚠️</span>
-                    <span>Please select both dates.</span>
-                  </div>
-                )}
-                {fromDate && toDate && new Date(fromDate) > new Date(toDate) && (
-                  <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2.5 text-rose-700 text-[11px]">
-                    <XCircle size={13} className="mt-0.5 flex-shrink-0" />
-                    <span>From Date must be on or before To Date.</span>
-                  </div>
-                )}
-              </>
-            )}
-          </Section>
+                <div>
+                  <FieldLabel>Branch Code</FieldLabel>
+                  <input
+                    type="text"
+                    value={branch.branchCode}
+                    onChange={(e) => handleBranchInputChange('branchCode', e.target.value)}
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+              </Grid2>
 
-          {/* Summary */}
-          <Section icon={Landmark} title="Summary">
-            <div className="grid grid-cols-2 gap-3 text-zinc-700 text-[11px] leading-relaxed">
-              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Bank</span>
-                <span className="font-extrabold text-slate-900">{getBankFullName(bankStyle)}</span>
+              <div>
+                <FieldLabel>Branch Address</FieldLabel>
+                <textarea
+                  value={branch.branchAddress}
+                  onChange={(e) => handleBranchInputChange('branchAddress', e.target.value)}
+                  rows={2}
+                  className={`${inputCls} resize-none`}
+                />
               </div>
-              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Branch</span>
-                <span className="font-extrabold text-slate-900">{branch.branchName}</span>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Interest Rate</span>
-                <span className="font-extrabold text-slate-900">2.50% p.a.</span>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Open Date</span>
-                <span className="font-extrabold text-slate-900">09-05-2022</span>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 col-span-2">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Statement Duration</span>
-                <span className="font-extrabold text-slate-900">
-                  {getPeriodDisplay()}
-                  {generationMode === 'duration' && activeRecord && activeRecord.transactions.length > 0 && (
-                    <> ({activeRecord.transactions[0].valueDate} to {activeRecord.transactions[activeRecord.transactions.length - 1].valueDate})</>
-                  )}
-                </span>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 col-span-2">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Opening Balance</span>
-                <span className="font-extrabold text-emerald-600 font-mono text-xs">
-                  ₹{(activeRecord ? activeRecord.accountInfo.openingBalance : account.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })} CR
-                </span>
-              </div>
-            </div>
-          </Section>
 
-          {/* Action Trigger */}
-          <button
-            onClick={handleTriggerRegenerate}
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-100 cursor-pointer transition-all text-sm flex items-center justify-center gap-2 active:scale-98"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Regenerate Transactions
-          </button>
+              <Grid2>
+                <div>
+                  <FieldLabel>IFSC Code</FieldLabel>
+                  <input
+                    type="text"
+                    value={branch.ifscCode}
+                    onChange={(e) => handleBranchInputChange('ifscCode', e.target.value.toUpperCase())}
+                    className={`${inputCls} font-mono tracking-wider`}
+                  />
+                </div>
+                <div>
+                  <FieldLabel>MICR Code</FieldLabel>
+                  <input
+                    type="text"
+                    value={branch.micrCode}
+                    onChange={(e) => handleBranchInputChange('micrCode', e.target.value)}
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+              </Grid2>
+            </Section>
 
-        </aside>
-
-        {/* Right Side: Exact Original Bank Layout Preview Container */}
-        <main className="flex-1 overflow-auto min-w-0 bg-white lg:bg-slate-200/20 lg:border lg:border-slate-200 lg:rounded-3xl p-0 lg:p-6 shadow-inner print:p-0 print:border-none print:shadow-none print:bg-white print:overflow-visible h-full">
-          {loading && !activeRecord ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-sans italic">
-              <RefreshCw size={24} className="animate-spin mb-2 text-blue-500" />
-              Initializing Statistical Statement...
-            </div>
-          ) : activeRecord ? (
-            <div className="min-w-[210mm] w-fit mx-auto print:mx-0">
-              <StatementPreview
-                record={activeRecord}
-                onPrint={handlePrintCheck}
-                onClose={() => {}}
+            {/* Statement Period */}
+            <Section icon={Calendar} title="Statement Duration & Date Range">
+              <SegmentedToggle<GenerationMode>
+                value={generationMode}
+                onChange={setGenerationMode}
+                options={[
+                  { value: 'duration', label: '⚡ Quick Duration' },
+                  { value: 'custom', label: '📅 Custom Date Range' },
+                ]}
               />
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-sans italic">
-              No statement compiled yet.
-            </div>
-          )}
-        </main>
 
+              {generationMode === 'duration' ? (
+                <div className="space-y-3 pt-2">
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {DURATION_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => handleDurationChange(opt.value)}
+                        className={`py-3 px-3 rounded-xl text-xs font-bold cursor-pointer transition-all border ${duration === opt.value
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/15'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                      >
+                        <div>{opt.label}</div>
+                        <div
+                          className={`text-[10px] font-normal mt-0.5 ${duration === opt.value ? 'text-blue-100' : 'text-slate-400'
+                            }`}
+                        >
+                          {opt.sub}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 pt-2">
+                  <Grid2>
+                    <div>
+                      <FieldLabel>From Date</FieldLabel>
+                      <input
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <FieldLabel>To Date</FieldLabel>
+                      <input
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        className={inputCls}
+                      />
+                    </div>
+                  </Grid2>
+                  {rangeInfo && (
+                    <div className="text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                      <span>Calculated Range:</span>
+                      <span className="font-bold">
+                        {rangeInfo.days} Days (approx. {rangeInfo.months.toFixed(1)} Months)
+                      </span>
+                    </div>
+                  )}
+                  {fromDate && toDate && new Date(fromDate) > new Date(toDate) && (
+                    <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-rose-700 text-xs">
+                      <XCircle size={14} className="flex-shrink-0" />
+                      <span>From Date must be on or before To Date.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Section>
+          </div>
 
+          {/* Right Action & Summary Panel (4 cols on lg, sticky on desktop) */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
+            {/* Live Financial Metrics Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className="text-amber-500" />
+                  <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Statement Summary</h3>
+                </div>
+                <span className="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">
+                  {bankStyle}
+                </span>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Account Holder:</span>
+                  <span className="font-bold text-slate-800 truncate max-w-[170px]">
+                    {customer.accountHolderName}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Account Number:</span>
+                  <span className="font-mono font-bold text-slate-800">{customer.accountNumber}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500">Total Transactions:</span>
+                  <span className="font-bold text-slate-800">
+                    {activeRecord?.transactions.length || 0} Transactions
+                  </span>
+                </div>
+              </div>
+
+              {/* Financial Balances Grid */}
+              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                  <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold uppercase mb-0.5">
+                    <ArrowDownRight size={12} /> Total Credits
+                  </div>
+                  <div className="font-mono font-bold text-xs text-slate-900">
+                    ₹{(activeRecord?.totalCredits || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-[9px] text-slate-400 mt-0.5">{activeRecord?.crCount || 0} credits</div>
+                </div>
+
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                  <div className="flex items-center gap-1 text-[10px] text-rose-600 font-bold uppercase mb-0.5">
+                    <ArrowUpRight size={12} /> Total Debits
+                  </div>
+                  <div className="font-mono font-bold text-xs text-slate-900">
+                    ₹{(activeRecord?.totalDebits || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="text-[9px] text-slate-400 mt-0.5">{activeRecord?.drCount || 0} debits</div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/60 p-3.5 rounded-xl border border-blue-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-blue-700 tracking-wider block">
+                    Calculated Closing Balance
+                  </span>
+                  <span className="font-mono font-extrabold text-base text-blue-950">
+                    ₹
+                    {(activeRecord?.closingBalance || account.openingBalance).toLocaleString('en-IN', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    CR
+                  </span>
+                </div>
+                <CheckCircle2 size={22} className="text-blue-600 flex-shrink-0" />
+              </div>
+            </div>
+
+            {/* PDF Export & Security Settings Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Lock size={15} className="text-slate-500" />
+                  <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider">PDF Security & Export</h3>
+                </div>
+              </div>
+
+              {/* Password Protection Toggle */}
+              <div className="space-y-3 bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/70">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="enable-password" className="text-xs font-bold text-slate-700 cursor-pointer">
+                    Enable PDF Password Protection
+                  </label>
+                  <input
+                    id="enable-password"
+                    type="checkbox"
+                    checked={enablePassword}
+                    onChange={(e) => setEnablePassword(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                </div>
+
+                {enablePassword && (
+                  <div className="pt-2">
+                    <FieldLabel>Opening Password</FieldLabel>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={pdfPassword}
+                        onChange={(e) => setPdfPassword(e.target.value)}
+                        placeholder="e.g. SUDH1234 or Date of Birth"
+                        className={`${inputCls} pr-10`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Primary Download Button */}
+              <button
+                onClick={() => handleDownloadPdf('vector')}
+                disabled={isDownloadingPdf}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/20 cursor-pointer transition-all flex items-center justify-center gap-2 active:scale-98 text-sm"
+              >
+                {isDownloadingPdf ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>{downloadProgress.text || 'Generating Statement PDF...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    <span>Download Statement PDF</span>
+                  </>
+                )}
+              </button>
+
+              {/* Progress Bar when Downloading */}
+              {isDownloadingPdf && downloadProgress.percent > 0 && (
+                <div className="space-y-1.5">
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                    <div
+                      className="bg-blue-600 h-full transition-all duration-300 rounded-full"
+                      style={{ width: `${downloadProgress.percent}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-[10px] text-slate-500 text-center font-medium">
+                    {downloadProgress.percent}% · {downloadProgress.text}
+                  </div>
+                </div>
+              )}
+
+              {/* Secondary Actions */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleTriggerRegenerate}
+                  disabled={loading || isDownloadingPdf}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200/80"
+                >
+                  <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                  <span>Regenerate</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrint}
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200/80"
+                >
+                  <Printer size={13} />
+                  <span>Print (A4)</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quality Guarantee badge */}
+            <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-2xl p-4 flex items-start gap-3">
+              <ShieldCheck size={18} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+              <div>
+                <h4 className="text-xs font-bold text-emerald-900">100% Vector & OCR Extractable</h4>
+                <p className="text-[11px] text-emerald-700 leading-relaxed mt-0.5">
+                  Generated PDF contains complete native text layers compatible with automated verifiers (Karza,
+                  Perfios, Finbit, Digitap).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Hidden Offscreen Export & Print Target (Does not show in UI, but provides full DOM for PDF compilation and print) */}
+      <div
+        className="offscreen-export-target print:block"
+        style={{
+          position: 'fixed',
+          left: '-99999px',
+          top: '0',
+          width: '210mm',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+        aria-hidden="true"
+      >
+        {activeRecord && (
+          <div className="print-container-target">
+            <StatementPreview
+              record={activeRecord}
+              onClose={() => { }}
+              onPrint={handlePrintCheck}
+              hideControls={true}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
-
 }

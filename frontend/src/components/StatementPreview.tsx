@@ -10,6 +10,7 @@ interface StatementPreviewProps {
   record: StatementRecord;
   onClose: () => void;
   onPrint?: () => Promise<boolean>;
+  hideControls?: boolean;
 }
 
 function formatKotakDate(dateStr: string): string {
@@ -222,7 +223,7 @@ function MetadataColumn({ children }: MetadataColumnProps) {
   return <div className="flex flex-col gap-2">{children}</div>;
 }
 
-export default function StatementPreview({ record, onClose, onPrint }: StatementPreviewProps) {
+export default function StatementPreview({ record, onClose, onPrint, hideControls }: StatementPreviewProps) {
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
 
   const pageChunks = settings.bankStyle === 'SBI'
@@ -385,101 +386,100 @@ export default function StatementPreview({ record, onClose, onPrint }: Statement
 
 
   return (
-    <div className="space-y-6">
-
-      {/* Action Controls Header (Non-printable) */}
-      <div className="bg-white border border-slate-200 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs print:hidden">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
-            <CheckCircle size={18} />
+    <div className={hideControls ? "w-fit mx-auto" : "space-y-6"}>
+      {!hideControls && (
+        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs print:hidden">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
+              <CheckCircle size={18} />
+            </div>
+            <div>
+              <h4 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Statement Assembled</h4>
+              <p className="text-slate-500 text-xs mt-0.5">Physical proofs are ready for print layout inspection. System: <strong className="text-indigo-600 font-semibold">A4 Programmatic Bounds</strong>.</p>
+            </div>
           </div>
-          <div>
-            <h4 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">Statement Assembled</h4>
-            <p className="text-slate-500 text-xs mt-0.5">Physical proofs are ready for print layout inspection. System: <strong className="text-indigo-600 font-semibold">A4 Programmatic Bounds</strong>.</p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Password Protection Button */}
+            <button
+              onClick={() => setIsPasswordModalOpen(true)}
+              className={`font-semibold py-2 px-3.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border ${enablePassword && pdfPassword.trim()
+                ? 'bg-amber-500/10 text-amber-700 border-amber-300 hover:bg-amber-500/20 shadow-xs'
+                : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                }`}
+              title="Set PDF opening password"
+            >
+              {enablePassword && pdfPassword.trim() ? (
+                <>
+                  <Lock size={14} className="text-amber-600 animate-pulse" />
+                  <span>PDF Password:</span>
+                  <span className="font-mono bg-amber-200/60 px-1.5 py-0.5 rounded text-[11px] text-amber-900 font-bold">
+                    {pdfPassword.trim()}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Lock size={14} className="text-slate-500" />
+                  <span>PDF Password</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">
+                    OFF
+                  </span>
+                </>
+              )}
+            </button>
+
+            {/* Export PDF with Encryption button */}
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isExporting || isBackendExporting}
+              className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  <span>Exporting ({exportProgress.percent}%)...</span>
+                </>
+              ) : (
+                <>
+                  <Download size={13} />
+                  <span>Download PDF {enablePassword && pdfPassword.trim() ? '(Protected)' : ''}</span>
+                </>
+              )}
+            </button>
+
+            {/* Download Text PDF via Backend Puppeteer */}
+            <button
+              onClick={handleDownloadTextPdf}
+              disabled={isBackendExporting || isExporting}
+              title="Generate a native vector PDF with selectable text — required for Perfios / Karza / bank verification"
+              className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              {isBackendExporting ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  <span>Generating ({backendExportProgress.percent}%)...</span>
+                </>
+              ) : (
+                <>
+                  <FileText size={13} />
+                  <span>Download Text PDF</span>
+                </>
+              )}
+            </button>
+
+            {/* Browser Native Print / Save */}
+            <button
+              onClick={handlePrint}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Printer size={13} /> Print
+            </button>
           </div>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Password Protection Button */}
-          <button
-            onClick={() => setIsPasswordModalOpen(true)}
-            className={`font-semibold py-2 px-3.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer border ${enablePassword && pdfPassword.trim()
-              ? 'bg-amber-500/10 text-amber-700 border-amber-300 hover:bg-amber-500/20 shadow-xs'
-              : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-              }`}
-            title="Set PDF opening password"
-          >
-            {enablePassword && pdfPassword.trim() ? (
-              <>
-                <Lock size={14} className="text-amber-600 animate-pulse" />
-                <span>PDF Password:</span>
-                <span className="font-mono bg-amber-200/60 px-1.5 py-0.5 rounded text-[11px] text-amber-900 font-bold">
-                  {pdfPassword.trim()}
-                </span>
-              </>
-            ) : (
-              <>
-                <Lock size={14} className="text-slate-500" />
-                <span>PDF Password</span>
-                <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-200 px-1.5 py-0.5 rounded">
-                  OFF
-                </span>
-              </>
-            )}
-          </button>
-
-          {/* Export PDF with Encryption button (image-based, for password protection) */}
-          <button
-            onClick={handleDownloadPdf}
-            disabled={isExporting || isBackendExporting}
-            className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 size={13} className="animate-spin" />
-                <span>Exporting ({exportProgress.percent}%)...</span>
-              </>
-            ) : (
-              <>
-                <Download size={13} />
-                <span>Download PDF {enablePassword && pdfPassword.trim() ? '(Protected)' : ''}</span>
-              </>
-            )}
-          </button>
-
-          {/* Download Text PDF via Backend Puppeteer (text-extractable, for verification) */}
-          <button
-            onClick={handleDownloadTextPdf}
-            disabled={isBackendExporting || isExporting}
-            title="Generate a native vector PDF with selectable text — required for Perfios / Karza / bank verification"
-            className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
-          >
-            {isBackendExporting ? (
-              <>
-                <Loader2 size={13} className="animate-spin" />
-                <span>Generating ({backendExportProgress.percent}%)...</span>
-              </>
-            ) : (
-              <>
-                <FileText size={13} />
-                <span>Download Text PDF</span>
-              </>
-            )}
-          </button>
-
-          {/* Browser Native Print / Save */}
-          <button
-            onClick={handlePrint}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
-          >
-            <Printer size={13} /> Print
-          </button>
-        </div>
-      </div>
-
+      )}
 
       {/* Proof container area */}
-      <div className="flex flex-col items-center gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-200/60 overflow-y-auto max-h-[800px] shadow-inner select-text print:bg-white print:p-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible">
+      <div className={hideControls ? "select-text print:bg-white print:p-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible" : "flex flex-col items-center gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-200/60 overflow-y-auto max-h-[800px] shadow-inner select-text print:bg-white print:p-0 print:border-none print:shadow-none print:max-h-none print:overflow-visible"}>
 
         {/* Printable target wrapper */}
         <div className="print-container-target space-y-8 print:space-y-0 print:m-0 print:p-0">

@@ -24,18 +24,21 @@ public final class DateUtils {
     }
 
     public static int getPageToTxCount(String pageCount, int customVal) {
-        if (pageCount == null) return 88;
+        if (pageCount == null) return 125;
         return switch (pageCount) {
             case "1 Page" -> 12;
             case "2 Pages" -> 28;
             case "3 Pages" -> 48;
             case "5 Pages" -> 88;
-            case "10 Pages" -> 160;
-            case "12 Pages" -> 190;
-            case "15 Pages" -> 240;
-            case "20 Pages" -> 310;
+            case "6 Pages" -> 125;
+            case "8 Pages" -> 175;
+            case "10 Pages" -> 220;
+            case "12 Pages" -> 270;
+            case "15 Pages" -> 330;
+            case "20 Pages" -> 450;
+            case "30 Pages" -> 680;
             case "Custom" -> Math.max(5, Math.min(2000, customVal));
-            default -> 88;
+            default -> 125;
         };
     }
 
