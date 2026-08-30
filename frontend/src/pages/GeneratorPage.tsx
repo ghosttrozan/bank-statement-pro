@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, ChevronsUpDown, Download, Loader2, FileCheck, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Landmark, User, RefreshCw, LogOut, ShieldAlert, Building2, Calendar, Wallet, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Components, Types & Hooks
@@ -51,6 +51,93 @@ const DURATION_OPTIONS: { value: StatementDuration; label: string; sub: string; 
   { value: '1year',   label: '1 Year',    sub: 'Last 12 months', months: 12 },
 ];
 
+const SALARY_DAY_PRESETS: { val: string; label: string }[] = [
+  { val: '1', label: '1st' },
+  { val: '3', label: '3rd' },
+  { val: '5', label: '5th' },
+  { val: '7', label: '7th' },
+  { val: '10', label: '10th' },
+  { val: '15', label: '15th' },
+  { val: '25', label: '25th' },
+  { val: '30', label: '30th' },
+  { val: 'last_day', label: 'Last' },
+];
+
+const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'; label: string }[] = [
+  { value: 'SBI', label: 'SBI' },
+  { value: 'SBI2', label: 'SBI V2' },
+  { value: 'Kotak', label: 'Kotak' },
+  { value: 'BOI', label: 'BOI' },
+  { value: 'PNB', label: 'PNB' },
+];
+
+// ── Shared form building blocks (flat sectioned-card design) ────────────────
+const inputCls = "w-full bg-white text-slate-900 border border-slate-300 px-3.5 py-2.5 rounded-lg text-sm font-sans focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all placeholder-slate-400";
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="block text-slate-500 text-[10.5px] font-semibold uppercase tracking-wide mb-1.5">{children}</label>;
+}
+
+function Grid2({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-2 gap-3">{children}</div>;
+}
+
+function Section({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/70">
+        <Icon size={14} className="text-slate-400" />
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{title}</span>
+      </div>
+      <div className="p-4 space-y-3.5">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function SegmentedToggle<T extends string>({ value, options, onChange }: { value: T; options: { value: T; label: string }[]; onChange: (v: T) => void }) {
+  return (
+    <div className="inline-flex w-full rounded-lg border border-slate-200 bg-slate-50 p-0.5">
+      {options.map(opt => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={`flex-1 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
+            value === opt.value
+              ? 'bg-white text-blue-600 shadow-sm border border-slate-200'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// Helper to format a date object to DD-MMM-YYYY (e.g., 01 Apr 2025)
+function formatDateDisplay(date: Date): string {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+// Compute days and approximate months between two dates
+function getDateRangeInfo(from: string, to: string): { days: number; months: number } | null {
+  if (!from || !to) return null;
+  const fromDate = new Date(from);
+  const toDate = new Date(to);
+  if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) return null;
+  const diffTime = toDate.getTime() - fromDate.getTime();
+  if (diffTime < 0) return null;
+  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
+  const months = days / 30.44; // approximate
+  return { days, months };
+}
 
 // Default branch presets per bank
 const SBI_BRANCH_DEFAULTS: BranchDetails = {
@@ -97,28 +184,6 @@ const PNB_BRANCH_DEFAULTS: BranchDetails = {
   ckycrNumber: '40057100381924',
 };
 
-// Helper to format a date object to DD-MMM-YYYY (e.g., 01 Apr 2025)
-function formatDateDisplay(date: Date): string {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = months[date.getMonth()];
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
-}
-
-// Compute days and approximate months between two dates
-function getDateRangeInfo(from: string, to: string): { days: number; months: number } | null {
-  if (!from || !to) return null;
-  const fromDate = new Date(from);
-  const toDate = new Date(to);
-  if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) return null;
-  const diffTime = toDate.getTime() - fromDate.getTime();
-  if (diffTime < 0) return null;
-  const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
-  const months = days / 30.44; // approximate
-  return { days, months };
-}
-
 export default function GeneratorPage() {
   const { user, logout } = useAuth();
 
@@ -129,7 +194,7 @@ export default function GeneratorPage() {
   const [toDate, setToDate] = useState<string>('');
   const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'>('SBI');
 
-  // ─── New salary configuration states ──────────────────────────────────────
+  // ─── Salary configuration states ──────────────────────────────────────
   const [salaryMode, setSalaryMode] = useState<SalaryMode>('auto');
   const [companyName, setCompanyName] = useState<string>('');
   const [monthlySalary, setMonthlySalary] = useState<number | undefined>(undefined);
@@ -546,7 +611,7 @@ export default function GeneratorPage() {
       <header className="bg-slate-900 text-white py-4 px-6 shadow-md border-b border-slate-800 select-none print:hidden flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-3">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-inner ${
-            bankStyle === 'SBI' ? 'bg-indigo-600' : bankStyle === 'Kotak' ? 'bg-rose-600' : bankStyle === 'BOI' ? 'bg-sky-700' : 'bg-red-700'
+            bankStyle === 'SBI' ? 'bg-blue-600' : bankStyle === 'Kotak' ? 'bg-rose-600' : bankStyle === 'BOI' ? 'bg-sky-700' : 'bg-red-700'
           }`}>
             <Landmark size={22} className="text-white" />
           </div>
@@ -554,7 +619,7 @@ export default function GeneratorPage() {
             <h1 className="font-extrabold text-lg tracking-tight leading-none flex items-center gap-1.5">
               {getBankFullName(bankStyle)}{' '}
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                bankStyle === 'SBI' ? 'text-indigo-300' : bankStyle === 'Kotak' ? 'text-rose-300' : bankStyle === 'BOI' ? 'text-sky-300' : 'text-amber-300'
+                bankStyle === 'SBI' ? 'text-blue-300' : bankStyle === 'Kotak' ? 'text-rose-300' : bankStyle === 'BOI' ? 'text-sky-300' : 'text-amber-300'
               }`}>Statistical Generator</span>
             </h1>
             <span className="text-[10.5px] text-slate-400 font-semibold block mt-0.5">HIGH-FIDELITY TRANSACTION ENGINE</span>
@@ -566,7 +631,7 @@ export default function GeneratorPage() {
           {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') && (
             <Link
               to="/admin/dashboard"
-              className="flex items-center gap-1.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 font-bold px-3 py-1.5 rounded-xl border border-indigo-500/20 text-xs transition-all"
+              className="flex items-center gap-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 font-bold px-3 py-1.5 rounded-xl border border-blue-500/20 text-xs transition-all"
             >
               <ShieldAlert size={14} />
               Admin Portal
@@ -593,334 +658,132 @@ export default function GeneratorPage() {
 
       {/* Main Work Area */}
       <div className="flex-1 overflow-hidden flex flex-col lg:flex-row p-6 lg:p-8 gap-8 print:p-0 print:gap-0 print:block print:overflow-visible">
-        
+
         {/* Left Side: Control Panel (Non-printable) */}
-        <aside className="w-full lg:w-96 flex flex-col space-y-6 select-none print:hidden shrink-0 lg:overflow-y-auto lg:h-full lg:pr-2">
-          
-          {/* ── Bank Style Selector ── */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-              <ChevronsUpDown size={14} className="text-indigo-600" /> Bank Format
-            </h2>
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* SBI Option */}
-              <button
-                onClick={() => handleBankStyleChange('SBI')}
-                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  bankStyle === 'SBI'
-                    ? 'border-indigo-500 bg-indigo-50 shadow-sm shadow-indigo-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {bankStyle === 'SBI' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-500" />
-                )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
-                  bankStyle === 'SBI'
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                }`}>SBI</div>
-                <div className="text-center">
-                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
-                    bankStyle === 'SBI' ? 'text-indigo-700' : 'text-slate-600'
-                  }`}>SBI</div>
-                  <div className="text-[8.5px] text-slate-400 leading-tight">State Bank</div>
-                </div>
-              </button>
+        <aside className="w-full lg:w-96 flex flex-col space-y-5 select-none print:hidden shrink-0 lg:overflow-y-auto lg:h-full lg:pr-2">
 
-              {/* SBI 2 Option */}
-              <button
-                onClick={() => handleBankStyleChange('SBI2')}
-                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  bankStyle === 'SBI2'
-                    ? 'border-cyan-600 bg-cyan-50 shadow-sm shadow-cyan-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {bankStyle === 'SBI2' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-cyan-600" />
-                )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
-                  bankStyle === 'SBI2'
-                    ? 'bg-cyan-600 text-white'
-                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                }`}>SBI 2</div>
-                <div className="text-center">
-                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
-                    bankStyle === 'SBI2' ? 'text-cyan-800' : 'text-slate-600'
-                  }`}>SBI 2.0</div>
-                  <div className="text-[8.5px] text-slate-400 leading-tight">Clean Table</div>
-                </div>
-              </button>
-
-
-              {/* Kotak Option */}
-              <button
-                onClick={() => handleBankStyleChange('Kotak')}
-                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  bankStyle === 'Kotak'
-                    ? 'border-rose-500 bg-rose-50 shadow-sm shadow-rose-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {bankStyle === 'Kotak' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
-                )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black transition-colors ${
-                  bankStyle === 'Kotak'
-                    ? 'bg-rose-500 text-white'
-                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                }`}>KKBK</div>
-                <div className="text-center">
-                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
-                    bankStyle === 'Kotak' ? 'text-rose-700' : 'text-slate-600'
-                  }`}>Kotak</div>
-                  <div className="text-[8.5px] text-slate-400 leading-tight">Kotak Mahindra</div>
-                </div>
-              </button>
-
-              {/* BOI Option */}
-              <button
-                onClick={() => handleBankStyleChange('BOI')}
-                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  bankStyle === 'BOI'
-                    ? 'border-sky-600 bg-sky-50 shadow-sm shadow-sky-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {bankStyle === 'BOI' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-sky-600" />
-                )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition-colors ${
-                  bankStyle === 'BOI'
-                    ? 'bg-sky-600 text-white'
-                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                }`}>BKID</div>
-                <div className="text-center">
-                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
-                    bankStyle === 'BOI' ? 'text-sky-700' : 'text-slate-600'
-                  }`}>BOI</div>
-                  <div className="text-[8.5px] text-slate-400 leading-tight">Bank of India</div>
-                </div>
-              </button>
-
-              {/* PNB Option */}
-              <button
-                onClick={() => handleBankStyleChange('PNB')}
-                className={`relative flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  bankStyle === 'PNB'
-                    ? 'border-amber-500 bg-amber-50 shadow-sm shadow-amber-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {bankStyle === 'PNB' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500" />
-                )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black transition-colors ${
-                  bankStyle === 'PNB'
-                    ? 'bg-red-700 text-amber-300 border border-amber-400'
-                    : 'bg-slate-200 text-slate-600 group-hover:bg-slate-300'
-                }`}>PUNB</div>
-                <div className="text-center">
-                  <div className={`text-[11px] font-extrabold uppercase tracking-wide ${
-                    bankStyle === 'PNB' ? 'text-amber-800' : 'text-slate-600'
-                  }`}>PNB</div>
-                  <div className="text-[8.5px] text-slate-400 leading-tight">Punjab National</div>
-                </div>
-              </button>
-            </div>
-            <div className={`mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium transition-colors ${
-              bankStyle === 'SBI'
-                ? 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-                : bankStyle === 'Kotak'
-                ? 'bg-rose-50 text-rose-700 border border-rose-100'
-                : bankStyle === 'BOI'
-                ? 'bg-sky-50 text-sky-800 border border-sky-100'
-                : 'bg-amber-50 text-amber-900 border border-amber-200'
-            }`}>
-              {bankStyle === 'SBI' && '🏦 SBI format — official blue/purple A4 layout with SBI branding and branch metadata.'}
-              {bankStyle === 'Kotak' && '🔴 Kotak format — authentic red/white Kotak Mahindra 811 style statement layout.'}
-              {bankStyle === 'BOI' && '🔷 BOI format — official Bank of India detailed statement layout with customer ID & IFSC box.'}
-              {bankStyle === 'PNB' && '🟡 PNB format — official Punjab National Bank red & yellow header statement layout.'}
+          {/* Select Project (bank format) pill switch */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">Select Project</p>
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              {BANK_STYLE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleBankStyleChange(opt.value)}
+                  className={`flex-1 min-w-[64px] whitespace-nowrap py-2 px-2 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                    bankStyle === opt.value
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* ── Statement Type Selector ── */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-              <Building2 size={14} className="text-indigo-600" /> Statement Type
-            </h2>
-
-            <div className="grid grid-cols-2 gap-3">
-              {/* Salaried Option */}
-              <button
-                onClick={() => handleTypeChange('salaried')}
-                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  statementType === 'salaried'
-                    ? 'border-indigo-500 bg-indigo-50 shadow-sm shadow-indigo-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {statementType === 'salaried' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-indigo-500" />
-                )}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                  statementType === 'salaried'
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
-                }`}>
-                  <User size={18} />
-                </div>
-                <div className="text-center">
-                  <div className={`text-xs font-extrabold uppercase tracking-wide ${
-                    statementType === 'salaried' ? 'text-indigo-700' : 'text-slate-600'
-                  }`}>Salaried</div>
-                  <div className="text-[9px] text-slate-400 mt-0.5 leading-tight">Monthly salary<br/>on 1st of each month</div>
-                </div>
-              </button>
-
-              {/* Business Option */}
-              <button
-                onClick={() => handleTypeChange('business')}
-                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
-                  statementType === 'business'
-                    ? 'border-emerald-500 bg-emerald-50 shadow-sm shadow-emerald-100'
-                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
-                }`}
-              >
-                {statementType === 'business' && (
-                  <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500" />
-                )}
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                  statementType === 'business'
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
-                }`}>
-                  <Building2 size={18} />
-                </div>
-                <div className="text-center">
-                  <div className={`text-xs font-extrabold uppercase tracking-wide ${
-                    statementType === 'business' ? 'text-emerald-700' : 'text-slate-600'
-                  }`}>Business</div>
-                  <div className="text-[9px] text-slate-400 mt-0.5 leading-tight">Mixed UPI/IMPS/NEFT<br/>transactions</div>
-                </div>
-              </button>
-            </div>
-
-            {/* Active type description */}
-            <div className={`mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium transition-colors ${
-              statementType === 'salaried'
-                ? 'bg-indigo-50 text-indigo-700 border border-indigo-100'
-                : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-            }`}>
+          {/* Statement Type */}
+          <Section icon={Building2} title="Statement Type">
+            <SegmentedToggle
+              value={statementType}
+              onChange={handleTypeChange}
+              options={[
+                { value: 'salaried', label: 'Salaried' },
+                { value: 'business', label: 'Business' },
+              ]}
+            />
+            <p className="text-[10.5px] text-slate-400 leading-relaxed">
               {statementType === 'salaried'
-                ? '💼 Salary of ₹20,000–₹80,000 will be credited via NEFT on the 1st of every month from a random Indian company.'
-                : '🏢 Standard business transactions: UPI, IMPS, NEFT, and ATM withdrawals without a fixed salary pattern.'}
-            </div>
-          </div>
+                ? 'Salary of ₹20,000–₹80,000 credited via NEFT from a company each month.'
+                : 'Mixed UPI / IMPS / NEFT / ATM transactions, no fixed salary pattern.'}
+            </p>
+          </Section>
 
-          {/* ── NEW: Salary Configuration (only for Salaried) ──────────────────── */}
-          {statementType === 'salaried' && (
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-                <User size={14} className="text-indigo-600" /> Salary Configuration
-              </h2>
-
-              {/* Mode toggle */}
-              <div className="flex gap-2 mb-4 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
-                <button
-                  onClick={() => setSalaryMode('auto')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                    salaryMode === 'auto'
-                      ? 'bg-indigo-500 text-white shadow-sm'
-                      : 'text-slate-500 hover:bg-slate-200/50'
-                  }`}
-                >
-                  Auto Generate
-                </button>
-                <button
-                  onClick={() => setSalaryMode('manual')}
-                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                    salaryMode === 'manual'
-                      ? 'bg-indigo-500 text-white shadow-sm'
-                      : 'text-slate-500 hover:bg-slate-200/50'
-                  }`}
-                >
-                  Manual Entry
-                </button>
+          {/* Account */}
+          <Section icon={Landmark} title="Account">
+            <Grid2>
+              <div>
+                <FieldLabel>Account Number</FieldLabel>
+                <input
+                  type="text"
+                  value={customer.accountNumber}
+                  onChange={e => handleInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
+                  className={`${inputCls} font-mono tracking-widest`}
+                />
               </div>
+              <div>
+                <FieldLabel>Opening Balance (₹)</FieldLabel>
+                <input
+                  type="number"
+                  value={account.openingBalance}
+                  onChange={e => handleAccountInputChange('openingBalance', parseFloat(e.target.value) || 0)}
+                  className={`${inputCls} font-mono font-bold`}
+                />
+              </div>
+            </Grid2>
+          </Section>
 
-              {salaryMode === 'auto' ? (
-                <div className="p-3 rounded-xl text-[10.5px] leading-relaxed font-medium bg-slate-50 text-slate-600 border border-slate-200/60">
-                  Company name and salary will be generated automatically.
-                </div>
-              ) : (
-                <div className="space-y-3.5">
+          {/* Salary Configuration (only for Salaried) */}
+          {statementType === 'salaried' && (
+            <Section icon={Wallet} title="Salary">
+              <SegmentedToggle<SalaryMode>
+                value={salaryMode}
+                onChange={setSalaryMode}
+                options={[
+                  { value: 'auto', label: 'Auto' },
+                  { value: 'manual', label: 'Manual' },
+                ]}
+              />
+
+              {salaryMode === 'manual' && (
+                <Grid2>
                   <div>
-                    <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Company Name</label>
+                    <FieldLabel>Salary Amount (₹)</FieldLabel>
+                    <input
+                      type="number"
+                      min={1}
+                      value={monthlySalary ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setMonthlySalary(undefined);
+                        } else {
+                          const num = Number(val);
+                          if (!isNaN(num) && num >= 0) {
+                            setMonthlySalary(Math.floor(num));
+                          }
+                        }
+                      }}
+                      placeholder="e.g. 45000"
+                      className={`${inputCls} font-mono`}
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel>Company Name</FieldLabel>
                     <input
                       type="text"
                       value={companyName}
                       onChange={(e) => handleCompanyNameChange(e.target.value)}
-                      placeholder="e.g., INFOSYS LIMITED"
-                      className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans font-bold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                      placeholder="e.g. INFOSYS LIMITED"
+                      className={inputCls}
                     />
                   </div>
-                  <div>
-                    <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Monthly Salary</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">₹</span>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={monthlySalary ?? ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setMonthlySalary(undefined);
-                          } else {
-                            const num = Number(val);
-                            if (!isNaN(num) && num >= 0) {
-                              setMonthlySalary(Math.floor(num)); // ensure integer
-                            }
-                          }
-                        }}
-                        placeholder="e.g., 45000"
-                        className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 pl-8 pr-3 py-2 rounded-xl text-xs font-mono font-semibold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                      />
-                    </div>
-                  </div>
-                  <div className="text-[10px] text-slate-400 italic">
-                    Enter salary as a whole number (no decimals).
-                  </div>
-                </div>
+                </Grid2>
               )}
 
-              {/* ── Salary Credit Day Selector ── */}
-              <div className="mt-4 pt-4 border-t border-slate-100">
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-2 uppercase tracking-wider">
-                  Salary Credit Day of Month
-                </label>
-                <div className="grid grid-cols-5 gap-1.5 mb-2">
-                  {[
-                    { val: '1', label: '1st' },
-                    { val: '3', label: '3rd' },
-                    { val: '5', label: '5th' },
-                    { val: '7', label: '7th' },
-                    { val: '10', label: '10th' },
-                    { val: '15', label: '15th' },
-                    { val: '25', label: '25th' },
-                    { val: '30', label: '30th' },
-                    { val: 'last_day', label: 'Last Day' },
-                  ].map(({ val, label }) => (
+              <div>
+                <FieldLabel>Salary Credit Day</FieldLabel>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {SALARY_DAY_PRESETS.map(({ val, label }) => (
                     <button
                       key={val}
+                      type="button"
                       onClick={() => setSalaryDay(val as any)}
-                      className={`py-1.5 px-2 rounded-lg text-[10.5px] font-bold uppercase tracking-wider transition-all border ${
+                      className={`py-1.5 rounded-lg text-[10.5px] font-bold cursor-pointer transition-colors border ${
                         salaryDay === val
-                          ? 'bg-indigo-500 text-white border-indigo-500 shadow-sm'
-                          : 'bg-slate-50 text-slate-500 border-slate-200/80 hover:bg-slate-100'
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
                       {label}
@@ -928,7 +791,7 @@ export default function GeneratorPage() {
                   ))}
                 </div>
                 <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-slate-500 font-medium">Or custom day (1-31):</span>
+                  <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">Custom day (1–31):</span>
                   <input
                     type="number"
                     min={1}
@@ -941,273 +804,218 @@ export default function GeneratorPage() {
                       }
                     }}
                     placeholder="Day"
-                    className="w-20 px-2 py-1 text-xs border border-slate-200 rounded-md font-mono text-slate-800 focus:outline-none focus:border-indigo-500"
+                    className={`${inputCls} w-20 py-1.5`}
                   />
                 </div>
-                <div className="mt-2 text-[10px] text-slate-400 italic">
-                  Salary will be credited on the chosen day of month for every month in statement duration. Sunday dates auto-shift to Saturday.
-                </div>
+                <p className="text-[10px] text-slate-400 mt-1.5">Sunday credit dates automatically shift to Saturday.</p>
               </div>
-            </div>
+            </Section>
           )}
 
-
-          {/* ── Statement Generation Mode & Duration / Custom Dates ── */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4">
-              <Calendar size={14} className="text-indigo-600" /> Statement Duration
-            </h2>
-
-            {/* Mode Selector */}
-            <div className="flex gap-2 mb-4 bg-slate-50 p-1 rounded-xl border border-slate-200/60">
-              <button
-                onClick={() => setGenerationMode('duration')}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                  generationMode === 'duration'
-                    ? 'bg-indigo-500 text-white shadow-sm'
-                    : 'text-slate-500 hover:bg-slate-200/50'
-                }`}
-              >
-                Quick Duration
-              </button>
-              <button
-                onClick={() => setGenerationMode('custom')}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                  generationMode === 'custom'
-                    ? 'bg-indigo-500 text-white shadow-sm'
-                    : 'text-slate-500 hover:bg-slate-200/50'
-                }`}
-              >
-                Custom Date Range
-              </button>
+          {/* Branch */}
+          <Section icon={Building2} title="Branch">
+            <div>
+              <FieldLabel>Branch Name</FieldLabel>
+              <input
+                type="text"
+                value={branch.branchName}
+                onChange={e => handleBranchInputChange('branchName', e.target.value)}
+                className={inputCls}
+              />
             </div>
+            <div>
+              <FieldLabel>Branch Address</FieldLabel>
+              <textarea
+                value={branch.branchAddress}
+                onChange={e => handleBranchInputChange('branchAddress', e.target.value)}
+                rows={2}
+                className={`${inputCls} resize-none`}
+              />
+            </div>
+            <Grid2>
+              <div>
+                <FieldLabel>IFSC Code</FieldLabel>
+                <input
+                  type="text"
+                  value={branch.ifscCode}
+                  onChange={e => handleBranchInputChange('ifscCode', e.target.value)}
+                  className={`${inputCls} font-mono tracking-wider`}
+                />
+              </div>
+              <div>
+                <FieldLabel>MICR Code</FieldLabel>
+                <input
+                  type="text"
+                  value={branch.micrCode}
+                  onChange={e => handleBranchInputChange('micrCode', e.target.value)}
+                  className={`${inputCls} font-mono`}
+                />
+              </div>
+            </Grid2>
+          </Section>
 
-            {/* Conditional Content */}
+          {/* Customer */}
+          <Section icon={User} title="Customer">
+            <Grid2>
+              <div>
+                <FieldLabel>Account Holder Name</FieldLabel>
+                <input
+                  type="text"
+                  value={customer.accountHolderName}
+                  onChange={e => handleInputChange('accountHolderName', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <FieldLabel>Nominee Name</FieldLabel>
+                <input
+                  type="text"
+                  value={customer.nomineeName}
+                  onChange={e => handleInputChange('nomineeName', e.target.value)}
+                  className={inputCls}
+                />
+              </div>
+            </Grid2>
+            <Grid2>
+              <div>
+                <FieldLabel>Account Type</FieldLabel>
+                <input
+                  type="text"
+                  value={account.accountType}
+                  onChange={e => handleAccountInputChange('accountType', e.target.value)}
+                  placeholder="e.g. SAVINGS BANK AC"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <FieldLabel>CIF Number</FieldLabel>
+                <input
+                  type="text"
+                  value={customer.cifNumber}
+                  onChange={e => handleInputChange('cifNumber', e.target.value.replace(/\D/g, ''))}
+                  className={`${inputCls} font-mono tracking-wider`}
+                />
+              </div>
+            </Grid2>
+            <div>
+              <FieldLabel>Primary Email ID</FieldLabel>
+              <input
+                type="email"
+                value={customer.email}
+                onChange={e => handleInputChange('email', e.target.value)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <FieldLabel>Mailing Address</FieldLabel>
+              <textarea
+                value={customer.address}
+                onChange={e => handleInputChange('address', e.target.value)}
+                rows={2}
+                className={`${inputCls} resize-none`}
+              />
+            </div>
+          </Section>
+
+          {/* Statement Period */}
+          <Section icon={Calendar} title="Statement Period">
+            <SegmentedToggle<GenerationMode>
+              value={generationMode}
+              onChange={setGenerationMode}
+              options={[
+                { value: 'duration', label: 'Quick Duration' },
+                { value: 'custom', label: 'Custom Range' },
+              ]}
+            />
+
             {generationMode === 'duration' ? (
               <>
                 <div className="grid grid-cols-3 gap-2">
                   {DURATION_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
+                      type="button"
                       onClick={() => handleDurationChange(opt.value)}
-                      className={`relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                      className={`py-2.5 rounded-lg text-xs font-bold cursor-pointer transition-colors border ${
                         duration === opt.value
-                          ? 'border-violet-500 bg-violet-50 shadow-sm shadow-violet-100'
-                          : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      {duration === opt.value && (
-                        <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-violet-500" />
-                      )}
-                      <div className={`text-xs font-extrabold uppercase tracking-wide ${
-                        duration === opt.value ? 'text-violet-700' : 'text-slate-600'
-                      }`}>{opt.label}</div>
-                      <div className="text-[9px] text-slate-400 leading-tight text-center">{opt.sub}</div>
+                      {opt.label}
                     </button>
                   ))}
                 </div>
-                <div className="mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium bg-violet-50 text-violet-700 border border-violet-100">
-                  {duration === '3months' && '📅 Showing last 3 months of transactions (half the data of 6-month base).'}
-                  {duration === '6months' && '📅 Full 6-month statement — default view with complete transaction history.'}
-                  {duration === '1year' && '📅 Full 12-month statement — previous 6 months auto-generated from base data.'}
-                </div>
+                <p className="text-[10.5px] text-slate-400">
+                  {duration === '3months' && 'Showing last 3 months of transactions.'}
+                  {duration === '6months' && 'Full 6-month statement — default view.'}
+                  {duration === '1year' && 'Full 12-month statement.'}
+                </p>
               </>
             ) : (
               <>
-                <div className="space-y-3">
+                <Grid2>
                   <div>
-                    <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">From Date</label>
+                    <FieldLabel>From Date</FieldLabel>
                     <input
                       type="date"
                       value={fromDate}
                       onChange={(e) => setFromDate(e.target.value)}
-                      className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                      className={inputCls}
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">To Date</label>
+                    <FieldLabel>To Date</FieldLabel>
                     <input
                       type="date"
                       value={toDate}
                       onChange={(e) => setToDate(e.target.value)}
-                      className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
+                      className={inputCls}
                     />
                   </div>
-                </div>
+                </Grid2>
                 {rangeInfo && (
-                  <div className="mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    <div>{rangeInfo.days} Days</div>
-                    <div>≈ {rangeInfo.months.toFixed(1)} Months</div>
+                  <div className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                    {rangeInfo.days} days · ≈ {rangeInfo.months.toFixed(1)} months
                   </div>
                 )}
                 {(!fromDate || !toDate) && (
-                  <div className="mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium bg-amber-50 text-amber-700 border border-amber-100">
-                    ⚠️ Please select both dates.
+                  <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-amber-800 text-[11px]">
+                    <span>⚠️</span>
+                    <span>Please select both dates.</span>
                   </div>
                 )}
                 {fromDate && toDate && new Date(fromDate) > new Date(toDate) && (
-                  <div className="mt-3 p-3 rounded-xl text-[10.5px] leading-relaxed font-medium bg-red-50 text-red-700 border border-red-100">
-                    ❌ From Date must be on or before To Date.
+                  <div className="flex items-start gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2.5 text-rose-700 text-[11px]">
+                    <XCircle size={13} className="mt-0.5 flex-shrink-0" />
+                    <span>From Date must be on or before To Date.</span>
                   </div>
                 )}
               </>
             )}
-          </div>
+          </Section>
 
-          {/* Section: Customer Config */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <User size={14} className="text-indigo-600" /> Customer Parameters
-            </h2>
-
-            <div className="space-y-3.5">
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Account Holder Name</label>
-                <input 
-                  type="text"
-                  value={customer.accountHolderName}
-                  onChange={e => handleInputChange('accountHolderName', e.target.value)}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans font-bold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Account Number</label>
-                <input 
-                  type="text"
-                  value={customer.accountNumber}
-                  onChange={e => handleInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-mono font-semibold tracking-wider focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Account Type</label>
-                <input 
-                  type="text"
-                  value={account.accountType}
-                  onChange={e => handleAccountInputChange('accountType', e.target.value)}
-                  placeholder="e.g., SAVINGS BANK AC"
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans font-bold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">CIF Number</label>
-                <input 
-                  type="text"
-                  value={customer.cifNumber}
-                  onChange={e => handleInputChange('cifNumber', e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-mono font-semibold tracking-wider focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Nominee Name</label>
-                <input 
-                  type="text"
-                  value={customer.nomineeName}
-                  onChange={e => handleInputChange('nomineeName', e.target.value)}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans font-semibold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Primary Email ID</label>
-                <input 
-                  type="email"
-                  value={customer.email}
-                  onChange={e => handleInputChange('email', e.target.value)}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Mailing Address</label>
-                <textarea 
-                  value={customer.address}
-                  onChange={e => handleInputChange('address', e.target.value)}
-                  rows={2}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Branch Parameters */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <Building2 size={14} className="text-indigo-600" /> Branch Parameters
-            </h2>
-
-            <div className="space-y-3.5">
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Branch Name</label>
-                <input 
-                  type="text"
-                  value={branch.branchName}
-                  onChange={e => handleBranchInputChange('branchName', e.target.value)}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans font-bold focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">IFSC Code</label>
-                <input 
-                  type="text"
-                  value={branch.ifscCode}
-                  onChange={e => handleBranchInputChange('ifscCode', e.target.value)}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-mono font-semibold tracking-wider focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">MICR Code</label>
-                <input 
-                  type="text"
-                  value={branch.micrCode}
-                  onChange={e => handleBranchInputChange('micrCode', e.target.value)}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-mono font-semibold tracking-wider focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 text-[10.5px] font-bold mb-1 uppercase tracking-wider">Branch Address</label>
-                <textarea 
-                  value={branch.branchAddress}
-                  onChange={e => handleBranchInputChange('branchAddress', e.target.value)}
-                  rows={2}
-                  className="w-full bg-slate-50 text-slate-900 border border-slate-200/80 px-3 py-2 rounded-xl text-xs font-sans focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all resize-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Section: Locked Parameters */}
-          <div className="bg-slate-100 rounded-2xl border border-slate-200/60 p-5 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-              <Landmark size={14} className="text-indigo-600" /> Hardcoded Parameters
-            </h2>
-
+          {/* Summary */}
+          <Section icon={Landmark} title="Summary">
             <div className="grid grid-cols-2 gap-3 text-zinc-700 text-[11px] leading-relaxed">
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">BANK</span>
+              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
+                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Bank</span>
                 <span className="font-extrabold text-slate-900">{getBankFullName(bankStyle)}</span>
               </div>
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">BRANCH</span>
+              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
+                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Branch</span>
                 <span className="font-extrabold text-slate-900">{branch.branchName}</span>
               </div>
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">INTEREST RATE</span>
+              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
+                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Interest Rate</span>
                 <span className="font-extrabold text-slate-900">2.50% p.a.</span>
               </div>
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">OPEN DATE</span>
+              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
+                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Open Date</span>
                 <span className="font-extrabold text-slate-900">09-05-2022</span>
               </div>
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40 col-span-2">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">STATEMENT DURATION</span>
+              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 col-span-2">
+                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Statement Duration</span>
                 <span className="font-extrabold text-slate-900">
                   {getPeriodDisplay()}
                   {generationMode === 'duration' && activeRecord && activeRecord.transactions.length > 0 && (
@@ -1215,22 +1023,22 @@ export default function GeneratorPage() {
                   )}
                 </span>
               </div>
-              <div className="bg-white rounded-xl p-2.5 border border-slate-200/40 col-span-2">
-                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">OPENING BALANCE</span>
+              <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60 col-span-2">
+                <span className="text-[9px] text-slate-400 font-bold block uppercase mb-0.5">Opening Balance</span>
                 <span className="font-extrabold text-emerald-600 font-mono text-xs">
                   ₹{(activeRecord ? activeRecord.accountInfo.openingBalance : account.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })} CR
                 </span>
               </div>
             </div>
-          </div>
+          </Section>
 
           {/* Action Trigger */}
           <button
             onClick={handleTriggerRegenerate}
             disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-md hover:shadow-lg hover:shadow-indigo-100 cursor-pointer transition-all text-xs uppercase tracking-widest flex items-center justify-center gap-2 group active:scale-98 disabled:opacity-50"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-blue-100 cursor-pointer transition-all text-sm flex items-center justify-center gap-2 active:scale-98"
           >
-            <RefreshCw size={14} className={`group-hover:rotate-180 transition-transform duration-500 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
             Regenerate Transactions
           </button>
 
@@ -1240,15 +1048,15 @@ export default function GeneratorPage() {
         <main className="flex-1 overflow-auto min-w-0 bg-white lg:bg-slate-200/20 lg:border lg:border-slate-200 lg:rounded-3xl p-0 lg:p-6 shadow-inner print:p-0 print:border-none print:shadow-none print:bg-white print:overflow-visible h-full">
           {loading && !activeRecord ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-sans italic">
-              <RefreshCw size={24} className="animate-spin mb-2 text-indigo-500" />
+              <RefreshCw size={24} className="animate-spin mb-2 text-blue-500" />
               Initializing Statistical Statement...
             </div>
           ) : activeRecord ? (
             <div className="min-w-[210mm] w-fit mx-auto print:mx-0">
-              <StatementPreview 
-                record={activeRecord} 
+              <StatementPreview
+                record={activeRecord}
                 onPrint={handlePrintCheck}
-                onClose={() => {}} 
+                onClose={() => {}}
               />
             </div>
           ) : (
