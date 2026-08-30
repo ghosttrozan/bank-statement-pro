@@ -154,9 +154,9 @@ public class Sbi2Template implements StatementTemplate {
     }
 
     private Table buildLedgerTable(List<Transaction> pageTxs) {
-        // Exact pixel-perfect column widths matching authentic SBI statement: Total 523pt
-        // Txn Date (64pt), Value Date (50pt), Description (124pt), Ref No (114pt), Debit (58pt), Credit (58pt), Balance (55pt)
-        Table table = new Table(UnitValue.createPointArray(new float[]{64f, 50f, 124f, 114f, 58f, 58f, 55f})).useAllAvailableWidth();
+        // Fixed exact widths in PDF points (1.6, 1.6, 4.0, 2.4, 1.9, 1.9, 2.4 cm): Total 447.87 pt
+        Table table = new Table(UnitValue.createPointArray(new float[]{45.35f, 45.35f, 113.39f, 68.03f, 53.86f, 53.86f, 68.03f}));
+        table.setWidth(447.87f);
         table.setFontSize(9.0f);
 
         table.addHeaderCell(headerCell("Txn Date", TextAlignment.LEFT));
@@ -290,11 +290,7 @@ public class Sbi2Template implements StatementTemplate {
                     year = Integer.parseInt(parts[2]);
                 }
                 if (month >= 0 && month < 12) {
-                    if (day >= 10) {
-                        return String.format("%d\u00A0%s\n%04d", day, MONTHS[month], year);
-                    } else {
-                        return String.format("%d\u00A0%s\u00A0%04d", day, MONTHS[month], year);
-                    }
+                    return String.format("%d\u00A0%s\n%04d", day, MONTHS[month], year);
                 }
             } catch (Exception ignored) {}
         }
