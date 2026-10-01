@@ -263,67 +263,102 @@ public final class TransactionEngine {
             }
         }
 
-        boolean isManualSalary = "manual".equalsIgnoreCase(settings.salaryMode())
-                || (settings.monthlySalary() != null && settings.monthlySalary() > 0)
-                || (settings.companyName() != null && !settings.companyName().isBlank());
-        LocalDate salaryMonthDate = startDay.withDayOfMonth(1);
-        int monthIndex = 0;
-        while (!salaryMonthDate.isAfter(endDay)) {
-            int year = salaryMonthDate.getYear();
-            int month = salaryMonthDate.getMonthValue() - 1;
-            LocalDate salaryDate = SalaryCalculator.getSalaryDateForMonth(year, month, settings);
-            LocalDateTime salaryDateTime = salaryDate.atStartOfDay();
+        boolean isBusiness = "Business".equalsIgnoreCase(settings.profile());
 
-            if (salaryDate.isBefore(startDay)) {
-                salaryDateTime = startDay.plusDays(1).atTime(9, 30);
-            }
-            if (salaryDate.isAfter(endDay)) {
-                salaryDateTime = endDay.minusDays(1).atTime(10, 15);
-            }
-            LocalDate finalSalaryDate = salaryDateTime.toLocalDate();
+        if (!isBusiness) {
+            boolean isManualSalary = "manual".equalsIgnoreCase(settings.salaryMode())
+                    || (settings.monthlySalary() != null && settings.monthlySalary() > 0)
+                    || (settings.companyName() != null && !settings.companyName().isBlank());
+            LocalDate salaryMonthDate = startDay.withDayOfMonth(1);
+            int monthIndex = 0;
+            while (!salaryMonthDate.isAfter(endDay)) {
+                int year = salaryMonthDate.getYear();
+                int month = salaryMonthDate.getMonthValue() - 1;
+                LocalDate salaryDate = SalaryCalculator.getSalaryDateForMonth(year, month, settings);
+                LocalDateTime salaryDateTime = salaryDate.atStartOfDay();
 
-            if (!finalSalaryDate.isBefore(startDay) && !finalSalaryDate.isAfter(endDay)) {
-                String dateStr = DateUtils.formatDate(finalSalaryDate);
-                String narrative = SalaryCalculator.buildSalaryNeftNarrative(bankStyle, salaryInfo.company(), finalSalaryDate);
-
-                double salaryCreditAmount = salaryInfo.amount();
-                if (!isManualSalary) {
-                    salaryCreditAmount = SalaryCalculator.applyMonthlyVariance(salaryCreditAmount, false);
+                if (salaryDate.isBefore(startDay)) {
+                    salaryDateTime = startDay.plusDays(1).atTime(9, 30);
                 }
+                if (salaryDate.isAfter(endDay)) {
+                    salaryDateTime = endDay.minusDays(1).atTime(10, 15);
+                }
+                LocalDate finalSalaryDate = salaryDateTime.toLocalDate();
 
-                totalTxs.add(new Transaction("tx_sal_" + finalSalaryDate + "_" + monthIndex,
-                        dateStr, dateStr, narrative, generateRefNo(bankStyle), null, salaryCreditAmount, 0));
+                if (!finalSalaryDate.isBefore(startDay) && !finalSalaryDate.isAfter(endDay)) {
+                    String dateStr = DateUtils.formatDate(finalSalaryDate);
+                    String narrative = SalaryCalculator.buildSalaryNeftNarrative(bankStyle, salaryInfo.company(), finalSalaryDate);
+
+                    double salaryCreditAmount = salaryInfo.amount();
+                    if (!isManualSalary) {
+                        salaryCreditAmount = SalaryCalculator.applyMonthlyVariance(salaryCreditAmount, false);
+                    }
+
+                    totalTxs.add(new Transaction("tx_sal_" + finalSalaryDate + "_" + monthIndex,
+                            dateStr, dateStr, narrative, generateRefNo(bankStyle), null, salaryCreditAmount, 0));
+                }
+                salaryMonthDate = salaryMonthDate.plusMonths(1);
+                monthIndex++;
             }
-            salaryMonthDate = salaryMonthDate.plusMonths(1);
-            monthIndex++;
-        }
 
-        boolean isSbi = "SBI".equalsIgnoreCase(bankStyle) || "SBI2".equalsIgnoreCase(bankStyle);
-        int[] interestMonths = { 3, 6, 9, 12 };
-        int startYear = startDay.getYear();
-        int endYear = endDay.getYear();
+            boolean isSbi = "SBI".equalsIgnoreCase(bankStyle) || "SBI2".equalsIgnoreCase(bankStyle);
+            int[] interestMonths = { 3, 6, 9, 12 };
+            int startYear = startDay.getYear();
+            int endYear = endDay.getYear();
 
-        for (int y = startYear; y <= endYear; y++) {
-            for (int im : interestMonths) {
-                int day = 25;
-                LocalDate iDate = LocalDate.of(y, im, day);
-                if (iDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
-                    iDate = iDate.plusDays(1);
+            for (int y = startYear; y <= endYear; y++) {
+                for (int im : interestMonths) {
+                    int day = 25;
+                    LocalDate iDate = LocalDate.of(y, im, day);
+                    if (iDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
+                        iDate = iDate.plusDays(1);
+                    }
+                    if (!iDate.isBefore(startDay) && !iDate.isAfter(endDay)) {
+                        double interestAmount = Math.round((RandomUtils.randRange(180, 1450) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                        String dateStr = DateUtils.formatDate(iDate);
+                        LocalDate periodFromDate = iDate.minusMonths(3).plusDays(1);
+                        LocalDate periodToDate = iDate;
+                        String periodFrom = DateUtils.formatDate(periodFromDate);
+                        String periodTo = DateUtils.formatDate(periodToDate);
+
+                        String intNarrative = SalaryCalculator.buildSBIntNarrative("996018210007421", periodFrom, periodTo, bankStyle);
+                        String intRef = isSbi ? "" : generateRefNo(bankStyle);
+
+                        totalTxs.add(new Transaction("tx_interest_" + iDate, dateStr, dateStr,
+                                intNarrative, intRef, null, interestAmount, 0));
+                    }
                 }
-                if (!iDate.isBefore(startDay) && !iDate.isAfter(endDay)) {
-                    double interestAmount = Math.round((RandomUtils.randRange(180, 1450) + RandomUtils.randomPaise()) * 100.0) / 100.0;
-                    String dateStr = DateUtils.formatDate(iDate);
-                    LocalDate periodFromDate = iDate.minusMonths(3).plusDays(1);
-                    LocalDate periodToDate = iDate;
-                    String periodFrom = DateUtils.formatDate(periodFromDate);
-                    String periodTo = DateUtils.formatDate(periodToDate);
+            }
+        } else {
+            // Business / Current account: inject authentic commercial client receivables & invoice settlements instead of salary
+            LocalDate bizMonthDate = startDay.withDayOfMonth(1);
+            int bizMonthIndex = 0;
+            List<String> bizPayers = List.of(
+                    "TECH SOLUTIONS PVT LTD", "APEX GLOBAL ENTERPRISES", "NEXUS LOGISTICS LLP",
+                    "RELIANCE RETAIL INWARD", "BHARAT COMMERCE CORP", "VISTA TRADE NETWORKS",
+                    "INFINITY SERVICES LLP", "SUPREME INFRASTRUCTURE LTD");
 
-                    String intNarrative = SalaryCalculator.buildSBIntNarrative("996018210007421", periodFrom, periodTo, bankStyle);
-                    String intRef = isSbi ? "" : generateRefNo(bankStyle);
+            while (!bizMonthDate.isAfter(endDay)) {
+                int settlementsThisMonth = RandomUtils.randRange(2, 3);
+                for (int s = 0; s < settlementsThisMonth; s++) {
+                    int day = RandomUtils.randRange(4, Math.min(27, bizMonthDate.lengthOfMonth()));
+                    LocalDate sDate = LocalDate.of(bizMonthDate.getYear(), bizMonthDate.getMonthValue(), day);
+                    if (sDate.isBefore(startDay) || sDate.isAfter(endDay)) continue;
 
-                    totalTxs.add(new Transaction("tx_interest_" + iDate, dateStr, dateStr,
-                            intNarrative, intRef, null, interestAmount, 0));
+                    String dateStr = DateUtils.formatDate(sDate);
+                    String payer = RandomUtils.pick(bizPayers);
+                    String ref = RandomUtils.genRef();
+                    String narrative = switch ((s + bizMonthIndex) % 3) {
+                        case 0 -> "NEFT/INW/" + ref.substring(0, 10) + "/" + payer + "/INVOICE PMT";
+                        case 1 -> "RTGS CR-" + ref.substring(0, 11) + "-" + payer + "-CLIENT RECEIPT";
+                        default -> "BY TRANSFER-INWARD CLG/" + ref.substring(0, 8) + "/" + payer;
+                    };
+                    double bizCreditAmount = Math.round((RandomUtils.randRange(35000, 185000) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    totalTxs.add(new Transaction("tx_biz_" + sDate + "_" + bizMonthIndex + "_" + s,
+                            dateStr, dateStr, narrative, generateRefNo(bankStyle), null, bizCreditAmount, 0));
                 }
+                bizMonthDate = bizMonthDate.plusMonths(1);
+                bizMonthIndex++;
             }
         }
 

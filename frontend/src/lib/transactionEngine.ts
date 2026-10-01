@@ -766,82 +766,135 @@ function generateRawSalariedTransactions(
     }
   });
 
-  // ── Inject monthly salary ──────────────────────────────────────────────────
-  let salaryMonthDate = new Date(startDay.getFullYear(), startDay.getMonth(), 1);
-  let monthIndex = 0;
-  while (salaryMonthDate <= endDay) {
-    const year = salaryMonthDate.getFullYear();
-    const month = salaryMonthDate.getMonth();
-    let salaryDate = getSalaryDateForMonth(year, month, settings);
+  const isBusiness = settings.profile === 'Business';
 
-    if (salaryDate < startDay) {
-      salaryDate = new Date(startDay.getTime() + 86400000);
-      salaryDate.setHours(9, 30, 0, 0);
-    }
-    if (salaryDate > endDay) {
-      salaryDate = new Date(endDay.getTime() - 86400000);
-      salaryDate.setHours(10, 15, 0, 0);
-    }
+  if (!isBusiness) {
+    // ── Inject monthly salary (Only for Salaried/Personal profiles) ─────────────
+    let salaryMonthDate = new Date(startDay.getFullYear(), startDay.getMonth(), 1);
+    let monthIndex = 0;
+    while (salaryMonthDate <= endDay) {
+      const year = salaryMonthDate.getFullYear();
+      const month = salaryMonthDate.getMonth();
+      let salaryDate = getSalaryDateForMonth(year, month, settings);
 
-    if (salaryDate >= startDay && salaryDate <= endDay) {
-      const dateStr = formatDate(salaryDate);
-      const narrative = buildSalaryNeftNarrative(bankStyle, companyName, salaryDate);
+      if (salaryDate < startDay) {
+        salaryDate = new Date(startDay.getTime() + 86400000);
+        salaryDate.setHours(9, 30, 0, 0);
+      }
+      if (salaryDate > endDay) {
+        salaryDate = new Date(endDay.getTime() - 86400000);
+        salaryDate.setHours(10, 15, 0, 0);
+      }
 
-      let monthlySalaryPayout = baseSalaryAmount;
-      if (settings.salaryMode !== 'manual') {
-        const roll = randRange(0, 99);
-        if (roll < 50) {
-          monthlySalaryPayout += randRange(100, 1150);
-        } else {
-          monthlySalaryPayout -= randRange(100, 950);
+      if (salaryDate >= startDay && salaryDate <= endDay) {
+        const dateStr = formatDate(salaryDate);
+        const narrative = buildSalaryNeftNarrative(bankStyle, companyName, salaryDate);
+
+        let monthlySalaryPayout = baseSalaryAmount;
+        if (settings.salaryMode !== 'manual') {
+          const roll = randRange(0, 99);
+          if (roll < 50) {
+            monthlySalaryPayout += randRange(100, 1150);
+          } else {
+            monthlySalaryPayout -= randRange(100, 950);
+          }
         }
-      }
-
-      totalTxs.push({
-        id: `tx_sal_${salaryDate.getTime()}_${monthIndex}`,
-        valueDate: dateStr,
-        postDate: dateStr,
-        details: narrative,
-        refNo: generateRefNo(bankStyle),
-        debit: null,
-        credit: monthlySalaryPayout,
-        balance: 0,
-      });
-    }
-    salaryMonthDate.setMonth(salaryMonthDate.getMonth() + 1);
-    monthIndex++;
-  }
-
-  // ── Inject Savings Bank Quarterly Interest ─────────────────────────────────
-  const isSbi = bankStyle === 'SBI' || bankStyle === 'SBI2';
-  const interestMonths = [2, 5, 8, 11]; // Mar (2), Jun (5), Sep (8), Dec (11) 0-indexed
-  const startYear = startDay.getFullYear();
-  const endYear = endDay.getFullYear();
-
-  for (let y = startYear; y <= endYear; y++) {
-    for (const im of interestMonths) {
-      let day = 25;
-      const iDate = new Date(y, im, day, 9, 0, 0);
-      if (iDate.getDay() === 0) {
-        iDate.setDate(26);
-      }
-      if (iDate >= startDay && iDate <= endDay) {
-        const interestAmount = parseFloat((randRange(180, 1450) + getRandomPaise()).toFixed(2));
-        const dateStr = formatDate(iDate);
-        const periodFrom = formatDate(new Date(y, im - 2, 1));
-        const periodTo = formatDate(iDate);
 
         totalTxs.push({
-          id: `tx_interest_${iDate.getTime()}`,
+          id: `tx_sal_${salaryDate.getTime()}_${monthIndex}`,
           valueDate: dateStr,
           postDate: dateStr,
-          details: buildSBIntNarrative('996018210007421', periodFrom, periodTo, bankStyle),
-          refNo: isSbi ? '' : generateRefNo(bankStyle),
+          details: narrative,
+          refNo: generateRefNo(bankStyle),
           debit: null,
-          credit: interestAmount,
+          credit: monthlySalaryPayout,
           balance: 0,
         });
       }
+      salaryMonthDate.setMonth(salaryMonthDate.getMonth() + 1);
+      monthIndex++;
+    }
+
+    // ── Inject Savings Bank Quarterly Interest ─────────────────────────────────
+    const isSbi = bankStyle === 'SBI' || bankStyle === 'SBI2';
+    const interestMonths = [2, 5, 8, 11]; // Mar (2), Jun (5), Sep (8), Dec (11) 0-indexed
+    const startYear = startDay.getFullYear();
+    const endYear = endDay.getFullYear();
+
+    for (let y = startYear; y <= endYear; y++) {
+      for (const im of interestMonths) {
+        let day = 25;
+        const iDate = new Date(y, im, day, 9, 0, 0);
+        if (iDate.getDay() === 0) {
+          iDate.setDate(26);
+        }
+        if (iDate >= startDay && iDate <= endDay) {
+          const interestAmount = parseFloat((randRange(180, 1450) + getRandomPaise()).toFixed(2));
+          const dateStr = formatDate(iDate);
+          const periodFrom = formatDate(new Date(y, im - 2, 1));
+          const periodTo = formatDate(iDate);
+
+          totalTxs.push({
+            id: `tx_interest_${iDate.getTime()}`,
+            valueDate: dateStr,
+            postDate: dateStr,
+            details: buildSBIntNarrative('996018210007421', periodFrom, periodTo, bankStyle),
+            refNo: isSbi ? '' : generateRefNo(bankStyle),
+            debit: null,
+            credit: interestAmount,
+            balance: 0,
+          });
+        }
+      }
+    }
+  } else {
+    // ── Inject Business / Current Account Client Receivables & Invoice Settlements ──
+    let bizMonthDate = new Date(startDay.getFullYear(), startDay.getMonth(), 1);
+    let bizMonthIndex = 0;
+    const bizPayers = [
+      'TECH SOLUTIONS PVT LTD',
+      'APEX GLOBAL ENTERPRISES',
+      'NEXUS LOGISTICS LLP',
+      'RELIANCE RETAIL INWARD',
+      'BHARAT COMMERCE CORP',
+      'VISTA TRADE NETWORKS',
+      'INFINITY SERVICES LLP',
+      'SUPREME INFRASTRUCTURE LTD',
+    ];
+
+    while (bizMonthDate <= endDay) {
+      const settlementsCount = randRange(2, 3);
+      for (let s = 0; s < settlementsCount; s++) {
+        const lastDayOfMonth = new Date(bizMonthDate.getFullYear(), bizMonthDate.getMonth() + 1, 0).getDate();
+        const day = randRange(4, Math.min(27, lastDayOfMonth));
+        const sDate = new Date(bizMonthDate.getFullYear(), bizMonthDate.getMonth(), day, 11, 30, 0);
+        if (sDate < startDay || sDate > endDay) continue;
+
+        const dateStr = formatDate(sDate);
+        const payer = pick(bizPayers);
+        const ref = genRef();
+        const modeRoll = (s + bizMonthIndex) % 3;
+        const narrative =
+          modeRoll === 0
+            ? `NEFT/INW/${ref.substring(0, 10)}/${payer}/INVOICE PMT`
+            : modeRoll === 1
+            ? `RTGS CR-${ref.substring(0, 11)}-${payer}-CLIENT RECEIPT`
+            : `BY TRANSFER-INWARD CLG/${ref.substring(0, 8)}/${payer}`;
+
+        const bizCreditAmount = parseFloat((randRange(35000, 185000) + getRandomPaise()).toFixed(2));
+        totalTxs.push({
+          id: `tx_biz_${sDate.getTime()}_${bizMonthIndex}_${s}`,
+          valueDate: dateStr,
+          postDate: dateStr,
+          details: narrative,
+          refNo: generateRefNo(bankStyle),
+          debit: null,
+          credit: bizCreditAmount,
+          balance: 0,
+        });
+      }
+      bizMonthDate.setMonth(bizMonthDate.getMonth() + 1);
+      bizMonthIndex++;
     }
   }
 

@@ -312,9 +312,9 @@ export default function GeneratorPage() {
       setCompanyName('');
       setMonthlySalary(undefined);
       setSalaryDay('5');
-      setAccount((prev) => ({ ...prev, openingBalance: 90000.0 }));
+      setAccount((prev) => ({ ...prev, openingBalance: 90000.0, accountType: 'Current' }));
     } else {
-      setAccount((prev) => ({ ...prev, openingBalance: getRandomOpeningBalance() }));
+      setAccount((prev) => ({ ...prev, openingBalance: getRandomOpeningBalance(), accountType: 'Savings' }));
     }
   }, [statementType]);
 
@@ -357,6 +357,7 @@ export default function GeneratorPage() {
       ...baseSettings,
       bankStyle,
       duration: dur === '3months' ? '3 Months' : dur === '1year' ? '12 Months' : '6 Months',
+      profile: type === 'salaried' ? 'Personal' : 'Business',
       enablePdfPassword: enablePassword && Boolean(pdfPassword.trim()),
       pdfPassword: enablePassword ? pdfPassword.trim() : undefined,
       ...(generationMode === 'custom' && {
@@ -560,9 +561,9 @@ export default function GeneratorPage() {
 
     const passToUse = enablePassword && pdfPassword.trim() ? pdfPassword.trim() : undefined;
 
-    const cleanCompany = companyName && companyName.trim() ? companyName.trim().toUpperCase() : undefined;
-    const cleanSalary = typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined;
-    const effectiveSalaryMode: SalaryMode = (cleanCompany || cleanSalary) ? 'manual' : salaryMode;
+    const cleanCompany = statementType === 'salaried' && companyName && companyName.trim() ? companyName.trim().toUpperCase() : undefined;
+    const cleanSalary = statementType === 'salaried' && typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined;
+    const effectiveSalaryMode: SalaryMode | undefined = statementType === 'salaried' ? ((cleanCompany || cleanSalary) ? 'manual' : salaryMode) : undefined;
 
     const settings: StatementSettings = {
       ...baseSettings,
@@ -576,7 +577,7 @@ export default function GeneratorPage() {
       salaryMode: effectiveSalaryMode,
       companyName: cleanCompany,
       monthlySalary: cleanSalary,
-      salaryDay,
+      salaryDay: statementType === 'salaried' ? salaryDay : undefined,
       ...(generationMode === 'custom' && {
         generationMode: 'custom',
         fromDate,

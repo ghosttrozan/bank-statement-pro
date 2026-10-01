@@ -51,7 +51,7 @@ class TransactionEngineTest {
 
     @Test
     void manualSalaryModeProducesExactCompanyAndAmountCredits() {
-        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+        List<Transaction> txs = TransactionEngine.generateSalariedStatementTransactions(
                 settings("manual", "ACME CORP", 60000.0), account(90000.0),
                 "2026-06-30T12:00:00", null, null);
 
@@ -62,13 +62,28 @@ class TransactionEngineTest {
 
     @Test
     void quarterlyInterestAppearsOnQuarterCycle() {
-        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+        List<Transaction> txs = TransactionEngine.generateSalariedStatementTransactions(
                 settings("auto", null, null), account(90000.0),
                 "2026-06-30T12:00:00", null, null);
 
         boolean hasInterest = txs.stream()
                 .anyMatch(tx -> "CREDIT INTEREST--".equals(tx.details()) && tx.credit() != null);
         assertTrue(hasInterest, "expected at least one quarterly CREDIT INTEREST-- transaction");
+    }
+
+    @Test
+    void businessStatementHasZeroSalaryNarrativesAndHasBusinessReceivables() {
+        StatementSettings bizSettings = new StatementSettings("SBI2", "3 Months", "duration", null, null,
+                "5 Pages", 0, "Normal", "Business", null, null, null, "1", null, false);
+        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+                bizSettings, account(90000.0), "2026-06-30T12:00:00", null, null);
+
+        boolean hasSalary = txs.stream().anyMatch(tx -> tx.details().toUpperCase().contains("SALARY"));
+        assertFalse(hasSalary, "business statement must not have any salary narrative");
+
+        boolean hasBizCredit = txs.stream().anyMatch(tx ->
+                tx.credit() != null && (tx.details().contains("INVOICE PMT") || tx.details().contains("CLIENT RECEIPT") || tx.details().contains("INWARD CLG")));
+        assertTrue(hasBizCredit, "expected at least one business receivable credit");
     }
 
     @Test
@@ -82,7 +97,7 @@ class TransactionEngineTest {
 
     @Test
     void salariedModeHasNoArtificialDeductionsOnLedger() {
-        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
+        List<Transaction> txs = TransactionEngine.generateSalariedStatementTransactions(
                 settings("auto", null, null), account(90000.0),
                 "2026-06-30T12:00:00", null, null);
 
