@@ -253,8 +253,10 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
 
 
     const originalTitle = document.title;
-    document.title = `${bankFullName} Statement - Acc ${customerDetails.accountNumber} - ${customerDetails.accountHolderName}`;
-    logToSystem('SYSTEM', 'INFO', `Preview initialized for record: "${customerDetails.accountHolderName}". Bank: ${bankFullName} (${settings.bankStyle}). Loaded ${allPages.length} compiled pages.`);
+    const accLabel = customerDetails.accountNumber ? `Acc ${customerDetails.accountNumber}` : 'Draft';
+    const holderLabel = customerDetails.accountHolderName ? ` - ${customerDetails.accountHolderName}` : '';
+    document.title = `${bankFullName} Statement - ${accLabel}${holderLabel}`;
+    logToSystem('SYSTEM', 'INFO', `Preview initialized for record: "${customerDetails.accountHolderName || 'Draft'}". Bank: ${bankFullName} (${settings.bankStyle}). Loaded ${allPages.length} compiled pages.`);
 
     return () => {
       document.title = originalTitle;

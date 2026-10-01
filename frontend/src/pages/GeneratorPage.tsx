@@ -247,13 +247,13 @@ export default function GeneratorPage() {
   });
 
   const [customer, setCustomer] = useState<CustomerDetails>({
-    accountHolderName: 'SUDHIR KUMAR SHARMA',
-    email: 'sudhir.sharma@sparktech.co.in',
-    address: 'B-402, Block 4, Prestige Whispering Palms,\nWhitefield, Bangalore, Karnataka - 560066',
-    accountNumber: '30521458920',
-    cifNumber: '85962145321',
-    accountOpenDate: '2022-05-09',
-    nomineeName: 'MEENAKSHI SHARMA (WIFE)',
+    accountHolderName: '',
+    email: '',
+    address: '',
+    accountNumber: '',
+    cifNumber: '',
+    accountOpenDate: '',
+    nomineeName: '',
   });
 
   const [branch, setBranch] = useState<BranchDetails>(SBI_BRANCH_DEFAULTS);
@@ -822,6 +822,7 @@ export default function GeneratorPage() {
                     type="text"
                     value={customer.accountNumber}
                     onChange={(e) => handleInputChange('accountNumber', e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter Account Number"
                     className={`${inputCls} font-mono font-bold tracking-wider`}
                   />
                 </div>
@@ -869,6 +870,7 @@ export default function GeneratorPage() {
                     type="text"
                     value={customer.accountHolderName}
                     onChange={(e) => handleInputChange('accountHolderName', e.target.value.toUpperCase())}
+                    placeholder="Enter Account Holder Name"
                     className={inputCls}
                   />
                 </div>
@@ -878,6 +880,7 @@ export default function GeneratorPage() {
                     type="text"
                     value={customer.nomineeName}
                     onChange={(e) => handleInputChange('nomineeName', e.target.value.toUpperCase())}
+                    placeholder="Enter Nominee Name (Optional)"
                     className={inputCls}
                   />
                 </div>
@@ -890,6 +893,7 @@ export default function GeneratorPage() {
                     type="text"
                     value={customer.cifNumber}
                     onChange={(e) => handleInputChange('cifNumber', e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter CIF Number"
                     className={`${inputCls} font-mono tracking-wider`}
                   />
                 </div>
@@ -899,6 +903,7 @@ export default function GeneratorPage() {
                     type="email"
                     value={customer.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder="Enter Email Address"
                     className={inputCls}
                   />
                 </div>
@@ -910,6 +915,7 @@ export default function GeneratorPage() {
                   value={customer.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   rows={2}
+                  placeholder="Enter Complete Mailing Address..."
                   className={`${inputCls} resize-none`}
                 />
               </div>
