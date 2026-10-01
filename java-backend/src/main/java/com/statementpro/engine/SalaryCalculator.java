@@ -108,7 +108,10 @@ public final class SalaryCalculator {
     }
 
     public static String buildSBIntNarrative(String accountNumber, String fromDate, String toDate, String bankStyle) {
-        if ("Kotak".equals(bankStyle) || "IndusInd".equals(bankStyle)) {
+        if ("SBI".equalsIgnoreCase(bankStyle) || "SBI2".equalsIgnoreCase(bankStyle)) {
+            return "CREDIT INTEREST--";
+        }
+        if ("Kotak".equalsIgnoreCase(bankStyle) || "IndusInd".equalsIgnoreCase(bankStyle)) {
             return "INT PAID ON SB ACCOUNT";
         }
         return accountNumber + ":SBInt.Pd:" + fromDate + " to " + toDate;

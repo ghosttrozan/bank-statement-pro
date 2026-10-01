@@ -47,7 +47,8 @@ import {
   exportStatementToPdf,
   exportStatementToPdfViaBackend,
   downloadStatementPdfFromBackend,
-  downloadStatementFromJavaBackend
+  downloadStatementFromJavaBackend,
+  prepareSaveTarget
 } from '../lib/pdfExport';
 import api from '../lib/api';
 
@@ -76,11 +77,7 @@ const SALARY_DAY_PRESETS: { val: string; label: string }[] = [
 ];
 
 const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'; label: string }[] = [
-  { value: 'SBI', label: 'SBI' },
   { value: 'SBI2', label: 'SBI V2' },
-  { value: 'Kotak', label: 'Kotak' },
-  { value: 'BOI', label: 'BOI' },
-  { value: 'PNB', label: 'PNB' },
 ];
 
 // ── Shared form building blocks ────────────────
@@ -227,7 +224,7 @@ export default function GeneratorPage() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('duration');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
-  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'>('SBI');
+  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'>('SBI2');
 
   // ─── Salary configuration states ──────────────────────────────────────
   const [salaryMode, setSalaryMode] = useState<SalaryMode>('auto');
@@ -431,12 +428,7 @@ export default function GeneratorPage() {
   };
 
   const handlePrintCheck = async (): Promise<boolean> => {
-    try {
-      await api.post('/api/statements/increment');
-      return true;
-    } catch (e) {
-      return true;
-    }
+    return true;
   };
 
   // Generate initial statement
@@ -477,6 +469,48 @@ export default function GeneratorPage() {
     }
   };
 
+  const handleSalaryConfigChange = (
+    newCompany = companyName,
+    newSalary = monthlySalary,
+    newDay = salaryDay,
+    newMode = salaryMode
+  ) => {
+    setCompanyName(newCompany);
+    setMonthlySalary(newSalary);
+    setSalaryDay(newDay);
+    setSalaryMode(newMode);
+
+    const cleanCompany = newCompany && newCompany.trim() ? newCompany.trim().toUpperCase() : undefined;
+    const cleanSalary = typeof newSalary === 'number' && !isNaN(newSalary) && newSalary > 0 ? newSalary : undefined;
+
+    const effSettings: StatementSettings = {
+      ...baseSettings,
+      bankStyle,
+      duration: duration === '3months' ? '3 Months' : duration === '1year' ? '12 Months' : '6 Months',
+      profile: statementType === 'salaried' ? 'Personal' : 'Business',
+      salaryMode: (cleanCompany || cleanSalary) ? 'manual' : newMode,
+      companyName: cleanCompany,
+      monthlySalary: cleanSalary,
+      salaryDay: newDay,
+      ...(generationMode === 'custom' && {
+        generationMode: 'custom',
+        fromDate,
+        toDate,
+      }),
+    };
+
+    try {
+      const txs =
+        statementType === 'salaried'
+          ? generateSalariedStatementTransactions(effSettings, account, new Date().toISOString(), customer, branch)
+          : generateStatementTransactions(effSettings, account, new Date().toISOString(), customer, branch);
+
+      setActiveRecord((prev) => (prev ? { ...prev, settings: effSettings, transactions: txs } : null));
+    } catch (e) {
+      console.warn('Salary update error:', e);
+    }
+  };
+
   const handleTriggerRegenerate = () => {
     handleGenerateStatement(customer, statementType, duration, true);
   };
@@ -493,15 +527,42 @@ export default function GeneratorPage() {
 
   // ── High Performance Java PDF Export ──
   const handleDownloadPdf = async (mode: 'vector' | 'standard' = 'vector') => {
+    if (generationMode === 'custom') {
+      if (!fromDate || !toDate) {
+        toast.error('Please select both From and To dates.', { theme: 'dark' });
+        return;
+      }
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+        toast.error('Invalid date format.', { theme: 'dark' });
+        return;
+      }
+      if (from > to) {
+        toast.error('From Date must be earlier than or equal to To Date.', { theme: 'dark' });
+        return;
+      }
+    }
+
+    const randCode =
+      Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
+    const filename = `${bankStyle}_Statement_${randCode}.pdf`;
+
+    // Must run before any await so the click's user gesture is still valid;
+    // otherwise the browser blocks every download after the first one.
+    const saveTargetReady = await prepareSaveTarget(filename);
+    if (!saveTargetReady) return;
+
     await handlePrintCheck();
 
     setIsDownloadingPdf(true);
     setDownloadProgress({ percent: 15, text: 'Preparing statement data...' });
 
     const passToUse = enablePassword && pdfPassword.trim() ? pdfPassword.trim() : undefined;
-    const randCode =
-      Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
-    const filename = `${bankStyle}_Statement_${randCode}.pdf`;
+
+    const cleanCompany = companyName && companyName.trim() ? companyName.trim().toUpperCase() : undefined;
+    const cleanSalary = typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined;
+    const effectiveSalaryMode: SalaryMode = (cleanCompany || cleanSalary) ? 'manual' : salaryMode;
 
     const settings: StatementSettings = {
       ...baseSettings,
@@ -511,16 +572,15 @@ export default function GeneratorPage() {
       customTransactionsCount: duration === '3months' ? 130 : duration === '1year' ? 700 : 350,
       enablePdfPassword: Boolean(passToUse),
       pdfPassword: passToUse,
+      profile: statementType === 'salaried' ? 'Personal' : 'Business',
+      salaryMode: effectiveSalaryMode,
+      companyName: cleanCompany,
+      monthlySalary: cleanSalary,
+      salaryDay,
       ...(generationMode === 'custom' && {
         generationMode: 'custom',
         fromDate,
         toDate,
-      }),
-      ...(statementType === 'salaried' && {
-        salaryMode,
-        companyName: companyName && companyName.trim() ? companyName.trim() : undefined,
-        monthlySalary: typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined,
-        salaryDay,
       }),
     };
 
@@ -528,12 +588,12 @@ export default function GeneratorPage() {
       setDownloadProgress({ percent: 30, text: 'Connecting to Java Vector PDF Engine (Port 8080)...' });
 
       // 1. Primary: Generate & Download from Java Spring Boot Backend (Port 8080)
+      // Java backend natively generates all transactions using TransactionEngine based on settings, salary, and company
       await downloadStatementFromJavaBackend({
         customerDetails: customer,
         branchDetails: branch,
         accountInfo: account,
         settings,
-        transactions: activeRecord?.transactions,
         onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
       });
 
@@ -544,33 +604,10 @@ export default function GeneratorPage() {
         { theme: 'dark' }
       );
     } catch (javaErr: any) {
-      console.warn('Java backend generation failed, attempting Node/Client fallback:', javaErr);
-      setDownloadProgress({ percent: 50, text: 'Attempting fallback PDF generator...' });
-
-      try {
-        const container = document.querySelector('.print-container-target') as HTMLElement;
-        if (container) {
-          await exportStatementToPdfViaBackend(container, {
-            filename,
-            password: passToUse,
-            onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
-          });
-        } else {
-          await downloadStatementPdfFromBackend({
-            customerDetails: customer,
-            branchDetails: branch,
-            accountInfo: account,
-            settings,
-            onProgress: (pct, msg) => setDownloadProgress({ percent: pct, text: msg }),
-          });
-        }
-        toast.success('📄 Statement PDF downloaded successfully (Fallback)!', { theme: 'dark' });
-      } catch (fallbackErr: any) {
-        console.error('All PDF download engines failed:', fallbackErr);
-        toast.error(`Download failed: ${fallbackErr.message || javaErr.message || 'Unknown error'}`, {
-          theme: 'dark',
-        });
-      }
+      console.error('Java backend generation failed:', javaErr);
+      toast.error(`PDF generation failed: ${javaErr.message || 'Unknown error'}`, {
+        theme: 'dark',
+      });
     } finally {
       setIsDownloadingPdf(false);
       setDownloadProgress({ percent: 0, text: '' });
@@ -607,7 +644,7 @@ export default function GeneratorPage() {
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
             <div className="flex items-center space-x-3">
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-inner ${bankStyle === 'SBI'
+                className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-inner ${bankStyle === 'SBI' || bankStyle === 'SBI2'
                     ? 'bg-blue-600'
                     : bankStyle === 'Kotak'
                       ? 'bg-rose-600'
@@ -622,7 +659,7 @@ export default function GeneratorPage() {
                 <h1 className="font-extrabold text-base tracking-tight leading-none flex items-center gap-2">
                   <span>{getBankFullName(bankStyle)}</span>
                   <span
-                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${bankStyle === 'SBI'
+                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${bankStyle === 'SBI' || bankStyle === 'SBI2'
                         ? 'bg-blue-900/60 text-blue-300'
                         : bankStyle === 'Kotak'
                           ? 'bg-rose-900/60 text-rose-300'
@@ -643,24 +680,6 @@ export default function GeneratorPage() {
 
           {/* Navigation Links */}
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-            {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') && (
-              <Link
-                to="/admin/dashboard"
-                className="flex items-center gap-1.5 bg-blue-600/15 hover:bg-blue-600/25 text-blue-400 font-bold px-3 py-1.5 rounded-xl border border-blue-500/20 text-xs transition-all"
-              >
-                <ShieldAlert size={13} />
-                Admin Portal
-              </Link>
-            )}
-
-            <Link
-              to="/profile"
-              className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 font-bold px-3 py-1.5 rounded-xl border border-slate-700 text-xs transition-all text-slate-200"
-            >
-              <User size={13} />
-              {user?.fullName || 'Profile'}
-            </Link>
-
             <button
               onClick={logout}
               className="flex items-center gap-1.5 bg-rose-600/90 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition-all active:scale-95 cursor-pointer shadow-xs"
@@ -724,7 +743,7 @@ export default function GeneratorPage() {
 
                   <SegmentedToggle<SalaryMode>
                     value={salaryMode}
-                    onChange={setSalaryMode}
+                    onChange={(mode) => handleSalaryConfigChange(companyName, monthlySalary, salaryDay, mode)}
                     options={[
                       { value: 'auto', label: 'Auto Salary Engine' },
                       { value: 'manual', label: 'Manual Salary Details' },
@@ -742,11 +761,11 @@ export default function GeneratorPage() {
                           onChange={(e) => {
                             const val = e.target.value;
                             if (val === '') {
-                              setMonthlySalary(undefined);
+                              handleSalaryConfigChange(companyName, undefined, salaryDay, salaryMode);
                             } else {
                               const num = Number(val);
                               if (!isNaN(num) && num >= 0) {
-                                setMonthlySalary(Math.floor(num));
+                                handleSalaryConfigChange(companyName, Math.floor(num), salaryDay, salaryMode);
                               }
                             }
                           }}
@@ -759,7 +778,7 @@ export default function GeneratorPage() {
                         <input
                           type="text"
                           value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value.toUpperCase())}
+                          onChange={(e) => handleSalaryConfigChange(e.target.value.toUpperCase(), monthlySalary, salaryDay, salaryMode)}
                           placeholder="e.g. INFOSYS LIMITED"
                           className={inputCls}
                         />
@@ -774,7 +793,7 @@ export default function GeneratorPage() {
                         <button
                           key={val}
                           type="button"
-                          onClick={() => setSalaryDay(val as any)}
+                          onClick={() => handleSalaryConfigChange(companyName, monthlySalary, val as any, salaryMode)}
                           className={`py-2 rounded-xl text-xs font-bold cursor-pointer transition-all border ${salaryDay === val
                               ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
                               : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
@@ -1029,77 +1048,7 @@ export default function GeneratorPage() {
 
           {/* Right Action & Summary Panel (4 cols on lg, sticky on desktop) */}
           <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-20">
-            {/* Live Financial Metrics Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Sparkles size={16} className="text-amber-500" />
-                  <h3 className="font-bold text-slate-800 text-xs uppercase tracking-wider">Statement Summary</h3>
-                </div>
-                <span className="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full border border-blue-100">
-                  {bankStyle}
-                </span>
-              </div>
 
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Account Holder:</span>
-                  <span className="font-bold text-slate-800 truncate max-w-[170px]">
-                    {customer.accountHolderName}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Account Number:</span>
-                  <span className="font-mono font-bold text-slate-800">{customer.accountNumber}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-500">Total Transactions:</span>
-                  <span className="font-bold text-slate-800">
-                    {activeRecord?.transactions.length || 0} Transactions
-                  </span>
-                </div>
-              </div>
-
-              {/* Financial Balances Grid */}
-              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
-                  <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-bold uppercase mb-0.5">
-                    <ArrowDownRight size={12} /> Total Credits
-                  </div>
-                  <div className="font-mono font-bold text-xs text-slate-900">
-                    ₹{(activeRecord?.totalCredits || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                  </div>
-                  <div className="text-[9px] text-slate-400 mt-0.5">{activeRecord?.crCount || 0} credits</div>
-                </div>
-
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
-                  <div className="flex items-center gap-1 text-[10px] text-rose-600 font-bold uppercase mb-0.5">
-                    <ArrowUpRight size={12} /> Total Debits
-                  </div>
-                  <div className="font-mono font-bold text-xs text-slate-900">
-                    ₹{(activeRecord?.totalDebits || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-                  </div>
-                  <div className="text-[9px] text-slate-400 mt-0.5">{activeRecord?.drCount || 0} debits</div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/60 p-3.5 rounded-xl border border-blue-100 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-blue-700 tracking-wider block">
-                    Calculated Closing Balance
-                  </span>
-                  <span className="font-mono font-extrabold text-base text-blue-950">
-                    ₹
-                    {(activeRecord?.closingBalance || account.openingBalance).toLocaleString('en-IN', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{' '}
-                    CR
-                  </span>
-                </div>
-                <CheckCircle2 size={22} className="text-blue-600 flex-shrink-0" />
-              </div>
-            </div>
 
             {/* PDF Export & Security Settings Card */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
@@ -1182,27 +1131,7 @@ export default function GeneratorPage() {
                 </div>
               )}
 
-              {/* Secondary Actions */}
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleTriggerRegenerate}
-                  disabled={loading || isDownloadingPdf}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200/80"
-                >
-                  <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-                  <span>Regenerate</span>
-                </button>
 
-                <button
-                  type="button"
-                  onClick={handlePrint}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200/80"
-                >
-                  <Printer size={13} />
-                  <span>Print (A4)</span>
-                </button>
-              </div>
             </div>
 
             {/* Quality Guarantee badge */}

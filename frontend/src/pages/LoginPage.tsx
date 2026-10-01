@@ -40,7 +40,7 @@ export default function LoginPage() {
       navigate(from, { replace: true });
     } catch (err: any) {
       console.error('[Login Error]', err);
-      const msg = err.response?.data?.message || 'Invalid username/phone or password';
+      const msg = err.message || 'Invalid username/phone or password';
       setErrorMsg(msg);
     } finally {
       setLoading(false);
@@ -69,7 +69,7 @@ export default function LoginPage() {
         </div>
 
         {/* Tab Selector */}
-        <div className="grid grid-cols-2 bg-slate-950 p-1 rounded-xl mb-6 border border-slate-800/50">
+        <div className="grid grid-cols-2 bg-slate-950 p-1 rounded-xl mb-4 border border-slate-800/50">
           <button
             type="button"
             onClick={() => {
@@ -102,6 +102,14 @@ export default function LoginPage() {
             <Phone size={13} />
             Phone Number
           </button>
+        </div>
+
+        {/* Environment Credentials Notice */}
+        <div className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 p-2.5 rounded-xl text-xs mb-5 flex items-center justify-between">
+          <span className="text-[11px] font-medium text-slate-400">Credentials (.env):</span>
+          <span className="font-mono text-[11px] font-bold text-indigo-300 bg-slate-950 px-2 py-0.5 rounded border border-indigo-500/20">
+            {import.meta.env.VITE_AUTH_USERNAME || 'admin'} / {import.meta.env.VITE_AUTH_PASSWORD || 'admin123'}
+          </span>
         </div>
 
         {/* Error Alert */}

@@ -67,22 +67,6 @@ public final class TransactionEngine {
         SalaryInfo salaryInfo = SalaryCalculator.getSalaryInfo(settings);
         GeoInfo geoInfo = GeoUtils.detectPrimaryCity(customer, branch);
 
-        int targetTxCount = Math.max(10, "Custom".equals(settings.pageCount())
-                ? settings.customTransactionsCount()
-                : DateUtils.getPageToTxCount(settings.pageCount(), 20));
-
-        // For 3 Months statement, ensure at least 125 transactions so that the PDF is minimum 6 pages
-        if ("3 Months".equalsIgnoreCase(settings.duration()) && targetTxCount < 125) {
-            targetTxCount = 128;
-        } else if ("6 Months".equalsIgnoreCase(settings.duration()) && targetTxCount < 240) {
-            targetTxCount = 250;
-        } else if ("12 Months".equalsIgnoreCase(settings.duration()) && targetTxCount < 480) {
-            targetTxCount = 500;
-        }
-
-        double initialOpening = info.openingBalance() > 0 ? info.openingBalance() : 90000.00;
-        double[] runningBal = { Math.round(initialOpening * 100.0) / 100.0 };
-
         record MonthRange(LocalDate start, LocalDate end) {}
         List<MonthRange> monthsList = new ArrayList<>();
         LocalDate mCurr = startDay.withDayOfMonth(1);
@@ -98,6 +82,16 @@ public final class TransactionEngine {
         }
 
         int numMonths = Math.max(1, monthsList.size());
+        // Natural target: 24 to 27 transactions per month (matching Neha Sharma's ~25.7/mo)
+        int defaultPerMonth = RandomUtils.randRange(24, 27);
+        int targetTxCount = ("Custom".equals(settings.pageCount()) && settings.customTransactionsCount() > 0)
+                ? settings.customTransactionsCount()
+                : (numMonths * defaultPerMonth);
+
+        int initialOpeningBal = (int) (info.openingBalance() > 0 ? info.openingBalance() : 90000.00);
+        double initialOpening = info.openingBalance() > 0 ? info.openingBalance() : 90000.00;
+        double[] runningBal = { Math.round(initialOpening * 100.0) / 100.0 };
+
         int basePerMonth = Math.max(3, targetTxCount / numMonths);
         int[] remainingTxs = { targetTxCount - (basePerMonth * numMonths) };
 
@@ -106,15 +100,15 @@ public final class TransactionEngine {
         List<WeightedTemplate> debitTemplates = List.of(
                 new WeightedTemplate(style -> AmountGenerator.getMerchantDebit(style), 40),
                 new WeightedTemplate(style -> {
-                    boolean isMicro = RandomUtils.randRange(0, 99) < 70;
+                    boolean isMicro = RandomUtils.randRange(0, 99) < 65;
                     return new DetailAndAmount(NarrativeBuilder.buildUpiNarrative(false, style, null), AmountGenerator.getP2pDebitAmount(isMicro));
-                }, 25),
+                }, 28),
                 new WeightedTemplate(style -> {
                     int cardLast4 = RandomUtils.randRange(1000, 9999);
                     String loc = RandomUtils.pick(geoInfo.posLocations());
-                    double amt = Math.round((RandomUtils.randRange(140, 3200) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    double amt = Math.round((RandomUtils.randRange(350, 3200) + RandomUtils.randomPaise()) * 100.0) / 100.0;
                     return new DetailAndAmount("POS 451239******" + cardLast4 + " " + loc, amt);
-                }, 10),
+                }, 8),
                 new WeightedTemplate(style -> {
                     String atmLoc = RandomUtils.pick(geoInfo.atmLocations());
                     int atmId = RandomUtils.randRange(1000, 9999);
@@ -122,26 +116,23 @@ public final class TransactionEngine {
                             ? "ATM WDL-CARD " + atmId + "-" + atmLoc
                             : "TO ATM WD-ATM CARD-" + atmId + " " + atmLoc;
                     return new DetailAndAmount(detail, RandomUtils.pick(List.of(500.0, 1000.0, 1500.0, 2000.0, 3000.0, 5000.0, 10000.0)));
-                }, 10),
+                }, 12),
+                new WeightedTemplate(style -> {
+                    int option = RandomUtils.randRange(1, 2);
+                    return switch (option) {
+                        case 1 -> new DetailAndAmount("NETC FASTAG RECHARGE - ICICI BANK", RandomUtils.pick(List.of(300.0, 500.0, 1000.0, 1500.0)));
+                        default -> new DetailAndAmount("UPI/DR/AIRTEL BROADBAND/AIRP/airtel.bill@airtel/Paymen", RandomUtils.pick(List.of(799.00, 943.00, 1179.00, 1499.00)));
+                    };
+                }, 6),
                 new WeightedTemplate(style -> {
                     int option = RandomUtils.randRange(1, 4);
                     return switch (option) {
-                        case 1 -> new DetailAndAmount("NETC FASTAG RECHARGE - ICICI BANK", RandomUtils.pick(List.of(300.0, 500.0, 1000.0, 1500.0)));
-                        case 2 -> new DetailAndAmount("BBPS/ELECTRICITY BILL PAY/TATA POWER", Math.round((RandomUtils.randRange(850, 3400) + RandomUtils.randomPaise()) * 100.0) / 100.0);
-                        case 3 -> new DetailAndAmount("UPI/DR/AIRTEL BROADBAND/AIRP/airtel.bill@airtel/Paymen", RandomUtils.pick(List.of(799.00, 943.00, 1179.00, 1499.00)));
-                        default -> new DetailAndAmount("UPI/DR/JIO RECHARGE/PAYTM/jio.recharge@paytm/Paymen", RandomUtils.pick(List.of(299.00, 349.00, 666.00, 719.00)));
-                    };
-                }, 10),
-                new WeightedTemplate(style -> {
-                    int option = RandomUtils.randRange(1, 5);
-                    return switch (option) {
                         case 1 -> new DetailAndAmount("ACH DR-NETFLIX ENTERTAINMENT/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(199.00, 499.00, 649.00)));
                         case 2 -> new DetailAndAmount("ACH DR-NIPPON INDIA MF SIP/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(1000.00, 2500.00, 5000.00)));
-                        case 3 -> new DetailAndAmount("ACH DR-HDFC ERGO HEALTH INS/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(840.00, 1248.00, 1950.00)));
-                        case 4 -> new DetailAndAmount("ACH DR-BAJAJ FINANCE EMI/" + RandomUtils.randRange(10000000, 99999999), RandomUtils.pick(List.of(2480.00, 3450.00, 4890.00)));
+                        case 3 -> new DetailAndAmount("ACH DR-BAJAJ FINANCE EMI/" + RandomUtils.randRange(10000000, 99999999), RandomUtils.pick(List.of(2480.00, 3450.00, 4890.00)));
                         default -> new DetailAndAmount("ACH DR-HDB FINANCIAL SERVICES/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(3200.00, 5400.00, 6250.00)));
                     };
-                }, 5)
+                }, 6)
         );
 
         List<WeightedTemplate> creditTemplates = List.of(
@@ -153,10 +144,10 @@ public final class TransactionEngine {
                                 "UPI/FAILED TXN REVERSAL/" + RandomUtils.genRef(),
                                 "UPI/REFUND/ZOMATO/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT",
                                 "UPI/REFUND/BLINKIT/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT")),
-                        AmountGenerator.getRefundAmount()), 25),
+                        AmountGenerator.getRefundAmount()), 28),
                 new WeightedTemplate(style -> new DetailAndAmount(
                         NarrativeBuilder.buildUpiNarrative(true, style, null),
-                        Math.round((RandomUtils.randRange(500, 2500) + RandomUtils.randomPaise()) * 100.0) / 100.0), 15)
+                        Math.round((RandomUtils.randRange(500, 2500) + RandomUtils.randomPaise()) * 100.0) / 100.0), 12)
         );
 
         for (int idx = 0; idx < monthsList.size(); idx++) {
@@ -199,13 +190,18 @@ public final class TransactionEngine {
             while (unassigned > 0 && attempts < 1000 && !activeDays.isEmpty()) {
                 attempts++;
                 int randomDay = RandomUtils.pick(activeDays);
-                if (dailyAllocation[randomDay] < 4) {
+                // Cap daily transactions strictly at 2 (matches Neha Sharma: 87 days 1 txn, 8 days 2 txns)
+                if (dailyAllocation[randomDay] < 2) {
                     dailyAllocation[randomDay]++;
                     unassigned--;
                 }
             }
 
-            List<Integer> availableHours = new ArrayList<>(List.of(8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22));
+            List<Integer> availableHours = new ArrayList<>(List.of(9, 11, 13, 15, 17, 19, 20, 21));
+
+            // Monthly recurring anchors (guaranteed 1 electricity bill & 1 mobile recharge per month)
+            boolean electricityBilled = false;
+            boolean mobileRecharged = false;
 
             for (int dayOffset = 0; dayOffset < totalDays; dayOffset++) {
                 int dayTxCount = dailyAllocation[dayOffset];
@@ -223,9 +219,29 @@ public final class TransactionEngine {
                     int hour = k < dayHours.size() ? dayHours.get(k) : RandomUtils.randRange(9, 21);
                     LocalDateTime txTime = txDate.atTime(LocalTime.of(hour, RandomUtils.randRange(0, 59), RandomUtils.randRange(0, 59)));
 
-                    boolean isCredit = RandomUtils.randRange(0, 99) < 18;
-                    WeightedTemplate tmpl = RandomUtils.weightedPick(isCredit ? creditTemplates : debitTemplates);
-                    DetailAndAmount picked = tmpl.detailAndAmount().apply(bankStyle);
+                    boolean isCredit;
+                    DetailAndAmount picked;
+
+                    // Anchor 1: Guaranteed Electricity bill between 3rd and 8th of month
+                    if (!electricityBilled && txDate.getDayOfMonth() >= 3 && txDate.getDayOfMonth() <= 8) {
+                        isCredit = false;
+                        double amt = Math.round((RandomUtils.randRange(1850, 3200) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                        picked = new DetailAndAmount("BBPS/ELECTRICITY BILL PAY/TATA POWER", amt);
+                        electricityBilled = true;
+                    }
+                    // Anchor 2: Guaranteed Mobile Recharge between 19th and 26th of month
+                    else if (!mobileRecharged && txDate.getDayOfMonth() >= 19 && txDate.getDayOfMonth() <= 26) {
+                        isCredit = false;
+                        double amt = RandomUtils.pick(List.of(299.00, 349.00, 666.00, 719.00));
+                        picked = new DetailAndAmount("UPI/DR/JIO RECHARGE/PAYTM/jio.recharge@paytm/Paymen", amt);
+                        mobileRecharged = true;
+                    } else {
+                        // Natural 36% credit probability matching Neha Sharma (total credits ~37-38%)
+                        isCredit = RandomUtils.randRange(0, 99) < 36;
+                        WeightedTemplate tmpl = RandomUtils.weightedPick(isCredit ? creditTemplates : debitTemplates);
+                        picked = tmpl.detailAndAmount().apply(bankStyle);
+                    }
+
                     double amount = Math.round(picked.amount() * 100.0) / 100.0;
 
                     if (isCredit) {
@@ -247,12 +263,9 @@ public final class TransactionEngine {
             }
         }
 
-        boolean isManualSalary = "manual".equals(settings.salaryMode());
-        int raiseMonth = SalaryCalculator.pickRaiseMonth(numMonths);
-        double raiseFactor = SalaryCalculator.pickRaiseFactor();
-        int bonusMonth = SalaryCalculator.pickBonusMonth(numMonths);
-        double bonusAmount = SalaryCalculator.pickBonusAmount();
-
+        boolean isManualSalary = "manual".equalsIgnoreCase(settings.salaryMode())
+                || (settings.monthlySalary() != null && settings.monthlySalary() > 0)
+                || (settings.companyName() != null && !settings.companyName().isBlank());
         LocalDate salaryMonthDate = startDay.withDayOfMonth(1);
         int monthIndex = 0;
         while (!salaryMonthDate.isAfter(endDay)) {
@@ -275,72 +288,42 @@ public final class TransactionEngine {
 
                 double salaryCreditAmount = salaryInfo.amount();
                 if (!isManualSalary) {
-                    salaryCreditAmount = SalaryCalculator.applyRaise(salaryCreditAmount, monthIndex, raiseMonth, raiseFactor);
                     salaryCreditAmount = SalaryCalculator.applyMonthlyVariance(salaryCreditAmount, false);
-                    salaryCreditAmount = SalaryCalculator.applyBonus(salaryCreditAmount, monthIndex, bonusMonth, bonusAmount);
                 }
 
                 totalTxs.add(new Transaction("tx_sal_" + finalSalaryDate + "_" + monthIndex,
                         dateStr, dateStr, narrative, generateRefNo(bankStyle), null, salaryCreditAmount, 0));
-
-                String monthYear = SalaryCalculator.monthAbbrev(finalSalaryDate.getMonthValue()) + finalSalaryDate.getYear();
-                if (!isManualSalary) {
-                    SalaryDeductions deductions = SalaryCalculator.computeDeductions(salaryCreditAmount);
-                    if (deductions.professionalTax() > 0) {
-                        totalTxs.add(new Transaction("tx_sal_pt_" + finalSalaryDate + "_" + monthIndex,
-                                dateStr, dateStr, "PROFESSIONAL TAX-" + monthYear, generateRefNo(bankStyle),
-                                deductions.professionalTax(), null, 0));
-                    }
-                    if (deductions.pfEmployeeContribution() > 0) {
-                        totalTxs.add(new Transaction("tx_sal_pf_" + finalSalaryDate + "_" + monthIndex,
-                                dateStr, dateStr, "PF EMPLOYEE CONTRIBUTION-" + monthYear, generateRefNo(bankStyle),
-                                deductions.pfEmployeeContribution(), null, 0));
-                    }
-                    if (deductions.tds() > 0) {
-                        totalTxs.add(new Transaction("tx_sal_tds_" + finalSalaryDate + "_" + monthIndex,
-                                dateStr, dateStr, "TDS ON SALARY U/S 192-" + monthYear, generateRefNo(bankStyle),
-                                deductions.tds(), null, 0));
-                    }
-                }
             }
             salaryMonthDate = salaryMonthDate.plusMonths(1);
             monthIndex++;
         }
 
-        LocalDate chargeMonth = startDay.withDayOfMonth(1).plusDays(24);
-        while (!chargeMonth.isAfter(endDay)) {
-            if (!chargeMonth.isBefore(startDay)) {
-                String dateStr = DateUtils.formatDate(chargeMonth);
-                totalTxs.add(new Transaction("tx_sms_" + chargeMonth, dateStr, dateStr,
-                        "SMS ALERT CHARGES", generateRefNo(bankStyle), 17.70, null, 0));
-            }
-            chargeMonth = chargeMonth.plusMonths(1).withDayOfMonth(25);
-        }
+        boolean isSbi = "SBI".equalsIgnoreCase(bankStyle) || "SBI2".equalsIgnoreCase(bankStyle);
+        int[] interestMonths = { 3, 6, 9, 12 };
+        int startYear = startDay.getYear();
+        int endYear = endDay.getYear();
 
-        if (!startDay.isAfter(endDay)) {
-            LocalDate cardChgDate = startDay.plusMonths(1).withDayOfMonth(12);
-            if (!cardChgDate.isBefore(startDay) && !cardChgDate.isAfter(endDay)) {
-                totalTxs.add(new Transaction("tx_card_amc_" + cardChgDate,
-                        DateUtils.formatDate(cardChgDate), DateUtils.formatDate(cardChgDate),
-                        "DEBIT CARD ANNUAL CHARGES INCL GST", generateRefNo(bankStyle), 147.50, null, 0));
-            }
-        }
+        for (int y = startYear; y <= endYear; y++) {
+            for (int im : interestMonths) {
+                int day = 25;
+                LocalDate iDate = LocalDate.of(y, im, day);
+                if (iDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
+                    iDate = iDate.plusDays(1);
+                }
+                if (!iDate.isBefore(startDay) && !iDate.isAfter(endDay)) {
+                    double interestAmount = Math.round((RandomUtils.randRange(180, 1450) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    String dateStr = DateUtils.formatDate(iDate);
+                    LocalDate periodFromDate = iDate.minusMonths(3).plusDays(1);
+                    LocalDate periodToDate = iDate;
+                    String periodFrom = DateUtils.formatDate(periodFromDate);
+                    String periodTo = DateUtils.formatDate(periodToDate);
 
-        int[] interestMonths = { 1, 4, 7, 10 };
-        for (int im : interestMonths) {
-            int iYear = im <= startDay.getMonthValue() - 1 ? startDay.getYear() + 1 : startDay.getYear();
-            LocalDate iDate = LocalDate.of(iYear, im + 1, 1);
-            if (!iDate.isBefore(startDay) && !iDate.isAfter(endDay)) {
-                double interestAmount = Math.round((RandomUtils.randRange(115, 680) + Math.random()) * 100.0) / 100.0;
-                String dateStr = DateUtils.formatDate(iDate);
-                LocalDate periodFromDate = LocalDate.of(iYear, 1, 1).plusMonths(im - 3);
-                LocalDate periodToDate = iDate.minusDays(1);
-                String periodFrom = DateUtils.formatDate(periodFromDate);
-                String periodTo = DateUtils.formatDate(periodToDate);
+                    String intNarrative = SalaryCalculator.buildSBIntNarrative("996018210007421", periodFrom, periodTo, bankStyle);
+                    String intRef = isSbi ? "" : generateRefNo(bankStyle);
 
-                totalTxs.add(new Transaction("tx_interest_" + iDate, dateStr, dateStr,
-                        SalaryCalculator.buildSBIntNarrative("996018210007421", periodFrom, periodTo, bankStyle),
-                        generateRefNo(bankStyle), null, interestAmount, 0));
+                    totalTxs.add(new Transaction("tx_interest_" + iDate, dateStr, dateStr,
+                            intNarrative, intRef, null, interestAmount, 0));
+                }
             }
         }
 
@@ -354,11 +337,37 @@ public final class TransactionEngine {
 
         List<Transaction> result = new ArrayList<>();
         double bal = Math.round(initialOpening * 100.0) / 100.0;
+        final double minFloor = 500.00; // Strictly ensure balance NEVER drops below ₹500 (and NEVER negative!)
+
         for (Transaction tx : totalTxs) {
-            if (tx.credit() != null) bal += tx.credit();
-            if (tx.debit() != null) bal -= tx.debit();
-            bal = Math.round(bal * 100.0) / 100.0;
-            result.add(tx.withBalance(bal));
+            if (tx.credit() != null) {
+                bal += tx.credit();
+                bal = Math.round(bal * 100.0) / 100.0;
+                result.add(tx.withBalance(bal));
+            } else if (tx.debit() != null) {
+                double debitAmt = tx.debit();
+                if (bal - debitAmt < minFloor) {
+                    double maxAllowed = bal - minFloor;
+                    if (maxAllowed > 45.00) {
+                        // Safely scale down debit so balance stays above minFloor
+                        double newDebit = Math.max(15.00, Math.floor(maxAllowed * (RandomUtils.randRange(45, 80) / 100.0) * 100.0) / 100.0);
+                        bal -= newDebit;
+                        bal = Math.round(bal * 100.0) / 100.0;
+                        result.add(new Transaction(tx.id(), tx.valueDate(), tx.postDate(), tx.details(), tx.refNo(), newDebit, null, bal));
+                    } else {
+                        // Balance at/near floor: simulate natural inward UPI credit from friend/family to replenish funds
+                        double creditAmt = Math.round((RandomUtils.randRange(1200, 3500) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                        String creditNarrative = NarrativeBuilder.buildUpiNarrative(true, bankStyle, null);
+                        bal += creditAmt;
+                        bal = Math.round(bal * 100.0) / 100.0;
+                        result.add(new Transaction(tx.id(), tx.valueDate(), tx.postDate(), creditNarrative, tx.refNo(), null, creditAmt, bal));
+                    }
+                } else {
+                    bal -= debitAmt;
+                    bal = Math.round(bal * 100.0) / 100.0;
+                    result.add(tx.withBalance(bal));
+                }
+            }
         }
         return result;
     }

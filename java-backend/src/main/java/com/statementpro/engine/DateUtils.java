@@ -55,8 +55,17 @@ public final class DateUtils {
 
     public static DateRange getDateRange(StatementSettings settings, String localTime) {
         if ("custom".equals(settings.generationMode()) && settings.fromDate() != null && settings.toDate() != null) {
-            LocalDateTime start = LocalDate.parse(settings.fromDate()).atStartOfDay();
-            LocalDateTime end = LocalDate.parse(settings.toDate()).atTime(23, 59, 59, 999_000_000);
+            LocalDate fromDate = LocalDate.parse(settings.fromDate());
+            LocalDate toDate = LocalDate.parse(settings.toDate());
+            if (fromDate.isAfter(toDate)) {
+                // A reversed date range must never silently yield zero months of
+                // transactions (an empty ledger breaks downstream statement validation).
+                LocalDate swap = fromDate;
+                fromDate = toDate;
+                toDate = swap;
+            }
+            LocalDateTime start = fromDate.atStartOfDay();
+            LocalDateTime end = toDate.atTime(23, 59, 59, 999_000_000);
             return new DateRange(start, end);
         }
 

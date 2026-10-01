@@ -1,13 +1,12 @@
 services:
   - type: web
-    name: statementpro-backend
-    env: node
-    rootDir: backend
-    buildCommand: npm ci && npx puppeteer browsers install chrome && npm run build
-    startCommand: npm run start
+    name: statementpro-java-backend
+    runtime: docker
+    dockerfilePath: java-backend/Dockerfile
+    dockerContext: java-backend
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/project/src/backend/.cache/puppeteer
-
-
-      
+      - key: PORT
+        value: 8080

@@ -93,10 +93,20 @@ export function isoToIndianFormat(isoStr: string): string {
 
 function getDateRange(settings: StatementSettings, localTime?: string): { startDay: Date; endDay: Date } {
   if (settings.generationMode === 'custom' && settings.fromDate && settings.toDate) {
-    const start = new Date(settings.fromDate);
+    let start = new Date(settings.fromDate);
     start.setHours(0, 0, 0, 0);
-    const end = new Date(settings.toDate);
+    let end = new Date(settings.toDate);
     end.setHours(23, 59, 59, 999);
+    if (start > end) {
+      // A reversed date range must never silently yield zero months of
+      // transactions (an empty ledger breaks downstream statement validation).
+      const swappedStart = new Date(settings.toDate);
+      swappedStart.setHours(0, 0, 0, 0);
+      const swappedEnd = new Date(settings.fromDate);
+      swappedEnd.setHours(23, 59, 59, 999);
+      start = swappedStart;
+      end = swappedEnd;
+    }
     return { startDay: start, endDay: end };
   }
 
@@ -364,15 +374,12 @@ function getRandomSalaryAmount(): number {
 }
 
 function getSalaryInfo(settings: StatementSettings): { company: string; amount: number } {
-  if (settings.salaryMode === 'manual' && settings.companyName && settings.monthlySalary && settings.monthlySalary > 0) {
-    return {
-      company: settings.companyName.trim().toUpperCase(),
-      amount: Math.round(settings.monthlySalary),
-    };
-  }
+  const customCompany = settings.companyName && settings.companyName.trim() ? settings.companyName.trim().toUpperCase() : null;
+  const customAmount = settings.monthlySalary && settings.monthlySalary > 0 ? Math.round(settings.monthlySalary) : null;
+
   return {
-    company: getRandomCompany(),
-    amount: getRandomSalaryAmount(),
+    company: customCompany || getRandomCompany(),
+    amount: customAmount || getRandomSalaryAmount(),
   };
 }
 
@@ -411,6 +418,9 @@ function getSalaryDateForMonth(year: number, month: number, settings: StatementS
 }
 
 function buildSBIntNarrative(accountNumber: string, fromDate: string, toDate: string, bankStyle: string): string {
+  if (bankStyle === 'SBI' || bankStyle === 'SBI2') {
+    return 'CREDIT INTEREST--';
+  }
   if (bankStyle === 'Kotak' || bankStyle === 'IndusInd') {
     return 'INT PAID ON SB ACCOUNT';
   }
@@ -494,15 +504,6 @@ function generateRawSalariedTransactions(
   const { company: companyName, amount: baseSalaryAmount } = getSalaryInfo(settings);
   const geoInfo = detectPrimaryCity(customer, branch);
 
-  const targetTxCount = Math.max(10, settings.pageCount === 'Custom'
-    ? settings.customTransactionsCount
-    : getPageToTxCount(settings.pageCount));
-
-  let initialOpening = (info.openingBalance && info.openingBalance > 0) ? info.openingBalance : 90000.00;
-
-  // Lock starting running balance to EXACT initialOpening (accountInfo.openingBalance) to prevent header math drift
-  let runningBal = Math.round(initialOpening * 100) / 100;
-
   const monthsList: { start: Date; end: Date }[] = [];
   let mCurr = new Date(startDay.getFullYear(), startDay.getMonth(), startDay.getDate());
   while (mCurr <= endDay) {
@@ -519,6 +520,16 @@ function generateRawSalariedTransactions(
   }
 
   const numMonths = Math.max(1, monthsList.length);
+  const defaultPerMonth = randRange(24, 27);
+  const targetTxCount = (settings.pageCount === 'Custom' && settings.customTransactionsCount > 0)
+    ? settings.customTransactionsCount
+    : numMonths * defaultPerMonth;
+
+  let initialOpening = (info.openingBalance && info.openingBalance > 0) ? info.openingBalance : 90000.00;
+
+  // Lock starting running balance to EXACT initialOpening (accountInfo.openingBalance) to prevent header math drift
+  let runningBal = Math.round(initialOpening * 100) / 100;
+
   const basePerMonth = Math.max(3, Math.floor(targetTxCount / numMonths));
   let remainingTxs = targetTxCount - (basePerMonth * numMonths);
 
@@ -679,11 +690,14 @@ function generateRawSalariedTransactions(
     while (unassigned > 0 && attempts < 1000 && activeDays.length > 0) {
       attempts++;
       const randomDay = pick(activeDays);
-      if (dailyAllocation[randomDay] < 3) {
+      if (dailyAllocation[randomDay] < 2) {
         dailyAllocation[randomDay]++;
         unassigned--;
       }
     }
+
+    let electricityBilled = false;
+    let mobileRecharged = false;
 
     for (let dayOffset = 0; dayOffset < totalDays; dayOffset++) {
       const dayTxCount = dailyAllocation[dayOffset];
@@ -693,7 +707,7 @@ function generateRawSalariedTransactions(
       txDate.setDate(txDate.getDate() + dayOffset);
       if (txDate > mRange.end) txDate.setTime(mRange.end.getTime());
 
-      const availableHours = [9, 11, 13, 15, 18, 20, 21];
+      const availableHours = [9, 11, 13, 15, 17, 19, 20, 21];
       const dayHours = [...availableHours].sort(() => Math.random() - 0.5).slice(0, dayTxCount);
       dayHours.sort((a, b) => a - b);
 
@@ -702,10 +716,29 @@ function generateRawSalariedTransactions(
         const txTime = new Date(txDate.getTime());
         txTime.setHours(hour, randRange(0, 59), randRange(0, 59));
 
-        // Lower credit ratio — salaried accounts spend more than they receive P2P
-        const isCredit = Math.random() < 0.18;
-        const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
-        const { detail, amount: rawAmt } = tmpl.detailAndAmount(bankStyle);
+        let isCredit = false;
+        let detail = '';
+        let rawAmt = 0;
+
+        const dayNum = txDate.getDate();
+        if (!electricityBilled && dayNum >= 3 && dayNum <= 8) {
+          isCredit = false;
+          rawAmt = Math.round((randRange(1850, 3200) + getRandomPaise()) * 100) / 100;
+          detail = 'BBPS/ELECTRICITY BILL PAY/TATA POWER';
+          electricityBilled = true;
+        } else if (!mobileRecharged && dayNum >= 19 && dayNum <= 26) {
+          isCredit = false;
+          rawAmt = pick([299.00, 349.00, 666.00, 719.00]);
+          detail = 'UPI/DR/JIO RECHARGE/PAYTM/jio.recharge@paytm/Paymen';
+          mobileRecharged = true;
+        } else {
+          isCredit = Math.random() < 0.36;
+          const tmpl = isCredit ? weightedPick(SALARIED_CREDIT_TEMPLATES) : weightedPick(SALARIED_DEBIT_TEMPLATES);
+          const picked = tmpl.detailAndAmount(bankStyle);
+          detail = picked.detail;
+          rawAmt = picked.amount;
+        }
+
         const amount = Math.round(rawAmt * 100) / 100;
 
         if (isCredit) {
@@ -756,12 +789,11 @@ function generateRawSalariedTransactions(
 
       let monthlySalaryPayout = baseSalaryAmount;
       if (settings.salaryMode !== 'manual') {
-        if (monthIndex % 3 === 1) {
-          monthlySalaryPayout += pick([450, 890, 1250]);
-        } else if (monthIndex % 3 === 2) {
-          monthlySalaryPayout -= pick([210, 480, 750]);
-        } else if (monthIndex === 5) {
-          monthlySalaryPayout += pick([3500, 5200, 8000]);
+        const roll = randRange(0, 99);
+        if (roll < 50) {
+          monthlySalaryPayout += randRange(100, 1150);
+        } else {
+          monthlySalaryPayout -= randRange(100, 950);
         }
       }
 
@@ -780,63 +812,36 @@ function generateRawSalariedTransactions(
     monthIndex++;
   }
 
-  // ── Inject Monthly SMS Alert Charges ───────────────────────────────────────
-  let chargeMonth = new Date(startDay.getFullYear(), startDay.getMonth(), 25);
-  while (chargeMonth <= endDay) {
-    if (chargeMonth >= startDay) {
-      const dateStr = formatDate(chargeMonth);
-      totalTxs.push({
-        id: `tx_sms_${chargeMonth.getTime()}`,
-        valueDate: dateStr,
-        postDate: dateStr,
-        details: 'SMS ALERT CHARGES',
-        refNo: generateRefNo(bankStyle),
-        debit: 17.70,
-        credit: null,
-        balance: 0,
-      });
-    }
-    chargeMonth.setMonth(chargeMonth.getMonth() + 1);
-  }
-
-  // ── Inject Annual Debit Card Maintenance Charges ───────────────────────────
-  if (startDay <= endDay) {
-    const cardChgDate = new Date(startDay.getFullYear(), startDay.getMonth() + 1, 12);
-    if (cardChgDate >= startDay && cardChgDate <= endDay) {
-      totalTxs.push({
-        id: `tx_card_amc_${cardChgDate.getTime()}`,
-        valueDate: formatDate(cardChgDate),
-        postDate: formatDate(cardChgDate),
-        details: 'DEBIT CARD ANNUAL CHARGES INCL GST',
-        refNo: generateRefNo(bankStyle),
-        debit: 147.50,
-        credit: null,
-        balance: 0,
-      });
-    }
-  }
-
   // ── Inject Savings Bank Quarterly Interest ─────────────────────────────────
-  const interestMonths = [1, 4, 7, 10];
-  for (const im of interestMonths) {
-    const iYear = im <= startDay.getMonth() ? startDay.getFullYear() + 1 : startDay.getFullYear();
-    const iDate = new Date(iYear, im, 1, 9, 0, 0);
-    if (iDate >= startDay && iDate <= endDay) {
-      const interestAmount = parseFloat((randRange(115, 680) + Math.random()).toFixed(2));
-      const dateStr = formatDate(iDate);
-      const periodFrom = formatDate(new Date(iYear, im - 3, 1));
-      const periodTo = formatDate(new Date(iYear, im, 0));
+  const isSbi = bankStyle === 'SBI' || bankStyle === 'SBI2';
+  const interestMonths = [2, 5, 8, 11]; // Mar (2), Jun (5), Sep (8), Dec (11) 0-indexed
+  const startYear = startDay.getFullYear();
+  const endYear = endDay.getFullYear();
 
-      totalTxs.push({
-        id: `tx_interest_${iDate.getTime()}`,
-        valueDate: dateStr,
-        postDate: dateStr,
-        details: buildSBIntNarrative('996018210007421', periodFrom, periodTo, bankStyle),
-        refNo: generateRefNo(bankStyle),
-        debit: null,
-        credit: interestAmount,
-        balance: 0,
-      });
+  for (let y = startYear; y <= endYear; y++) {
+    for (const im of interestMonths) {
+      let day = 25;
+      const iDate = new Date(y, im, day, 9, 0, 0);
+      if (iDate.getDay() === 0) {
+        iDate.setDate(26);
+      }
+      if (iDate >= startDay && iDate <= endDay) {
+        const interestAmount = parseFloat((randRange(180, 1450) + getRandomPaise()).toFixed(2));
+        const dateStr = formatDate(iDate);
+        const periodFrom = formatDate(new Date(y, im - 2, 1));
+        const periodTo = formatDate(iDate);
+
+        totalTxs.push({
+          id: `tx_interest_${iDate.getTime()}`,
+          valueDate: dateStr,
+          postDate: dateStr,
+          details: buildSBIntNarrative('996018210007421', periodFrom, periodTo, bankStyle),
+          refNo: isSbi ? '' : generateRefNo(bankStyle),
+          debit: null,
+          credit: interestAmount,
+          balance: 0,
+        });
+      }
     }
   }
 
@@ -857,10 +862,42 @@ function generateRawSalariedTransactions(
   });
 
   let bal = Math.round(initialOpening * 100) / 100;
+  const minFloor = 500.00; // Strictly ensure balance NEVER drops below ₹500 (and NEVER negative!)
+
   return totalTxs.map((tx) => {
-    if (tx.credit) bal += tx.credit;
-    if (tx.debit) bal -= tx.debit;
-    bal = Math.round(bal * 100) / 100;
+    if (tx.credit) {
+      bal += tx.credit;
+      bal = Math.round(bal * 100) / 100;
+      return { ...tx, balance: bal };
+    } else if (tx.debit) {
+      const debitAmt = tx.debit;
+      if (bal - debitAmt < minFloor) {
+        const maxAllowed = bal - minFloor;
+        if (maxAllowed > 45.00) {
+          const newDebit = Math.max(15.00, Math.floor(maxAllowed * (randRange(45, 80) / 100) * 100) / 100);
+          bal -= newDebit;
+          bal = Math.round(bal * 100) / 100;
+          return { ...tx, debit: newDebit, balance: bal };
+        } else {
+          // Balance at/near floor: simulate natural inward UPI credit to replenish funds
+          const creditAmt = Math.round((randRange(1200, 3500) + getRandomPaise()) * 100) / 100;
+          const creditNarrative = buildUpiNarrative(true, bankStyle);
+          bal += creditAmt;
+          bal = Math.round(bal * 100) / 100;
+          return {
+            ...tx,
+            details: creditNarrative,
+            debit: null,
+            credit: creditAmt,
+            balance: bal
+          };
+        }
+      } else {
+        bal -= debitAmt;
+        bal = Math.round(bal * 100) / 100;
+        return { ...tx, balance: bal };
+      }
+    }
     return { ...tx, balance: bal };
   });
 }

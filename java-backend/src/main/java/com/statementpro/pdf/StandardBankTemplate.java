@@ -6,7 +6,6 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.WriterProperties;
 import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.AreaBreak;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
@@ -39,7 +38,8 @@ public class StandardBankTemplate implements StatementTemplate {
             pdfDoc.getDocumentInfo()
                     .setAuthor(theme.headerTitle())
                     .setCreator(theme.headerTitle() + " Automated Core Banking System")
-                    .setTitle(theme.headerTitle() + " - Statement");
+                    .setTitle(theme.headerTitle() + " - Statement")
+                    .setProducer("iText 2.0.4 (by lowagie.com)");
 
             List<List<Transaction>> pages = TemplateUtils.chunkTransactions(record.transactions(), 8, 20);
             int totalPages = pages.size();
@@ -61,7 +61,7 @@ public class StandardBankTemplate implements StatementTemplate {
                 }
             }
         }
-        return out.toByteArray();
+        return TemplateUtils.sanitizeProducerMetadata(out.toByteArray(), "iText 2.0.4 (by lowagie.com)");
     }
 
     private Table buildHeader(BankTheme theme, DeviceRgb primaryColor, int pageNum, int totalPages) {
@@ -94,8 +94,13 @@ public class StandardBankTemplate implements StatementTemplate {
     private Table buildTransactionsTable(List<Transaction> pageTxs, DeviceRgb primaryColor) {
         Table table = new Table(UnitValue.createPercentArray(new float[]{12, 44, 14, 10, 10, 10})).useAllAvailableWidth();
         for (String colHeader : new String[]{"Txn Date", "Transaction Details", "Ref / Chq No", "Debit (Dr)", "Credit (Cr)", "Balance"}) {
-            table.addHeaderCell(new Cell().add(new Paragraph(colHeader).setFontSize(9).setBold())
-                    .setBackgroundColor(primaryColor).setFontColor(new DeviceRgb(255, 255, 255)));
+            Cell hCell = new Cell()
+                    .add(new Paragraph(colHeader).setFontSize(9).setBold())
+                    .setBackgroundColor(primaryColor)
+                    .setFontColor(new DeviceRgb(255, 255, 255))
+                    .setBorder(null); // border drawn by renderer
+            hCell.setNextRenderer(new CustomBorderCellRenderer(hCell, 0.5f, new DeviceRgb(255, 255, 255)));
+            table.addHeaderCell(hCell);
         }
         for (Transaction tx : pageTxs) {
             table.addCell(cell(tx.valueDate()));
@@ -108,9 +113,16 @@ public class StandardBankTemplate implements StatementTemplate {
         return table;
     }
 
+    /**
+     * Data cell with a real PDF path border (m/l/S operators) so pdfplumber
+     * lines_strict strategy can detect the table grid.
+     */
     private Cell cell(String text) {
-        return new Cell().add(new Paragraph(text == null ? "" : text).setFontSize(8))
-                .setBorder(new SolidBorder(new DeviceRgb(226, 232, 240), 0.5f));
+        Cell c = new Cell()
+                .add(new Paragraph(text == null ? "" : text).setFontSize(8))
+                .setBorder(null); // iText's own border disabled; drawn by renderer
+        c.setNextRenderer(new CustomBorderCellRenderer(c, 0.5f, new DeviceRgb(226, 232, 240)));
+        return c;
     }
 
     private Cell cellRight(String text) {

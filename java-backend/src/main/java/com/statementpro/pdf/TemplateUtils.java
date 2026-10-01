@@ -57,6 +57,54 @@ public final class TemplateUtils {
         return sb.toString();
     }
 
+    /**
+     * iText 8's AGPL/community core forcibly appends "; modified using iText(R) Core X.X.X
+     * (AGPL version)..." to any custom /Producer value once the document is closed, which is
+     * an immediate giveaway that the PDF wasn't produced by genuine bank software. This rewrites
+     * the raw bytes to restore a clean producer string, using balanced-parenthesis scanning
+     * (PDF literal strings allow unescaped nested parens) so the replacement can't desync mid-value.
+     */
+    public static byte[] sanitizeProducerMetadata(byte[] pdfBytes, String cleanProducer) {
+        String pdf = new String(pdfBytes, java.nio.charset.StandardCharsets.ISO_8859_1);
+        String marker = "/Producer";
+        int markerIdx = pdf.indexOf(marker);
+        if (markerIdx == -1) return pdfBytes;
+
+        int openParen = pdf.indexOf('(', markerIdx + marker.length());
+        if (openParen == -1) return pdfBytes;
+        for (int i = markerIdx + marker.length(); i < openParen; i++) {
+            if (!Character.isWhitespace(pdf.charAt(i))) return pdfBytes;
+        }
+
+        int depth = 0;
+        int closeParen = -1;
+        for (int i = openParen; i < pdf.length(); i++) {
+            char c = pdf.charAt(i);
+            if (c == '\\') {
+                i++;
+                continue;
+            }
+            if (c == '(') depth++;
+            else if (c == ')') {
+                depth--;
+                if (depth == 0) {
+                    closeParen = i;
+                    break;
+                }
+            }
+        }
+        int origContentLen = closeParen - openParen - 1;
+        String replacement = cleanProducer;
+        if (cleanProducer.length() < origContentLen) {
+            replacement = cleanProducer + " ".repeat(origContentLen - cleanProducer.length());
+        } else if (cleanProducer.length() > origContentLen) {
+            replacement = cleanProducer.substring(0, origContentLen);
+        }
+
+        String patched = pdf.substring(0, openParen) + "(" + replacement + ")" + pdf.substring(closeParen + 1);
+        return patched.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+    }
+
     public static String formatAddress4Lines(String address) {
         if (address == null || address.isEmpty()) return "";
         List<String> parts = new ArrayList<>();

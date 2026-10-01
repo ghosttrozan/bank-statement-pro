@@ -76,6 +76,9 @@ class Sbi2TemplateTest {
 
             int[] rowsPerPage = new int[totalPages];
             for (Transaction tx : txs) {
+                if (tx.details() != null && tx.details().contains("INTEREST")) {
+                    continue;
+                }
                 String rNum = refFingerprint(tx.refNo());
                 int matchedPage = -1;
                 int matchCount = 0;

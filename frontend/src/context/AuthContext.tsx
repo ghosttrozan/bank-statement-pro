@@ -1,6 +1,5 @@
-import React, { createContext, useEffect, useRef } from 'react';
+import React, { createContext, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import api from '../lib/api';
 
 interface AuthContextProps {
   refreshSession: () => Promise<void>;
@@ -9,74 +8,16 @@ interface AuthContextProps {
 export const AuthContext = createContext<AuthContextProps | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoading, isAuthenticated, setIsLoading, setTokens, setUser, clearAuth } = useAuthStore();
-  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { isLoading, setIsLoading } = useAuthStore();
 
   const refreshSession = async () => {
-    const currentRefreshToken = useAuthStore.getState().refreshToken;
-    const currentAccessToken = useAuthStore.getState().accessToken;
-
-    if (!currentRefreshToken && !currentAccessToken) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Call token rotation refresh route (reads httpOnly cookie or fallback body)
-      const res = await api.post('/api/auth/refresh', {
-        refreshToken: currentRefreshToken,
-      });
-      const { accessToken, refreshToken } = res.data;
-      setTokens(accessToken, refreshToken);
-
-      // Fetch own profile
-      const userRes = await api.get('/api/auth/me');
-      setUser(userRes.data.user);
-    } catch (err: any) {
-      // Only clear if auth actually failed (401/403)
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        clearAuth();
-      }
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
 
-  // On mount, perform session refresh
+  // On mount, stop loading immediately
   useEffect(() => {
-    refreshSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Periodic silent refresh (every 14 minutes)
-  useEffect(() => {
-    if (isAuthenticated) {
-      refreshIntervalRef.current = setInterval(() => {
-        const currentRefreshToken = useAuthStore.getState().refreshToken;
-        api
-          .post('/api/auth/refresh', { refreshToken: currentRefreshToken })
-          .then((res) => {
-            const { accessToken, refreshToken } = res.data;
-            setTokens(accessToken, refreshToken);
-          })
-          .catch((err: any) => {
-            if (err.response?.status === 401 || err.response?.status === 403) {
-              clearAuth();
-            }
-          });
-      }, 14 * 60 * 1000);
-    } else {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    }
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current);
-      }
-    };
-  }, [isAuthenticated, setTokens, clearAuth]);
+    setIsLoading(false);
+  }, [setIsLoading]);
 
   if (isLoading) {
     return (

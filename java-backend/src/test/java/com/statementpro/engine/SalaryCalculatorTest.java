@@ -58,8 +58,14 @@ class SalaryCalculatorTest {
     }
 
     @Test
-    void defaultIntNarrativeIncludesAccountAndPeriod() {
+    void sbiIntNarrativeIsCreditInterest() {
         String narrative = SalaryCalculator.buildSBIntNarrative("123", "01-01-2026", "31-03-2026", "SBI");
+        assertEquals("CREDIT INTEREST--", narrative);
+    }
+
+    @Test
+    void defaultIntNarrativeIncludesAccountAndPeriod() {
+        String narrative = SalaryCalculator.buildSBIntNarrative("123", "01-01-2026", "31-03-2026", "PNB");
         assertEquals("123:SBInt.Pd:01-01-2026 to 31-03-2026", narrative);
     }
 

@@ -289,7 +289,7 @@ ${containerHtml}
     try {
       const errData = await response.json();
       if (errData?.message) errMsg = errData.message;
-    } catch {}
+    } catch { }
     throw new Error(errMsg);
   }
 
@@ -300,16 +300,60 @@ ${containerHtml}
   if (onProgress) onProgress(100, 'Done!');
 
   // Trigger download
-  saveBlobAsFile(blob, filename);
+  await saveBlobAsFile(blob, filename);
 
   logToSystem('SYSTEM', 'INFO', `Backend PDF (text-layer) downloaded successfully: ${filename}`);
+}
+
+let pendingSaveHandle: any = null;
+
+/**
+ * Opens the native "Save as" dialog. Must be called directly from a click handler,
+ * BEFORE any await, while the user gesture is still valid. Browsers block repeated
+ * programmatic downloads that happen after async work (API calls, PDF generation),
+ * but writing through a handle obtained here is never blocked.
+ *
+ * Returns false only if the user cancelled the dialog. Where the File System Access
+ * API is unavailable (Firefox/Safari) it returns true and saveBlobAsFile falls back
+ * to the anchor-click download.
+ */
+export async function prepareSaveTarget(suggestedName: string): Promise<boolean> {
+  pendingSaveHandle = null;
+  const picker = (window as any).showSaveFilePicker;
+  if (typeof picker !== 'function') return true;
+
+  try {
+    pendingSaveHandle = await picker({
+      suggestedName,
+      types: [{ description: 'PDF Document', accept: { 'application/pdf': ['.pdf'] } }],
+    });
+    return true;
+  } catch (err: any) {
+    if (err?.name === 'AbortError') return false;
+    console.warn('showSaveFilePicker failed, using anchor download fallback:', err);
+    return true;
+  }
 }
 
 /**
  * Reliable browser file download trigger for Blobs (PDF, etc.)
  */
-export function saveBlobAsFile(blob: Blob, filename: string): void {
+export async function saveBlobAsFile(blob: Blob, filename: string): Promise<void> {
   const pdfBlob = blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' });
+
+  const handle = pendingSaveHandle;
+  pendingSaveHandle = null;
+  if (handle) {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(pdfBlob);
+      await writable.close();
+      return;
+    } catch (err) {
+      console.warn('Writing via file handle failed, using anchor download fallback:', err);
+    }
+  }
+
   const blobUrl = window.URL.createObjectURL(pdfBlob);
 
   const link = document.createElement('a');
@@ -330,7 +374,7 @@ export function saveBlobAsFile(blob: Blob, filename: string): void {
         document.body.removeChild(link);
       }
       window.URL.revokeObjectURL(blobUrl);
-    } catch {}
+    } catch { }
   }, 30000);
 }
 
@@ -342,7 +386,7 @@ export function saveBlobAsFile(blob: Blob, filename: string): void {
 export async function downloadStatementFromJavaBackend(payload: {
   customerDetails: any;
   branchDetails: any;
-  accountInfo: any;
+  accountInfo?: any;
   settings: any;
   transactions?: any[];
   onProgress?: (percent: number, text: string) => void;
@@ -351,27 +395,62 @@ export async function downloadStatementFromJavaBackend(payload: {
 
   if (onProgress) onProgress(20, 'Sending request to Java Vector PDF Engine (Port 8080)...');
 
-  // Use proxy /api/statements/download for same-origin reliability or configured URL
-  const endpoint = '/api/statements/download';
+  // Use configured VITE_JAVA_API_URL for cloud deployments (e.g. Render) or fallback to local proxy
+  const javaBase = (import.meta.env.VITE_JAVA_API_URL || '').replace(/\/$/, '');
+  const endpoint = javaBase ? `${javaBase}/api/statements/download` : '/api/statements/download';
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   let response: Response;
   try {
+    const minimalPayload: any = {
+      customerDetails: {
+        accountHolderName: customerDetails?.accountHolderName,
+        accountNumber: customerDetails?.accountNumber,
+        address: customerDetails?.address,
+        cifNumber: customerDetails?.cifNumber,
+        email: customerDetails?.email,
+        nomineeName: customerDetails?.nomineeName,
+        accountOpenDate: customerDetails?.accountOpenDate,
+        city: customerDetails?.city,
+        pinCode: customerDetails?.pinCode,
+      },
+      branchDetails: {
+        branchName: branchDetails?.branchName,
+        branchAddress: branchDetails?.branchAddress,
+        branchCode: branchDetails?.branchCode,
+        branchEmail: branchDetails?.branchEmail,
+        branchPhone: branchDetails?.branchPhone,
+        ifscCode: branchDetails?.ifscCode,
+        micrCode: branchDetails?.micrCode,
+        ckycrNumber: branchDetails?.ckycrNumber,
+        city: branchDetails?.city,
+        pinCode: branchDetails?.pinCode,
+      },
+      settings: {
+        ...settings,
+        bankStyle: settings?.bankStyle || 'SBI2',
+        duration: settings?.duration || '6 Months',
+        profile: settings?.profile || 'Personal',
+        salaryMode: settings?.salaryMode || (settings?.companyName || settings?.monthlySalary ? 'manual' : 'auto'),
+        companyName: settings?.companyName ? settings.companyName.trim().toUpperCase() : undefined,
+        monthlySalary: typeof settings?.monthlySalary === 'number' && settings.monthlySalary > 0 ? settings.monthlySalary : undefined,
+        salaryDay: settings?.salaryDay || '5',
+        enablePdfPassword: Boolean(settings?.enablePdfPassword),
+        pdfPassword: settings?.pdfPassword || undefined,
+      },
+    };
+    if (accountInfo) minimalPayload.accountInfo = accountInfo;
+    if (transactions && transactions.length > 0) minimalPayload.transactions = transactions;
+
     response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       signal: controller.signal,
-      body: JSON.stringify({
-        customerDetails,
-        branchDetails,
-        accountInfo,
-        settings,
-        transactions,
-      }),
+      body: JSON.stringify(minimalPayload),
     });
   } catch (err: any) {
     clearTimeout(timeoutId);
@@ -388,7 +467,7 @@ export async function downloadStatementFromJavaBackend(payload: {
     try {
       const errData = await response.json();
       if (errData?.message) errMsg = errData.message;
-    } catch {}
+    } catch { }
     throw new Error(errMsg);
   }
 
@@ -400,7 +479,7 @@ export async function downloadStatementFromJavaBackend(payload: {
 
   if (onProgress) onProgress(100, 'Download complete!');
 
-  saveBlobAsFile(blob, filename);
+  await saveBlobAsFile(blob, filename);
 
   logToSystem('SYSTEM', 'INFO', `Java iText Vector PDF downloaded successfully: ${filename}`);
   return { filename };
@@ -440,7 +519,7 @@ export async function downloadStatementPdfFromBackend(payload: {
     try {
       const errData = await response.json();
       if (errData?.message) errMsg = errData.message;
-    } catch {}
+    } catch { }
     throw new Error(errMsg);
   }
 
@@ -453,7 +532,7 @@ export async function downloadStatementPdfFromBackend(payload: {
 
   if (onProgress) onProgress(100, 'Download complete!');
 
-  saveBlobAsFile(blob, filename);
+  await saveBlobAsFile(blob, filename);
 
   logToSystem('SYSTEM', 'INFO', `Backend PDF generated & downloaded successfully: ${filename}`);
 }

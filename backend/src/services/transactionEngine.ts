@@ -93,10 +93,20 @@ export function isoToIndianFormat(isoStr: string): string {
 
 function getDateRange(settings: StatementSettings, localTime?: string): { startDay: Date; endDay: Date } {
   if (settings.generationMode === 'custom' && settings.fromDate && settings.toDate) {
-    const start = new Date(settings.fromDate);
+    let start = new Date(settings.fromDate);
     start.setHours(0, 0, 0, 0);
-    const end = new Date(settings.toDate);
+    let end = new Date(settings.toDate);
     end.setHours(23, 59, 59, 999);
+    if (start > end) {
+      // A reversed date range must never silently yield zero months of
+      // transactions (an empty ledger breaks downstream statement validation).
+      const swappedStart = new Date(settings.toDate);
+      swappedStart.setHours(0, 0, 0, 0);
+      const swappedEnd = new Date(settings.fromDate);
+      swappedEnd.setHours(23, 59, 59, 999);
+      start = swappedStart;
+      end = swappedEnd;
+    }
     return { startDay: start, endDay: end };
   }
 

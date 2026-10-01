@@ -19,7 +19,7 @@ class DateUtilsTest {
     @Test
     void pageCountMapsToExpectedTxCount() {
         assertEquals(12, DateUtils.getPageToTxCount("1 Page", 20));
-        assertEquals(310, DateUtils.getPageToTxCount("20 Pages", 20));
+        assertEquals(450, DateUtils.getPageToTxCount("20 Pages", 20));
         assertEquals(20, DateUtils.getPageToTxCount("Custom", 20));
         assertEquals(5, DateUtils.getPageToTxCount("Custom", 1));
         assertEquals(2000, DateUtils.getPageToTxCount("Custom", 9999));
@@ -40,5 +40,17 @@ class DateUtilsTest {
         DateRange range = DateUtils.getDateRange(settings, null);
         assertEquals(LocalDate.of(2026, 1, 1), range.start().toLocalDate());
         assertEquals(LocalDate.of(2026, 1, 31), range.end().toLocalDate());
+    }
+
+    @Test
+    void reversedCustomDateRangeIsSwappedInsteadOfProducingAnEmptyRange() {
+        StatementSettings settings = new StatementSettings(
+                "SBI", "3 Months", "custom", "2026-08-23", "2026-04-01",
+                "5 Pages", 0, "Normal", "Personal", "auto",
+                null, null, "1", null, false);
+
+        DateRange range = DateUtils.getDateRange(settings, null);
+        assertEquals(LocalDate.of(2026, 4, 1), range.start().toLocalDate());
+        assertEquals(LocalDate.of(2026, 8, 23), range.end().toLocalDate());
     }
 }

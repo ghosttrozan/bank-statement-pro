@@ -61,28 +61,14 @@ class TransactionEngineTest {
     }
 
     @Test
-    void smsAlertChargeAppearsInEveryMonth() {
+    void quarterlyInterestAppearsOnQuarterCycle() {
         List<Transaction> txs = TransactionEngine.generateStatementTransactions(
                 settings("auto", null, null), account(90000.0),
                 "2026-06-30T12:00:00", null, null);
 
-        long smsCharges = txs.stream().filter(tx -> "SMS ALERT CHARGES".equals(tx.details())).count();
-        assertTrue(smsCharges >= 1);
-    }
-
-    @Test
-    void februaryInterestPostingRollsPeriodFromBackIntoPreviousYear() {
-        // Quarterly interest months are [1,4,7,10] (0-indexed: Feb,May,Aug,Nov). For the February
-        // posting, the 3-month lookback period starts in November of the PRECEDING year — this only
-        // shows up when the date range actually spans a Feb 1 interest posting.
-        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
-                settings("auto", null, null), account(90000.0),
-                "2026-02-28T12:00:00", null, null);
-
-        boolean hasCorrectPeriod = txs.stream()
-                .anyMatch(tx -> tx.details().contains("01/11/2025") && tx.details().contains("31/01/2026"));
-        assertTrue(hasCorrectPeriod,
-                "expected an interest narrative with period 01/11/2025 to 31/01/2026 (year must roll back for the Feb posting)");
+        boolean hasInterest = txs.stream()
+                .anyMatch(tx -> "CREDIT INTEREST--".equals(tx.details()) && tx.credit() != null);
+        assertTrue(hasInterest, "expected at least one quarterly CREDIT INTEREST-- transaction");
     }
 
     @Test
@@ -95,50 +81,27 @@ class TransactionEngineTest {
     }
 
     @Test
-    void autoSalaryModeAddsProfessionalTaxAndPfDeductionLines() {
+    void salariedModeHasNoArtificialDeductionsOnLedger() {
         List<Transaction> txs = TransactionEngine.generateStatementTransactions(
                 settings("auto", null, null), account(90000.0),
                 "2026-06-30T12:00:00", null, null);
 
-        boolean hasPt = txs.stream().anyMatch(tx -> tx.details().startsWith("PROFESSIONAL TAX-") && tx.debit() != null);
-        boolean hasPf = txs.stream().anyMatch(tx -> tx.details().startsWith("PF EMPLOYEE CONTRIBUTION-") && tx.debit() != null);
-
-        assertTrue(hasPt, "expected a professional tax deduction line");
-        assertTrue(hasPf, "expected a PF employee contribution deduction line");
-    }
-
-    @Test
-    void manualSalaryModeHasNoDeductionLines() {
-        List<Transaction> txs = TransactionEngine.generateStatementTransactions(
-                settings("manual", "ACME CORP", 60000.0), account(90000.0),
-                "2026-06-30T12:00:00", null, null);
-
-        boolean hasAnyDeduction = txs.stream().anyMatch(tx ->
+        boolean hasArtificialDeductions = txs.stream().anyMatch(tx ->
                 tx.details().startsWith("PROFESSIONAL TAX-")
                         || tx.details().startsWith("PF EMPLOYEE CONTRIBUTION-")
                         || tx.details().startsWith("TDS ON SALARY"));
 
-        assertFalse(hasAnyDeduction, "manual salary mode must not add deduction lines");
+        assertFalse(hasArtificialDeductions, "salaried mode must not insert artificial deduction lines on bank ledger");
     }
 
     @Test
-    void deductionLinesShareSameDateAsALargeSalaryCredit() {
+    void majorityOfTransactionsAreUpi() {
         List<Transaction> txs = TransactionEngine.generateStatementTransactions(
                 settings("auto", null, null), account(90000.0),
                 "2026-06-30T12:00:00", null, null);
 
-        List<Transaction> deductionLines = txs.stream()
-                .filter(tx -> tx.details().startsWith("PROFESSIONAL TAX-") || tx.details().startsWith("PF EMPLOYEE CONTRIBUTION-"))
-                .toList();
-
-        assertFalse(deductionLines.isEmpty());
-
-        for (Transaction deduction : deductionLines) {
-            boolean hasMatchingSalaryCredit = txs.stream().anyMatch(tx ->
-                    tx.valueDate().equals(deduction.valueDate()) && tx.credit() != null && tx.credit() >= 20000);
-            assertTrue(hasMatchingSalaryCredit,
-                    "expected a same-date salary credit >= 20000 for deduction: " + deduction.details());
-        }
+        long upiCount = txs.stream().filter(tx -> tx.details().contains("UPI")).count();
+        assertTrue((double) upiCount / txs.size() >= 0.70, "expected majority of retail transactions to be UPI");
     }
 
     @Test
