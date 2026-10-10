@@ -137,17 +137,7 @@ public class BobTemplate implements StatementTemplate {
                 PdfPage page = pdfDoc.getPage(i);
                 PdfCanvas canvas = new PdfCanvas(page);
 
-                // A. "DUMMY STATEMENT" label requested by user at very top of Page 1
-                if (i == 1) {
-                    canvas.saveState();
-                    canvas.beginText();
-                    canvas.setFontAndSize(fontBold, 8.0f);
-                    canvas.setFillColor(new DeviceRgb(220, 50, 50)); // subtle dark red/crimson badge
-                    canvas.moveText(20.5f, BobLayout.PAGE_HEIGHT - 12.0f);
-                    canvas.showText("DUMMY STATEMENT - FOR TESTING / DEMONSTRATION PURPOSES ONLY");
-                    canvas.endText();
-                    canvas.restoreState();
-                }
+
 
                 // B. Banner Title text: "Account Statement from DD-MM-YYYY to DD-MM-YYYY" in white over orange banner
                 // In reference: y0 = 127.6pt, size 15pt bold Helvetica white, centered horizontally

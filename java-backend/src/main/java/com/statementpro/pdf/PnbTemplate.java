@@ -29,7 +29,6 @@ public class PnbTemplate implements StatementTemplate {
 
     private static final DeviceRgb COLOR_BLACK = new DeviceRgb(0, 0, 0);
     private static final DeviceRgb COLOR_HEADER_BG = new DeviceRgb(217, 217, 217); // RGB 0.851
-    private static final DeviceRgb COLOR_DUMMY_RED = new DeviceRgb(220, 50, 50);
 
     @Override
     public byte[] render(StatementRecord record) throws java.io.IOException {
@@ -128,17 +127,7 @@ public class PnbTemplate implements StatementTemplate {
             } catch (Exception ignored) {}
         }
 
-        // Top Dummy Notice
-        String dummyText = "DUMMY STATEMENT - FOR TESTING / DEMONSTRATION PURPOSES ONLY";
-        float dummyW = fontArialBold.getWidth(dummyText, 8.0f);
-        canvas.saveState();
-        canvas.beginText();
-        canvas.setFontAndSize(fontArialBold, 8.0f);
-        canvas.setFillColor(COLOR_DUMMY_RED);
-        canvas.moveText((PnbLayout.PAGE_WIDTH - dummyW) / 2f, PnbLayout.PAGE_HEIGHT - 43.0f);
-        canvas.showText(dummyText);
-        canvas.endText();
-        canvas.restoreState();
+
 
         // Account Statement For Account:XXXX
         String titleText = "Account Statement For Account:" + accNum;

@@ -171,17 +171,7 @@ public class KotakTemplate implements StatementTemplate {
             } catch (Exception ignored) {}
         }
 
-        // 2. Dummy Notice Line
-        String dummyText = "DUMMY STATEMENT - FOR TESTING / DEMONSTRATION PURPOSES ONLY";
-        float dummyW = fontBold.getWidth(dummyText, 8.0f);
-        canvas.saveState();
-        canvas.beginText();
-        canvas.setFontAndSize(fontBold, 8.0f);
-        canvas.setFillColor(KotakLayout.COLOR_DUMMY_RED);
-        canvas.moveText((KotakLayout.PAGE_WIDTH - dummyW) / 2f, H - 85.0f);
-        canvas.showText(dummyText);
-        canvas.endText();
-        canvas.restoreState();
+
 
         // 3. Title: Account Statement (25.0pt bold) + Period (11.0pt regular)
         canvas.saveState();
@@ -293,16 +283,7 @@ public class KotakTemplate implements StatementTemplate {
         CustomerDetails cust = record.customerDetails();
         float H = KotakLayout.PAGE_HEIGHT;
 
-        // Dummy Notice Line
-        String dummyText = "DUMMY STATEMENT - FOR TESTING / DEMONSTRATION PURPOSES ONLY";
-        float dummyW = fontBold.getWidth(dummyText, 8.0f);
-        canvas.saveState();
-        canvas.beginText();
-        canvas.setFontAndSize(fontBold, 8.0f);
-        canvas.setFillColor(KotakLayout.COLOR_DUMMY_RED);
-        canvas.moveText((KotakLayout.PAGE_WIDTH - dummyW) / 2f, H - 18.0f);
-        canvas.showText(dummyText);
-        canvas.endText();
+
 
         String custName = cust.accountHolderName() != null ? cust.accountHolderName() : "Mishi Hasan";
 

@@ -75,9 +75,6 @@ public class IndusindTemplate implements StatementTemplate {
                 PdfPage page = pdfDoc.addNewPage(new PageSize(IndusindLayout.PAGE_WIDTH, IndusindLayout.PAGE_HEIGHT));
                 PdfCanvas canvas = new PdfCanvas(page);
 
-                // Top Dummy Statement Line on all pages
-                renderDummyHeader(canvas, fontBold);
-
                 if (isFirstPage) {
                     renderPage1Header(canvas, record, logoBytes, fontRegular, fontBold, accNum, periodStr, endDateStr);
                     float tableTopY = 510.8f;
@@ -99,25 +96,11 @@ public class IndusindTemplate implements StatementTemplate {
             if (needSeparateDisclaimerPage) {
                 PdfPage lastPage = pdfDoc.addNewPage(new PageSize(IndusindLayout.PAGE_WIDTH, IndusindLayout.PAGE_HEIGHT));
                 PdfCanvas lastCanvas = new PdfCanvas(lastPage);
-                renderDummyHeader(lastCanvas, fontBold);
                 renderDisclaimers(lastCanvas, fontRegular, fontBold, 60.0f, endDateStr);
             }
         }
 
         return out.toByteArray();
-    }
-
-    private void renderDummyHeader(PdfCanvas canvas, PdfFont fontBold) {
-        String dummyText = "DUMMY STATEMENT - FOR TESTING / DEMONSTRATION PURPOSES ONLY";
-        float dummyW = fontBold.getWidth(dummyText, 8.0f);
-        canvas.saveState();
-        canvas.beginText();
-        canvas.setFontAndSize(fontBold, 8.0f);
-        canvas.setFillColor(IndusindLayout.COLOR_DUMMY_RED);
-        canvas.moveText((IndusindLayout.PAGE_WIDTH - dummyW) / 2f, IndusindLayout.PAGE_HEIGHT - 22.0f);
-        canvas.showText(dummyText);
-        canvas.endText();
-        canvas.restoreState();
     }
 
     private List<List<Transaction>> splitTransactions(List<Transaction> all) {

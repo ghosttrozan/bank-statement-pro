@@ -137,17 +137,8 @@ public class AxisTemplate implements StatementTemplate {
             // Flush document layout
             doc.flush();
 
-            // Overlay Phase: Add DUMMY STATEMENT line at top of Page 1
             PdfPage page1 = pdfDoc.getPage(1);
             PdfCanvas canvas = new PdfCanvas(page1);
-            canvas.saveState();
-            canvas.beginText();
-            canvas.setFontAndSize(PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD), 8.0f);
-            canvas.setFillColor(new DeviceRgb(220, 50, 50));
-            canvas.moveText(36.0f, AxisLayout.PAGE_HEIGHT - 12.0f);
-            canvas.showText("DUMMY STATEMENT - FOR TESTING / DEMONSTRATION PURPOSES ONLY");
-            canvas.endText();
-            canvas.restoreState();
 
             // Underline under customer name on Page 1 (matches 6-axis.pdf drawing at y=68)
             canvas.saveState();
