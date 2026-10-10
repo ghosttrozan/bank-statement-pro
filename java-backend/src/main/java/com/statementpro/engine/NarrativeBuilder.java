@@ -15,10 +15,21 @@ public final class NarrativeBuilder {
 
         if ("SBI2".equalsIgnoreCase(bankStyle) || "SBI".equalsIgnoreCase(bankStyle)) {
             return "UPI/" + direction + "/" + ref + "/" + merch.name().toUpperCase() + "/" + bank + "/" + merch.handle() + "/Payme-";
+        } else if ("AXIS".equalsIgnoreCase(bankStyle)) {
+            String tag = isCredit ? "UPI/P2A" : "UPI/P2M";
+            return tag + "/" + ref + "/" + merch.name().toUpperCase() + "/Paymen/" + bank;
+        } else if ("PNB".equalsIgnoreCase(bankStyle)) {
+            String dir = isCredit ? "CR" : "DR";
+            String pfx = isCredit ? "BY TRANSFER-UPI/" : "TO TRANSFER-UPI/";
+            return pfx + dir + "/" + ref + "/" + merch.name().toUpperCase() + "/" + bank + "/PAYME-";
+        } else if ("BOB".equalsIgnoreCase(bankStyle)) {
+            return "UPI/" + ref + "/" + hh + ":" + mm + ":" + ss + "/UPI/" + merch.handle() + "/Paym";
         } else if ("BOI".equalsIgnoreCase(bankStyle)) {
             return "UPI/" + ref + "/" + hh + ":" + mm + ":" + ss + "/UPI/" + merch.handle() + "/" + direction;
         } else if ("Kotak".equalsIgnoreCase(bankStyle)) {
-            return "UPI/" + direction + "/" + ref + "/" + merch.name() + "/" + merch.handle();
+            return "UPI/" + merch.name().toUpperCase() + "/" + ref + "/Payment from Ph";
+        } else if ("INDUSIND".equalsIgnoreCase(bankStyle) || "INDIE".equalsIgnoreCase(bankStyle)) {
+            return "UPI/" + ref + "/" + direction + "/" + merch.name().toUpperCase() + "/" + merch.handle();
         }
         String tag = isCredit ? "UPIAB" : "UPIAR";
         return tag + "/" + ref + "/" + direction + "/" + merch.name() + "/" + bank + "/" + accountSuffix + "/Paymen";
@@ -40,12 +51,23 @@ public final class NarrativeBuilder {
 
         if ("SBI2".equalsIgnoreCase(bankStyle) || "SBI".equalsIgnoreCase(bankStyle)) {
             return "UPI/" + direction + "/" + ref + "/" + firstName + "/" + bank + "/" + vpaHandle + "/Payme-";
+        } else if ("AXIS".equalsIgnoreCase(bankStyle)) {
+            String tag = isCredit ? "UPI/P2A" : "UPI/P2M";
+            return tag + "/" + ref + "/" + name.toUpperCase() + "/Paymen/" + bank;
+        } else if ("PNB".equalsIgnoreCase(bankStyle)) {
+            String dir = isCredit ? "CR" : "DR";
+            String pfx = isCredit ? "BY TRANSFER-UPI/" : "TO TRANSFER-UPI/";
+            return pfx + dir + "/" + ref + "/" + name.toUpperCase() + "/" + bank + "/PAYME-";
+        } else if ("BOB".equalsIgnoreCase(bankStyle)) {
+            String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
+            return "UPI/" + ref + "/" + hh + ":" + mm + ":" + ss + "/UPI/" + vpa + "/Paym";
         } else if ("BOI".equalsIgnoreCase(bankStyle)) {
             String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
             return "UPI/" + ref + "/" + hh + ":" + mm + ":" + ss + "/UPI/" + vpa + "/" + direction;
         } else if ("Kotak".equalsIgnoreCase(bankStyle)) {
-            String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);
-            return "UPI/" + direction + "/" + ref + "/" + firstName + "/" + vpa;
+            return "UPI/" + firstName + "/" + ref + "/Payment from Ph";
+        } else if ("INDUSIND".equalsIgnoreCase(bankStyle) || "INDIE".equalsIgnoreCase(bankStyle)) {
+            return "UPI/" + ref + "/" + direction + "/" + firstName + "/" + vpaHandle;
         }
 
         String vpa = firstName.toLowerCase() + RandomUtils.randRange(10, 99) + RandomUtils.pick(MerchantData.VPA_SUFFIXES);

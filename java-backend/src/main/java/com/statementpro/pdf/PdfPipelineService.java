@@ -34,10 +34,13 @@ public final class PdfPipelineService {
             return rendered;
         }
 
-        String bankName = switch (bankStyle != null ? bankStyle : "SBI") {
+        String bankName = switch (bankStyle != null ? bankStyle.toUpperCase() : "SBI") {
+            case "BOB" -> "Bank of Baroda";
+            case "AXIS" -> "Axis Bank";
             case "BOI" -> "Bank of India";
-            case "Kotak" -> "Kotak Mahindra Bank";
+            case "KOTAK" -> "Kotak Mahindra Bank";
             case "PNB" -> "Punjab National Bank";
+            case "INDUSIND", "INDIE" -> "IndusInd Bank";
             default -> "State Bank of India";
         };
         SignOptions signOptions = new SignOptions(

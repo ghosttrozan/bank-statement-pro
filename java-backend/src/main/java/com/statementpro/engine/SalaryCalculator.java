@@ -31,7 +31,7 @@ public final class SalaryCalculator {
             case "BOI" -> variant == 1
                     ? "NEFT/ICIC" + neftRef + "/CR/" + companyName + " SALARY CREDIT"
                     : "NEFT/UTIB" + neftRef + "/CR/" + companyName + " SALARY FOR " + monthStr + " " + yearStr;
-            case "PNB" -> "NEFT/PUNB" + neftRef + "/CR/" + companyName + " SALARY FOR " + monthStr + " " + yearStr;
+            case "PNB" -> "BY TRANSFER-NEFT*PUNB*" + neftRef + "*" + companyName;
             case "Kotak" -> variant == 1
                     ? "NEFT CR-KKBK" + neftRef + "-" + companyName + "-SALARY"
                     : "CMS CR-" + companyName + "-SALARY PAYROLL-" + neftRef.substring(0, Math.min(10, neftRef.length()));
@@ -113,6 +113,9 @@ public final class SalaryCalculator {
         }
         if ("Kotak".equalsIgnoreCase(bankStyle) || "IndusInd".equalsIgnoreCase(bankStyle)) {
             return "INT PAID ON SB ACCOUNT";
+        }
+        if ("PNB".equalsIgnoreCase(bankStyle)) {
+            return "BY INTEREST CREDIT";
         }
         return accountNumber + ":SBInt.Pd:" + fromDate + " to " + toDate;
     }

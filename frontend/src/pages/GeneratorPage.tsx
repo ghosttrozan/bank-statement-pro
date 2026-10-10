@@ -31,7 +31,8 @@ import {
   generateStatementTransactions,
   generateSalariedStatementTransactions,
   formatDate,
-  getRandomOpeningBalance
+  getRandomOpeningBalance,
+  getPageToTxCount
 } from '../lib/transactionEngine';
 import {
   StatementRecord,
@@ -64,6 +65,20 @@ const DURATION_OPTIONS: { value: StatementDuration; label: string; sub: string; 
   { value: '1year', label: '1 Year', sub: 'Last 12 months', months: 12 },
 ];
 
+const PAGE_COUNT_OPTIONS: { value: StatementSettings['pageCount']; label: string; sub: string }[] = [
+  { value: 'Auto', label: 'Auto (Natural)', sub: '~25 txns/mo' },
+  { value: '1 Page', label: '1 Page', sub: '~11 txns' },
+  { value: '2 Pages', label: '2 Pages', sub: '~35 txns' },
+  { value: '3 Pages', label: '3 Pages', sub: '~59 txns' },
+  { value: '5 Pages', label: '5 Pages', sub: '~107 txns' },
+  { value: '6 Pages', label: '6 Pages', sub: '~131 txns' },
+  { value: '8 Pages', label: '8 Pages', sub: '~179 txns' },
+  { value: '10 Pages', label: '10 Pages', sub: '~227 txns' },
+  { value: '15 Pages', label: '15 Pages', sub: '~347 txns' },
+  { value: '20 Pages', label: '20 Pages', sub: '~468 txns' },
+  { value: 'Custom', label: 'Custom Count', sub: 'Exact txns' },
+];
+
 const SALARY_DAY_PRESETS: { val: string; label: string }[] = [
   { val: '1', label: '1st' },
   { val: '3', label: '3rd' },
@@ -76,8 +91,35 @@ const SALARY_DAY_PRESETS: { val: string; label: string }[] = [
   { val: 'last_day', label: 'Last' },
 ];
 
-const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'; label: string }[] = [
+const BOB_BRANCH_DEFAULTS: BranchDetails = {
+  branchName: 'ASHTA',
+  branchAddress: 'KANNOD ROAD ASHTA MADHYA PRADESH 466116 MP',
+  branchCode: 'VJASHT',
+  branchEmail: 'vjasht@bankofbaroda.co.in',
+  branchPhone: '+91-7562-242044',
+  ifscCode: 'BARB0VJASHT',
+  micrCode: '466012002',
+  ckycrNumber: '68130100008269',
+};
+
+const AXIS_BRANCH_DEFAULTS: BranchDetails = {
+  branchName: 'SHUJALPUR',
+  branchAddress: 'UPPER GROUND FLOOR PATEL COMPLEX, VILLAGE ARANDIYA ASHTA SHAJAPUR ROAD, TEHSIL SHUJALPUR, 465333, SHUJALPUR, MADHYA PRADESH, INDIA',
+  branchCode: '5251',
+  branchEmail: 'shujalpur@axisbank.com',
+  branchPhone: '7400187511',
+  ifscCode: 'UTIB0005251',
+  micrCode: '465211102',
+  ckycrNumber: 'XXXXXXXXXX1484',
+};
+
+const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd'; label: string }[] = [
   { value: 'SBI2', label: 'SBI V2' },
+  { value: 'BOB', label: 'Bank of Baroda' },
+  { value: 'AXIS', label: 'Axis Bank' },
+  { value: 'PNB', label: 'Punjab National Bank' },
+  { value: 'Kotak', label: 'Kotak Mahindra' },
+  { value: 'IndusInd', label: 'IndusInd Bank' },
 ];
 
 // ── Shared form building blocks ────────────────
@@ -208,12 +250,23 @@ const BOI_BRANCH_DEFAULTS: BranchDetails = {
 const PNB_BRANCH_DEFAULTS: BranchDetails = {
   branchName: 'SHAJAPUR',
   branchAddress: 'AJAY SHARE TAKTEO SHAJAPUR 466038',
-  branchCode: '078000',
-  branchEmail: 'bo7800@pnb.co.in',
+  branchCode: '0659200',
+  branchEmail: 'bo6592@pnb.co.in',
   branchPhone: '+91-7364-222038',
-  ifscCode: 'PUNB0780000',
+  ifscCode: 'PUNB0659200',
   micrCode: '465024505',
   ckycrNumber: '40057100381924',
+};
+
+const INDUSIND_BRANCH_DEFAULTS: BranchDetails = {
+  branchName: 'VIJAY NAGAR',
+  branchAddress: 'VIJAY NAGAR INDORE MADHYA PRADESH 452010',
+  branchCode: '001325',
+  branchEmail: 'reachus@indusind.com',
+  branchPhone: '1860-267-7777',
+  ifscCode: 'INDB0001325',
+  micrCode: '452234002',
+  ckycrNumber: 'CKYCR123456789',
 };
 
 export default function GeneratorPage() {
@@ -224,7 +277,7 @@ export default function GeneratorPage() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('duration');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
-  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB'>('SBI2');
+  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd'>('SBI2');
 
   // ─── Salary configuration states ──────────────────────────────────────
   const [salaryMode, setSalaryMode] = useState<SalaryMode>('auto');
@@ -266,21 +319,28 @@ export default function GeneratorPage() {
     accountType: 'Savings',
   });
 
+  // ─── Page Count & Transaction Count states ────────────────────────────
+  const [pageCountChoice, setPageCountChoice] = useState<StatementSettings['pageCount']>('Auto');
+  const [customTxCount, setCustomTxCount] = useState<number>(60);
+
   const baseSettings: StatementSettings = {
     bankStyle,
     duration: '6 Months',
-    pageCount: '12 Pages',
-    customTransactionsCount: 270,
+    pageCount: pageCountChoice,
+    customTransactionsCount: pageCountChoice === 'Custom' ? customTxCount : (pageCountChoice === 'Auto' ? 0 : 120),
     transactionMode: 'Normal',
     profile: 'Personal',
   };
 
-  const handleBankStyleChange = (style: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB') => {
+  const handleBankStyleChange = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd') => {
     setBankStyle(style);
     let newBranch = SBI_BRANCH_DEFAULTS;
-    if (style === 'Kotak') newBranch = KOTAK_BRANCH_DEFAULTS;
+    if (style === 'BOB') newBranch = BOB_BRANCH_DEFAULTS;
+    else if (style === 'AXIS') newBranch = AXIS_BRANCH_DEFAULTS;
+    else if (style === 'Kotak') newBranch = KOTAK_BRANCH_DEFAULTS;
     else if (style === 'BOI') newBranch = BOI_BRANCH_DEFAULTS;
     else if (style === 'PNB') newBranch = PNB_BRANCH_DEFAULTS;
+    else if (style === 'IndusInd') newBranch = INDUSIND_BRANCH_DEFAULTS;
     setBranch(newBranch);
 
     const patchRecord = (prev: StatementRecord | null) => {
@@ -565,12 +625,16 @@ export default function GeneratorPage() {
     const cleanSalary = statementType === 'salaried' && typeof monthlySalary === 'number' && !isNaN(monthlySalary) && monthlySalary > 0 ? monthlySalary : undefined;
     const effectiveSalaryMode: SalaryMode | undefined = statementType === 'salaried' ? ((cleanCompany || cleanSalary) ? 'manual' : salaryMode) : undefined;
 
+    const calculatedCustomCount = pageCountChoice === 'Custom'
+      ? customTxCount
+      : (pageCountChoice === 'Auto' ? 0 : getPageToTxCount(pageCountChoice));
+
     const settings: StatementSettings = {
       ...baseSettings,
       bankStyle,
       duration: duration === '3months' ? '3 Months' : duration === '1year' ? '12 Months' : '6 Months',
-      pageCount: duration === '3months' ? '6 Pages' : duration === '1year' ? '30 Pages' : '15 Pages',
-      customTransactionsCount: duration === '3months' ? 130 : duration === '1year' ? 700 : 350,
+      pageCount: pageCountChoice,
+      customTransactionsCount: calculatedCustomCount,
       enablePdfPassword: Boolean(passToUse),
       pdfPassword: passToUse,
       profile: statementType === 'salaried' ? 'Personal' : 'Business',
@@ -620,18 +684,24 @@ export default function GeneratorPage() {
     window.print();
   };
 
-  const getBankFullName = (style: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB') => {
+  const getBankFullName = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd') => {
     switch (style) {
       case 'SBI':
         return 'State Bank of India';
       case 'SBI2':
         return 'State Bank of India 2.0';
+      case 'BOB':
+        return 'Bank of Baroda (bob World)';
+      case 'AXIS':
+        return 'Axis Bank';
       case 'Kotak':
         return 'Kotak Mahindra Bank';
       case 'BOI':
         return 'Bank of India';
       case 'PNB':
         return 'Punjab National Bank';
+      case 'IndusInd':
+        return 'IndusInd Bank (INDIE)';
     }
   };
 
@@ -647,11 +717,17 @@ export default function GeneratorPage() {
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-inner ${bankStyle === 'SBI' || bankStyle === 'SBI2'
                     ? 'bg-blue-600'
-                    : bankStyle === 'Kotak'
-                      ? 'bg-rose-600'
-                      : bankStyle === 'BOI'
-                        ? 'bg-sky-700'
-                        : 'bg-red-700'
+                    : bankStyle === 'BOB'
+                      ? 'bg-orange-600'
+                      : bankStyle === 'AXIS'
+                        ? 'bg-[#97144D]'
+                        : bankStyle === 'Kotak'
+                          ? 'bg-red-600'
+                          : bankStyle === 'IndusInd'
+                            ? 'bg-[#E6503D]'
+                            : bankStyle === 'BOI'
+                              ? 'bg-sky-700'
+                              : 'bg-red-700'
                   }`}
               >
                 <Landmark size={20} className="text-white" />
@@ -662,11 +738,17 @@ export default function GeneratorPage() {
                   <span
                     className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${bankStyle === 'SBI' || bankStyle === 'SBI2'
                         ? 'bg-blue-900/60 text-blue-300'
-                        : bankStyle === 'Kotak'
-                          ? 'bg-rose-900/60 text-rose-300'
-                          : bankStyle === 'BOI'
-                            ? 'bg-sky-900/60 text-sky-300'
-                            : 'bg-red-900/60 text-amber-300'
+                        : bankStyle === 'BOB'
+                          ? 'bg-orange-900/60 text-orange-300'
+                          : bankStyle === 'AXIS'
+                            ? 'bg-[#97144D]/60 text-rose-200'
+                            : bankStyle === 'Kotak'
+                              ? 'bg-red-900/60 text-rose-300'
+                              : bankStyle === 'IndusInd'
+                                ? 'bg-orange-900/60 text-orange-300'
+                                : bankStyle === 'BOI'
+                                  ? 'bg-sky-900/60 text-sky-300'
+                                  : 'bg-red-900/60 text-amber-300'
                       }`}
                   >
                     Generator
@@ -1050,6 +1132,81 @@ export default function GeneratorPage() {
                   )}
                 </div>
               )}
+            </Section>
+
+            {/* Statement Page Count & Volume */}
+            <Section
+              icon={FileText}
+              title="Page Count & Transaction Volume"
+              subtitle={
+                pageCountChoice === 'Auto'
+                  ? 'Natural ~25 txns/month'
+                  : pageCountChoice === 'Custom'
+                  ? `${customTxCount} Transactions`
+                  : `${pageCountChoice}`
+              }
+            >
+              <div className="space-y-4">
+                <div>
+                  <FieldLabel>Select Target Page Count</FieldLabel>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {PAGE_COUNT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setPageCountChoice(opt.value)}
+                        className={`p-2.5 rounded-xl text-left cursor-pointer transition-all border ${
+                          pageCountChoice === opt.value
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className="text-xs font-bold leading-tight">{opt.label}</div>
+                        <div
+                          className={`text-[10px] font-normal mt-0.5 ${
+                            pageCountChoice === opt.value ? 'text-blue-100' : 'text-slate-400'
+                          }`}
+                        >
+                          {opt.sub}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {pageCountChoice === 'Custom' && (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <Grid2>
+                      <div>
+                        <FieldLabel>Exact Number of Transactions (5 - 2000)</FieldLabel>
+                        <input
+                          type="number"
+                          min={5}
+                          max={2000}
+                          value={customTxCount}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            if (!isNaN(val)) setCustomTxCount(Math.max(1, Math.min(2000, val)));
+                          }}
+                          placeholder="e.g. 75"
+                          className={`${inputCls} font-mono font-bold`}
+                        />
+                      </div>
+                      <div className="flex flex-col justify-end">
+                        <div className="text-xs text-slate-600 bg-white border border-slate-200 rounded-xl p-3">
+                          <span className="font-bold text-slate-800">Estimated PDF Pages: </span>
+                          <span className="text-blue-600 font-extrabold text-sm">
+                            {customTxCount <= 14 ? 1 : 1 + Math.ceil((customTxCount - 14) / 24)} Pages
+                          </span>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            (Page 1 holds ~14 txns; subsequent pages hold ~24 txns)
+                          </p>
+                        </div>
+                      </div>
+                    </Grid2>
+                  </div>
+                )}
+              </div>
             </Section>
           </div>
 

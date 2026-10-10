@@ -395,8 +395,11 @@ export async function downloadStatementFromJavaBackend(payload: {
 
   if (onProgress) onProgress(20, 'Sending request to Java Vector PDF Engine (Port 8080)...');
 
-  // Use configured VITE_JAVA_API_URL for cloud deployments (e.g. Render) or fallback to live Render / local proxy
-  const javaBase = (import.meta.env.VITE_JAVA_API_URL || (import.meta.env.PROD ? 'https://bank-statement-new.onrender.com' : '')).replace(/\/$/, '');
+  // In local development, call local Java backend via Vite proxy or localhost:8080.
+  // In production, fallback to configured VITE_JAVA_API_URL or production backend.
+  const javaBase = import.meta.env.DEV
+    ? ''
+    : (import.meta.env.VITE_JAVA_API_URL || 'https://bank-statement-new.onrender.com').replace(/\/$/, '');
   const endpoint = javaBase ? `${javaBase}/api/statements/download` : '/api/statements/download';
 
   const controller = new AbortController();

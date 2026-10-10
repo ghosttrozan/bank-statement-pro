@@ -59,16 +59,19 @@ export function getDurationDays(duration: StatementSettings['duration']): number
 
 export function getPageToTxCount(pageCount: StatementSettings['pageCount'] | string, customVal = 20): number {
   switch (pageCount) {
-    case '1 Page': return 12;
-    case '2 Pages': return 28;
-    case '3 Pages': return 48;
-    case '5 Pages': return 88;
-    case '10 Pages': return 160;
-    case '12 Pages': return 190;
-    case '15 Pages': return 240;
-    case '20 Pages': return 310;
-    case '30 Pages': return 450;
+    case '1 Page': return 11;
+    case '2 Pages': return 35;
+    case '3 Pages': return 59;
+    case '5 Pages': return 107;
+    case '6 Pages': return 131;
+    case '8 Pages': return 179;
+    case '10 Pages': return 227;
+    case '12 Pages': return 275;
+    case '15 Pages': return 347;
+    case '20 Pages': return 468;
+    case '30 Pages': return 708;
     case 'Custom': return Math.max(5, Math.min(2000, customVal));
+    case 'Auto':
     default: return 120;
   }
 }

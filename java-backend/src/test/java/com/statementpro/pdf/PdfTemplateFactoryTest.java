@@ -15,7 +15,6 @@ class PdfTemplateFactoryTest {
     void otherStylesUseStandardTemplate() {
         assertInstanceOf(StandardBankTemplate.class, PdfTemplateFactory.forBankStyle("SBI"));
         assertInstanceOf(StandardBankTemplate.class, PdfTemplateFactory.forBankStyle("BOI"));
-        assertInstanceOf(StandardBankTemplate.class, PdfTemplateFactory.forBankStyle("Kotak"));
-        assertInstanceOf(StandardBankTemplate.class, PdfTemplateFactory.forBankStyle("PNB"));
+        assertInstanceOf(PnbTemplate.class, PdfTemplateFactory.forBankStyle("PNB"));
     }
 }

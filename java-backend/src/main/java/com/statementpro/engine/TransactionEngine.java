@@ -84,9 +84,27 @@ public final class TransactionEngine {
         int numMonths = Math.max(1, monthsList.size());
         // Natural target: 24 to 27 transactions per month (matching Neha Sharma's ~25.7/mo)
         int defaultPerMonth = RandomUtils.randRange(24, 27);
-        int targetTxCount = ("Custom".equals(settings.pageCount()) && settings.customTransactionsCount() > 0)
-                ? settings.customTransactionsCount()
-                : (numMonths * defaultPerMonth);
+        int targetTxCount;
+        if ("Custom".equalsIgnoreCase(settings.pageCount()) && settings.customTransactionsCount() > 0) {
+            targetTxCount = settings.customTransactionsCount();
+        } else if (settings.pageCount() != null && !"Auto".equalsIgnoreCase(settings.pageCount()) && !settings.pageCount().isBlank()) {
+            targetTxCount = switch (settings.pageCount()) {
+                case "1 Page" -> 11;
+                case "2 Pages" -> 35;
+                case "3 Pages" -> 59;
+                case "5 Pages" -> 107;
+                case "6 Pages" -> 131;
+                case "8 Pages" -> 179;
+                case "10 Pages" -> 227;
+                case "12 Pages" -> 275;
+                case "15 Pages" -> 347;
+                case "20 Pages" -> 468;
+                case "30 Pages" -> 708;
+                default -> numMonths * defaultPerMonth;
+            };
+        } else {
+            targetTxCount = numMonths * defaultPerMonth;
+        }
 
         int initialOpeningBal = (int) (info.openingBalance() > 0 ? info.openingBalance() : 90000.00);
         double initialOpening = info.openingBalance() > 0 ? info.openingBalance() : 90000.00;
@@ -186,18 +204,21 @@ public final class TransactionEngine {
             }
 
             int unassigned = Math.max(0, countForThisMonth - activeDays.size());
+            int maxDailyCap = Math.max(2, (int) Math.ceil((double) countForThisMonth / Math.max(1, activeDays.size())) + 1);
             int attempts = 0;
-            while (unassigned > 0 && attempts < 1000 && !activeDays.isEmpty()) {
+            while (unassigned > 0 && attempts < 2000 && !activeDays.isEmpty()) {
                 attempts++;
                 int randomDay = RandomUtils.pick(activeDays);
-                // Cap daily transactions strictly at 2 (matches Neha Sharma: 87 days 1 txn, 8 days 2 txns)
-                if (dailyAllocation[randomDay] < 2) {
+                if (dailyAllocation[randomDay] < maxDailyCap) {
                     dailyAllocation[randomDay]++;
                     unassigned--;
                 }
             }
-
-            List<Integer> availableHours = new ArrayList<>(List.of(9, 11, 13, 15, 17, 19, 20, 21));
+            while (unassigned > 0) {
+                int randomDay = RandomUtils.randRange(0, totalDays - 1);
+                dailyAllocation[randomDay]++;
+                unassigned--;
+            }
 
             // Monthly recurring anchors (guaranteed 1 electricity bill & 1 mobile recharge per month)
             boolean electricityBilled = false;
@@ -210,13 +231,14 @@ public final class TransactionEngine {
                 LocalDate txDate = mRange.start().plusDays(dayOffset);
                 if (txDate.isAfter(mRange.end())) txDate = mRange.end();
 
-                List<Integer> shuffledHours = new ArrayList<>(availableHours);
-                Collections.shuffle(shuffledHours);
-                List<Integer> dayHours = new ArrayList<>(shuffledHours.subList(0, Math.min(dayTxCount, shuffledHours.size())));
+                List<Integer> dayHours = new ArrayList<>();
+                for (int h = 0; h < dayTxCount; h++) {
+                    dayHours.add(RandomUtils.randRange(8, 22));
+                }
                 Collections.sort(dayHours);
 
                 for (int k = 0; k < dayTxCount; k++) {
-                    int hour = k < dayHours.size() ? dayHours.get(k) : RandomUtils.randRange(9, 21);
+                    int hour = dayHours.get(k);
                     LocalDateTime txTime = txDate.atTime(LocalTime.of(hour, RandomUtils.randRange(0, 59), RandomUtils.randRange(0, 59)));
 
                     boolean isCredit;

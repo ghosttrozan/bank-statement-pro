@@ -32,7 +32,7 @@ export interface AccountInfo {
 }
 
 export interface StatementSettings {
-  bankStyle: 'SBI' | 'SBI2' | 'Kotak' | 'BOI' | 'PNB';
+  bankStyle: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd';
 
 
   // Existing Quick Duration Mode
@@ -45,7 +45,7 @@ export interface StatementSettings {
   fromDate?: string;
   toDate?: string;
 
-  pageCount: '1 Page' | '2 Pages' | '3 Pages' | '5 Pages' | '6 Pages' | '8 Pages' | '10 Pages' | '12 Pages' | '15 Pages' | '20 Pages' | '30 Pages' | 'Custom';
+  pageCount: 'Auto' | '1 Page' | '2 Pages' | '3 Pages' | '5 Pages' | '6 Pages' | '8 Pages' | '10 Pages' | '12 Pages' | '15 Pages' | '20 Pages' | '30 Pages' | 'Custom';
 
   customTransactionsCount: number;
 
