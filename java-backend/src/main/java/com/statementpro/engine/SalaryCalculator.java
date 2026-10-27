@@ -27,14 +27,25 @@ public final class SalaryCalculator {
         int yearStr = date.getYear();
         int variant = RandomUtils.randRange(1, 3);
 
-        return switch (bankStyle) {
-            case "BOI" -> variant == 1
-                    ? "NEFT/ICIC" + neftRef + "/CR/" + companyName + " SALARY CREDIT"
-                    : "NEFT/UTIB" + neftRef + "/CR/" + companyName + " SALARY FOR " + monthStr + " " + yearStr;
-            case "PNB" -> "BY TRANSFER-NEFT*PUNB*" + neftRef + "*" + companyName;
-            case "Kotak" -> variant == 1
+        String style = (bankStyle != null) ? bankStyle.toUpperCase() : "SBI";
+
+        return switch (style) {
+            case "BOB", "BANK OF BARODA" -> variant == 1
+                    ? "NEFT/BARB" + neftRef + "/CR/" + companyName + "/SALARY FOR " + monthStr
+                    : "CMS/CMS" + RandomUtils.randRange(1000000, 9999999) + "/" + companyName + "/SALARY CR";
+            case "AXIS", "AXIS BANK" -> variant == 1
+                    ? "NEFT/UTIB" + neftRef + "/CR/" + companyName + "/SALARY"
+                    : "CMS/" + companyName + "/SALARY FOR " + monthStr;
+            case "INDUSIND", "INDUSIND BANK", "INDIE" -> variant == 1
+                    ? "NEFT/INDB" + neftRef + "/CR/" + companyName + "/SALARY"
+                    : "CMS/" + companyName + "/SALARY CREDIT";
+            case "KOTAK", "KOTAK MAHINDRA BANK", "KOTAK MAHINDRA" -> variant == 1
                     ? "NEFT CR-KKBK" + neftRef + "-" + companyName + "-SALARY"
                     : "CMS CR-" + companyName + "-SALARY PAYROLL-" + neftRef.substring(0, Math.min(10, neftRef.length()));
+            case "PNB", "PUNJAB NATIONAL BANK" -> "BY TRANSFER-NEFT*PUNB*" + neftRef + "*" + companyName;
+            case "BOI", "BANK OF INDIA" -> variant == 1
+                    ? "NEFT/ICIC" + neftRef + "/CR/" + companyName + " SALARY CREDIT"
+                    : "NEFT/UTIB" + neftRef + "/CR/" + companyName + " SALARY FOR " + monthStr + " " + yearStr;
             default -> {
                 String cmsRef = "CMS" + RandomUtils.randRange(1000, 9999) + RandomUtils.randRange(100000, 999999);
                 if (variant == 1) {

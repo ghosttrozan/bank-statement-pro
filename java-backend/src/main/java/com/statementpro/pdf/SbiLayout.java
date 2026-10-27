@@ -109,7 +109,7 @@ public final class SbiLayout {
      * Maximum cumulative row height on continuation pages.
      * Usable height = 770pt − repeated header ~25pt − safety 30pt = 715pt.
      */
-    public static final float CONTINUATION_ROW_BUDGET = 715f;
+    public static final float CONTINUATION_ROW_BUDGET = 680f;
 
     /**
      * Target row count for the first page (with full dossier, bank logo, and title).

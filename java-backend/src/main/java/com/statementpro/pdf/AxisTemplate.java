@@ -215,9 +215,9 @@ public class AxisTemplate implements StatementTemplate {
         Cell rightCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setMargin(0).setTextAlignment(TextAlignment.RIGHT);
         rightCell.add(new Paragraph("Customer ID: " + (cust.cifNumber() != null ? cust.cifNumber() : "964785889")).setFont(fontRom).setFontSize(9.0f).setMargin(0).setMarginTop(45.0f));
         rightCell.add(new Paragraph("IFSC Code: " + (branch.ifscCode() != null ? branch.ifscCode() : "UTIB0005251")).setFont(fontRom).setFontSize(9.0f).setMargin(0));
-        rightCell.add(new Paragraph("MICR Code: " + (branch.micrCode() != null ? branch.micrCode() : "465211102")).setFont(fontRom).setFontSize(9.0f).setMargin(0));
-        rightCell.add(new Paragraph("Nominee Registered: Y").setFont(fontRom).setFontSize(9.0f).setMargin(0));
-        rightCell.add(new Paragraph("Nominee Name: " + (cust.nomineeName() != null && !cust.nomineeName().isBlank() ? cust.nomineeName().toUpperCase() : "GOKAL SINGH GURJAR")).setFont(fontRom).setFontSize(9.0f).setMargin(0));
+        boolean hasNominee = cust.nomineeName() != null && !cust.nomineeName().isBlank();
+        rightCell.add(new Paragraph("Nominee Registered: " + (hasNominee ? "Y" : "N")).setFont(fontRom).setFontSize(9.0f).setMargin(0));
+        rightCell.add(new Paragraph("Nominee Name: " + (hasNominee ? cust.nomineeName().toUpperCase() : "-")).setFont(fontRom).setFontSize(9.0f).setMargin(0));
         rightCell.add(new Paragraph("PAN: EJRPG7867M").setFont(fontRom).setFontSize(9.0f).setMargin(0));
         rightCell.add(new Paragraph("CKYC No: XXXXXXXXXX1484").setFont(fontRom).setFontSize(9.0f).setMargin(0));
 

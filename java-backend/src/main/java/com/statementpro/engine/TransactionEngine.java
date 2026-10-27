@@ -114,8 +114,9 @@ public final class TransactionEngine {
         int[] remainingTxs = { targetTxCount - (basePerMonth * numMonths) };
 
         List<Transaction> totalTxs = new ArrayList<>();
+        boolean isBusiness = "Business".equalsIgnoreCase(settings.profile());
 
-        List<WeightedTemplate> debitTemplates = List.of(
+        List<WeightedTemplate> personalDebitTemplates = List.of(
                 new WeightedTemplate(style -> AmountGenerator.getMerchantDebit(style), 40),
                 new WeightedTemplate(style -> {
                     boolean isMicro = RandomUtils.randRange(0, 99) < 65;
@@ -130,16 +131,31 @@ public final class TransactionEngine {
                 new WeightedTemplate(style -> {
                     String atmLoc = RandomUtils.pick(geoInfo.atmLocations());
                     int atmId = RandomUtils.randRange(1000, 9999);
-                    String detail = "Kotak".equals(style)
-                            ? "ATM WDL-CARD " + atmId + "-" + atmLoc
-                            : "TO ATM WD-ATM CARD-" + atmId + " " + atmLoc;
+                    String detail;
+                    String cityLoc = geoInfo.city();
+                    if ("Kotak".equalsIgnoreCase(style)) {
+                        detail = "ATM WDL-CARD " + atmId + "-KOTAK ATM " + cityLoc;
+                    } else if ("BOB".equalsIgnoreCase(style)) {
+                        detail = "ATM CASH BOB ATM " + cityLoc + " / CASH WITHDRAWAL";
+                    } else if ("AXIS".equalsIgnoreCase(style)) {
+                        detail = "ATM-CASH/" + atmId + "/AXIS ATM " + cityLoc;
+                    } else if ("PNB".equalsIgnoreCase(style)) {
+                        detail = "ATM WDL/" + atmId + "/PNB ATM " + cityLoc;
+                    } else if ("IndusInd".equalsIgnoreCase(style)) {
+                        detail = "ATM WDL " + atmId + " INDUSIND ATM " + cityLoc;
+                    } else {
+                        detail = "TO ATM WD-ATM CARD-" + atmId + " " + atmLoc;
+                    }
                     return new DetailAndAmount(detail, RandomUtils.pick(List.of(500.0, 1000.0, 1500.0, 2000.0, 3000.0, 5000.0, 10000.0)));
                 }, 12),
                 new WeightedTemplate(style -> {
                     int option = RandomUtils.randRange(1, 2);
                     return switch (option) {
                         case 1 -> new DetailAndAmount("NETC FASTAG RECHARGE - ICICI BANK", RandomUtils.pick(List.of(300.0, 500.0, 1000.0, 1500.0)));
-                        default -> new DetailAndAmount("UPI/DR/AIRTEL BROADBAND/AIRP/airtel.bill@airtel/Paymen", RandomUtils.pick(List.of(799.00, 943.00, 1179.00, 1499.00)));
+                        default -> {
+                            String pfx = ("SBI".equalsIgnoreCase(style) || "SBI2".equalsIgnoreCase(style)) ? "TO TRANSFER-" : "";
+                            yield new DetailAndAmount(pfx + "UPI/DR/AIRTEL BROADBAND/AIRP/airtel.bill@airtel/Paymen", RandomUtils.pick(List.of(799.00, 943.00, 1179.00, 1499.00)));
+                        }
                     };
                 }, 6),
                 new WeightedTemplate(style -> {
@@ -153,20 +169,88 @@ public final class TransactionEngine {
                 }, 6)
         );
 
-        List<WeightedTemplate> creditTemplates = List.of(
+        List<WeightedTemplate> personalCreditTemplates = List.of(
                 new WeightedTemplate(style -> new DetailAndAmount(
                         NarrativeBuilder.buildUpiNarrative(true, style, null), AmountGenerator.getContinuousCreditAmount()), 60),
-                new WeightedTemplate(style -> new DetailAndAmount(
-                        RandomUtils.pick(List.of(
-                                "UPI/REFUND/SWIGGY/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT",
-                                "UPI/FAILED TXN REVERSAL/" + RandomUtils.genRef(),
-                                "UPI/REFUND/ZOMATO/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT",
-                                "UPI/REFUND/BLINKIT/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT")),
-                        AmountGenerator.getRefundAmount()), 28),
+                new WeightedTemplate(style -> {
+                    String pfx = ("SBI".equalsIgnoreCase(style) || "SBI2".equalsIgnoreCase(style)) ? "BY TRANSFER-" : "";
+                    String refDetail = RandomUtils.pick(List.of(
+                            "UPI/REFUND/SWIGGY/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT",
+                            "UPI/FAILED TXN REVERSAL/" + RandomUtils.genRef(),
+                            "UPI/REFUND/ZOMATO/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT",
+                            "UPI/REFUND/BLINKIT/REF" + RandomUtils.randRange(100000, 999999) + "/CREDIT"));
+                    return new DetailAndAmount(pfx + refDetail, AmountGenerator.getRefundAmount());
+                }, 28),
                 new WeightedTemplate(style -> new DetailAndAmount(
                         NarrativeBuilder.buildUpiNarrative(true, style, null),
                         Math.round((RandomUtils.randRange(500, 2500) + RandomUtils.randomPaise()) * 100.0) / 100.0), 12)
         );
+
+        List<String> suppliers = List.of(
+                "SHREE BALAJI TRADERS", "AGRAWAL ENTERPRISES", "MAHESHWARI TRADING CO",
+                "KHANDELWAL STEELS", "GUPTA HARDWARE & PAINTS", "JAIN ELECTRICALS",
+                "NATIONAL LOGISTICS CORP", "VINAYAK PACKAGING SOLUTIONS");
+
+        List<WeightedTemplate> businessDebitTemplates = List.of(
+                new WeightedTemplate(style -> {
+                    String supplier = RandomUtils.pick(suppliers);
+                    String ref = RandomUtils.genRef();
+                    String detail = switch (RandomUtils.randRange(1, 3)) {
+                        case 1 -> "TO TRANSFER-UPI/DR/" + ref + "/" + supplier + "/VENDOR-PYMT";
+                        case 2 -> "UPI/P2M/" + ref + "/" + supplier + "/Paymen/YESB";
+                        default -> "UPI/DR/" + ref + "/" + supplier + "/COMMERCIAL-PURCHASE";
+                    };
+                    double amt = Math.round((RandomUtils.randRange(5500, 48000) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    return new DetailAndAmount(detail, amt);
+                }, 45),
+                new WeightedTemplate(style -> {
+                    boolean isMicro = RandomUtils.randRange(0, 99) < 40;
+                    return new DetailAndAmount(NarrativeBuilder.buildUpiNarrative(false, style, null), AmountGenerator.getP2pDebitAmount(isMicro));
+                }, 35),
+                new WeightedTemplate(style -> {
+                    String cpin = RandomUtils.genRef() + RandomUtils.randRange(10, 99);
+                    return new DetailAndAmount("GST TAX PMT - CPIN " + cpin + " / GOVT OF INDIA",
+                            Math.round(RandomUtils.randRange(8500, 38500) * 100.0) / 100.0);
+                }, 8),
+                new WeightedTemplate(style -> {
+                    String atmId = String.valueOf(RandomUtils.randRange(1000, 9999));
+                    return new DetailAndAmount("ATM WDL ATM CASH " + atmId + " / CASH WITHDRAWAL",
+                            RandomUtils.pick(List.of(5000.0, 10000.0, 15000.0, 20000.0)));
+                }, 6),
+                new WeightedTemplate(style -> {
+                    return new DetailAndAmount("COMMERCIAL ELECTRICITY BILL - TATA POWER DISCOM",
+                            Math.round((RandomUtils.randRange(4200, 12500) + RandomUtils.randomPaise()) * 100.0) / 100.0);
+                }, 6)
+        );
+
+        List<WeightedTemplate> businessCreditTemplates = List.of(
+                new WeightedTemplate(style -> {
+                    String ref = RandomUtils.genRef();
+                    String detail = switch (RandomUtils.randRange(1, 3)) {
+                        case 1 -> "UPI/CR/" + ref + "/PAYTM-PAYMENTS-SERVICES/SETTLEMENT";
+                        case 2 -> "UPIAB/" + ref + "/CR/Paytm pa/UTIB/poweraccess.pp";
+                        default -> "UPI/" + ref + "/11:19:20/UPI/BHARATPE." + RandomUtils.randRange(100000, 999999) + "@yesbank/Paym";
+                    };
+                    double amt = Math.round((RandomUtils.randRange(3200, 24500) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    return new DetailAndAmount(detail, amt);
+                }, 55),
+                new WeightedTemplate(style -> {
+                    double amt = Math.round((RandomUtils.randRange(8000, 48000) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    return new DetailAndAmount(NarrativeBuilder.buildUpiNarrative(true, style, null), amt);
+                }, 35),
+                new WeightedTemplate(style -> {
+                    String payer = RandomUtils.pick(List.of(
+                            "TECH SOLUTIONS PVT LTD", "APEX GLOBAL ENTERPRISES", "NEXUS LOGISTICS LLP",
+                            "RELIANCE RETAIL INWARD", "BHARAT COMMERCE CORP", "VISTA TRADE NETWORKS"));
+                    String ref = RandomUtils.genRef();
+                    String narrative = "NEFT/INW/" + ref.substring(0, 10) + "/" + payer + "/INVOICE PMT";
+                    double amt = Math.round((RandomUtils.randRange(25000, 125000) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                    return new DetailAndAmount(narrative, amt);
+                }, 15)
+        );
+
+        List<WeightedTemplate> debitTemplates = isBusiness ? businessDebitTemplates : personalDebitTemplates;
+        List<WeightedTemplate> creditTemplates = isBusiness ? businessCreditTemplates : personalCreditTemplates;
 
         for (int idx = 0; idx < monthsList.size(); idx++) {
             MonthRange mRange = monthsList.get(idx);
@@ -220,7 +304,7 @@ public final class TransactionEngine {
                 unassigned--;
             }
 
-            // Monthly recurring anchors (guaranteed 1 electricity bill & 1 mobile recharge per month)
+            // Monthly recurring anchors (guaranteed 1 electricity bill & 1 mobile recharge per month for personal accounts)
             boolean electricityBilled = false;
             boolean mobileRecharged = false;
 
@@ -244,22 +328,21 @@ public final class TransactionEngine {
                     boolean isCredit;
                     DetailAndAmount picked;
 
-                    // Anchor 1: Guaranteed Electricity bill between 3rd and 8th of month
-                    if (!electricityBilled && txDate.getDayOfMonth() >= 3 && txDate.getDayOfMonth() <= 8) {
+                    if (!isBusiness && !electricityBilled && txDate.getDayOfMonth() >= 3 && txDate.getDayOfMonth() <= 8) {
                         isCredit = false;
                         double amt = Math.round((RandomUtils.randRange(1850, 3200) + RandomUtils.randomPaise()) * 100.0) / 100.0;
                         picked = new DetailAndAmount("BBPS/ELECTRICITY BILL PAY/TATA POWER", amt);
                         electricityBilled = true;
-                    }
-                    // Anchor 2: Guaranteed Mobile Recharge between 19th and 26th of month
-                    else if (!mobileRecharged && txDate.getDayOfMonth() >= 19 && txDate.getDayOfMonth() <= 26) {
+                    } else if (!isBusiness && !mobileRecharged && txDate.getDayOfMonth() >= 19 && txDate.getDayOfMonth() <= 26) {
                         isCredit = false;
                         double amt = RandomUtils.pick(List.of(299.00, 349.00, 666.00, 719.00));
-                        picked = new DetailAndAmount("UPI/DR/JIO RECHARGE/PAYTM/jio.recharge@paytm/Paymen", amt);
+                        String pfx = ("SBI".equalsIgnoreCase(bankStyle) || "SBI2".equalsIgnoreCase(bankStyle)) ? "TO TRANSFER-" : "";
+                        picked = new DetailAndAmount(pfx + "UPI/DR/JIO RECHARGE/PAYTM/jio.recharge@paytm/Paymen", amt);
                         mobileRecharged = true;
                     } else {
-                        // Natural 36% credit probability matching Neha Sharma (total credits ~37-38%)
-                        isCredit = RandomUtils.randRange(0, 99) < 36;
+                        // Business has balanced 45% credit rate; personal has 14% credit rate allowing natural salary decay curve
+                        int creditChance = isBusiness ? 45 : 14;
+                        isCredit = RandomUtils.randRange(0, 99) < creditChance;
                         WeightedTemplate tmpl = RandomUtils.weightedPick(isCredit ? creditTemplates : debitTemplates);
                         picked = tmpl.detailAndAmount().apply(bankStyle);
                     }
@@ -284,8 +367,6 @@ public final class TransactionEngine {
                 }
             }
         }
-
-        boolean isBusiness = "Business".equalsIgnoreCase(settings.profile());
 
         if (!isBusiness) {
             boolean isManualSalary = "manual".equalsIgnoreCase(settings.salaryMode())
@@ -343,7 +424,10 @@ public final class TransactionEngine {
                         String periodFrom = DateUtils.formatDate(periodFromDate);
                         String periodTo = DateUtils.formatDate(periodToDate);
 
-                        String intNarrative = SalaryCalculator.buildSBIntNarrative("996018210007421", periodFrom, periodTo, bankStyle);
+                        String accNo = (customer != null && customer.accountNumber() != null && !customer.accountNumber().isBlank())
+                                ? customer.accountNumber()
+                                : "00000036009463215";
+                        String intNarrative = SalaryCalculator.buildSBIntNarrative(accNo, periodFrom, periodTo, bankStyle);
                         String intRef = isSbi ? "" : generateRefNo(bankStyle);
 
                         totalTxs.add(new Transaction("tx_interest_" + iDate, dateStr, dateStr,
@@ -361,7 +445,7 @@ public final class TransactionEngine {
                     "INFINITY SERVICES LLP", "SUPREME INFRASTRUCTURE LTD");
 
             while (!bizMonthDate.isAfter(endDay)) {
-                int settlementsThisMonth = RandomUtils.randRange(2, 3);
+                int settlementsThisMonth = RandomUtils.randRange(2, 4);
                 for (int s = 0; s < settlementsThisMonth; s++) {
                     int day = RandomUtils.randRange(4, Math.min(27, bizMonthDate.lengthOfMonth()));
                     LocalDate sDate = LocalDate.of(bizMonthDate.getYear(), bizMonthDate.getMonthValue(), day);
@@ -381,6 +465,46 @@ public final class TransactionEngine {
                 }
                 bizMonthDate = bizMonthDate.plusMonths(1);
                 bizMonthIndex++;
+            }
+        }
+
+        // Inward Quarterly Bank Charges: SMS Alert Charges (₹17.70)
+        int[] chargeMonths = { 3, 6, 9, 12 };
+        int sYear = startDay.getYear();
+        int eYear = endDay.getYear();
+
+        for (int y = sYear; y <= eYear; y++) {
+            for (int cm : chargeMonths) {
+                LocalDate smsDate = LocalDate.of(y, cm, 26);
+                if (smsDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) {
+                    smsDate = smsDate.minusDays(1);
+                }
+                if (!smsDate.isBefore(startDay) && !smsDate.isAfter(endDay)) {
+                    String dateStr = DateUtils.formatDate(smsDate);
+                    String smsNarrative = switch (bankStyle.toUpperCase()) {
+                        case "BOB" -> "SMS Charges for " + DateUtils.formatDate(smsDate).substring(3, 5) + " " + String.valueOf(y).substring(2);
+                        case "INDUSIND" -> "SMS ALERT CHARGES";
+                        case "AXIS" -> "SMS Banking Charges/" + RandomUtils.randRange(10000000, 99999999);
+                        default -> "SMS ALERT CHARGES";
+                    };
+                    String smsRef = "IndusInd".equalsIgnoreCase(bankStyle) ? "S" + RandomUtils.randRange(10000000, 99999999) : generateRefNo(bankStyle);
+                    totalTxs.add(new Transaction("tx_sms_" + smsDate, dateStr, dateStr, smsNarrative, smsRef, 17.70, null, 0));
+                }
+            }
+        }
+
+        // Annual Debit Card AMC (₹177.00) for statements >= 120 days
+        if (ChronoUnit.DAYS.between(startDay, endDay) >= 120) {
+            LocalDate cardFeeDate = startDay.plusDays(18);
+            if (cardFeeDate.getDayOfWeek() == java.time.DayOfWeek.SUNDAY) cardFeeDate = cardFeeDate.plusDays(1);
+            if (!cardFeeDate.isAfter(endDay)) {
+                String dateStr = DateUtils.formatDate(cardFeeDate);
+                String feeNarrative = switch (bankStyle.toUpperCase()) {
+                    case "AXIS" -> "ANNUAL DEBIT CARD FEE + GST";
+                    case "BOB" -> "DEBIT CARD AMC CHARGES";
+                    default -> "DEBIT CARD ANNUAL MAINT CHG";
+                };
+                totalTxs.add(new Transaction("tx_card_fee_" + cardFeeDate, dateStr, dateStr, feeNarrative, generateRefNo(bankStyle), 177.00, null, 0));
             }
         }
 

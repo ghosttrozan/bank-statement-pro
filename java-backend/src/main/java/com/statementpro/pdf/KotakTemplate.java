@@ -231,10 +231,22 @@ public class KotakTemplate implements StatementTemplate {
         canvas.endText();
         adrY += 15.0f;
 
+        String stateStr = (city != null && !city.isBlank()) ? city + " - India" : "India";
+        if (cust.address() != null) {
+            String uAddr = cust.address().toUpperCase();
+            if (uAddr.contains("DELHI")) stateStr = "Delhi - India";
+            else if (uAddr.contains("KARNATAKA") || uAddr.contains("BLR") || uAddr.contains("BANGALORE")) stateStr = "Karnataka - India";
+            else if (uAddr.contains("MAHARASHTRA") || uAddr.contains("MUMBAI") || uAddr.contains("PUNE")) stateStr = "Maharashtra - India";
+            else if (uAddr.contains("MADHYA PRADESH") || uAddr.contains("BHOPAL")) stateStr = "Madhya Pradesh - India";
+            else if (uAddr.contains("GUJARAT")) stateStr = "Gujarat - India";
+            else if (uAddr.contains("RAJASTHAN")) stateStr = "Rajasthan - India";
+            else if (uAddr.contains("UTTAR PRADESH")) stateStr = "Uttar Pradesh - India";
+        }
+
         canvas.beginText();
         canvas.setFontAndSize(fontRegular, 9.0f);
         canvas.moveText(38.0f, H - adrY - 7.5f);
-        canvas.showText("Madhya Pradesh - India");
+        canvas.showText(stateStr);
         canvas.endText();
 
         // MICR & IFSC Code
@@ -245,10 +257,10 @@ public class KotakTemplate implements StatementTemplate {
         canvas.beginText();
         canvas.setFontAndSize(fontRegular, 9.0f);
         canvas.moveText(38.0f, H - 308.5f - 7.5f);
-        canvas.showText("MICR  ");
+        canvas.showText("MICR Code  ");
         canvas.setFillColor(KotakLayout.COLOR_BLACK);
         canvas.setFontAndSize(fontBold, 9.0f);
-        canvas.moveText(25.0f, 0);
+        canvas.moveText(46.0f, 0);
         canvas.showText(micr);
 
         canvas.setFillColor(KotakLayout.COLOR_TEXT_GREY);
@@ -282,6 +294,7 @@ public class KotakTemplate implements StatementTemplate {
                                           String accNum, String periodStr) {
         CustomerDetails cust = record.customerDetails();
         float H = KotakLayout.PAGE_HEIGHT;
+        canvas.saveState();
 
 
 

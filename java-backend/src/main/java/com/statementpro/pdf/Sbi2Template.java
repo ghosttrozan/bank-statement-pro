@@ -288,12 +288,16 @@ public class Sbi2Template implements StatementTemplate {
         dossier.add(dossierAddressLine(record.customerDetails().address()));
         dossier.add(dossierLine("Date", endDateStr));
         dossier.add(dossierLine("Account Number", accountNumber));
-        dossier.add(dossierLine("Account Description", record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank()
-                ? record.accountInfo().accountType().toUpperCase()
-                : "REGULAR SAVINGS BANK ACCOUNT"));
+        String rawAccType = record.accountInfo().accountType();
+        String sbiAccDesc = (rawAccType != null && rawAccType.toLowerCase().contains("current"))
+                ? "REGULAR CURRENT ACCOUNT"
+                : "REGULAR SAVINGS BANK ACCOUNT";
+        dossier.add(dossierLine("Account Description", sbiAccDesc));
         dossier.add(dossierLine("Branch", record.branchDetails().branchName() != null ? record.branchDetails().branchName() : "317"));
         dossier.add(dossierLine("Drawing Power", "0.00"));
-        dossier.add(dossierLine("Interest Rate(% p.a.)", String.valueOf(record.accountInfo().interestRate())));
+        double rate = record.accountInfo().interestRate() > 0 ? record.accountInfo().interestRate() : 2.70;
+        String rateStr = (Math.abs(rate - 2.70) < 0.01) ? "2.7" : (Math.abs(rate - 2.50) < 0.01 ? "2.5" : String.valueOf(rate));
+        dossier.add(dossierLine("Interest Rate(% p.a.)", rateStr));
         dossier.add(dossierLine("MOD Balance", "0.00"));
         dossier.add(dossierLine("CIF No.", record.customerDetails().cifNumber() != null ? record.customerDetails().cifNumber() : ""));
         dossier.add(dossierLine("CKYCR Number", maskCkycr(record.branchDetails().ckycrNumber())));
@@ -301,7 +305,7 @@ public class Sbi2Template implements StatementTemplate {
         dossier.add(new Paragraph("(Indian Financial System)").setFontSize(SbiLayout.FONT_DOSSIER).setMultipliedLeading(1.15f).setMargin(0).setMarginTop(1.0f).setMarginBottom(1.0f));
         dossier.add(dossierLine("MICR Code", record.branchDetails().micrCode() != null ? record.branchDetails().micrCode() : "466002002"));
         dossier.add(new Paragraph("(Magnetic Ink Character Recognition)").setFontSize(SbiLayout.FONT_DOSSIER).setMultipliedLeading(1.15f).setMargin(0).setMarginTop(1.0f).setMarginBottom(1.0f));
-        dossier.add(dossierLine("Nomination Registered", isNominationRegistered(record.customerDetails().nomineeName()) ? "No" : "No"));
+        dossier.add(dossierLine("Nomination Registered", isNominationRegistered(record.customerDetails().nomineeName()) ? "Yes" : "No"));
         dossier.add(dossierLine("Balance as on " + startDateStr, TemplateUtils.formatCurrency(record.accountInfo().openingBalance())));
 
         return dossier;

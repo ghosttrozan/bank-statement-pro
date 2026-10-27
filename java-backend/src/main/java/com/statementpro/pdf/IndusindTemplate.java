@@ -355,8 +355,9 @@ public class IndusindTemplate implements StatementTemplate {
         // Values
         double bal = record.closingBalance();
         String balStr = String.format(Locale.US, "%.2f", bal);
-        String accType = record.accountInfo() != null && record.accountInfo().accountType() != null
+        String rawAccType = record.accountInfo() != null && record.accountInfo().accountType() != null
                 ? record.accountInfo().accountType() : "INDUS CLASSIC";
+        String accType = rawAccType.toLowerCase().contains("current") ? "INDUS PREMIER" : "INDUS CLASSIC";
 
         canvas.beginText();
         canvas.setFontAndSize(fontRegular, 9.0f);

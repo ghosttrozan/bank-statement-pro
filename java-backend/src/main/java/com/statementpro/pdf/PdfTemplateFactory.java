@@ -5,7 +5,7 @@ public final class PdfTemplateFactory {
     private PdfTemplateFactory() {}
 
     public static StatementTemplate forBankStyle(String bankStyle) {
-        if ("SBI2".equalsIgnoreCase(bankStyle)) {
+        if ("SBI2".equalsIgnoreCase(bankStyle) || "SBI".equalsIgnoreCase(bankStyle) || "STATE BANK OF INDIA".equalsIgnoreCase(bankStyle)) {
             return new Sbi2Template();
         }
         if ("BOB".equalsIgnoreCase(bankStyle) || "BANK OF BARODA".equalsIgnoreCase(bankStyle)) {
