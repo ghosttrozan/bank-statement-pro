@@ -157,26 +157,123 @@ public class AxisTemplate implements StatementTemplate {
         return out.toByteArray();
     }
 
+    private float estimateRowHeight(Transaction tx) {
+        String desc = wrapParticulars(tx.details());
+        int lines = 1;
+        if (desc != null && !desc.isEmpty()) {
+            lines = desc.split("\n", -1).length;
+        }
+        // Measured exact rendered heights in iText 8:
+        // 1 line: 21.3 pt -> 22.0 pt
+        // 2 lines: 26.4 pt -> 27.5 pt
+        // 3 lines: 31.5 pt -> 33.0 pt
+        // 4 lines: 36.6 pt -> 38.5 pt
+        return 22.0f + (lines - 1) * 5.5f;
+    }
+
     private List<List<Transaction>> splitTransactions(List<Transaction> all) {
         List<List<Transaction>> pages = new ArrayList<>();
         if (all == null || all.isEmpty()) {
-            pages.add(List.of());
+            pages.add(new ArrayList<>());
             return pages;
         }
 
+        final float BUDGET_PAGE_1 = 465.0f;
+        final int MAX_PAGE_1_ROWS = 22;
+
+        final float BUDGET_CONT_PAGE = 715.0f;
+        final int MAX_CONT_ROWS = 33;
+
+        final float BUDGET_LAST_PAGE = 510.0f;
+        final int MAX_LAST_ROWS = 24;
+
+        final float BUDGET_SINGLE_PAGE = 260.0f;
+        final int MAX_SINGLE_PAGE_ROWS = 10;
+
         int total = all.size();
+
+        // 1. Single page check: fits on Page 1 WITH summary and closing notes
+        float allH = 0.0f;
+        for (Transaction tx : all) {
+            allH += estimateRowHeight(tx);
+        }
+        if (total <= MAX_SINGLE_PAGE_ROWS && allH <= BUDGET_SINGLE_PAGE) {
+            pages.add(new ArrayList<>(all));
+            return pages;
+        }
+
         int idx = 0;
 
-        // Page 1 target: up to 23 txs (24 rows including opening balance)
-        int p1Target = Math.min(23, total);
-        pages.add(new ArrayList<>(all.subList(0, p1Target)));
-        idx += p1Target;
+        // 2. Page 1
+        List<Transaction> p1 = new ArrayList<>();
+        float p1Height = 0.0f;
 
-        // Continuation pages: 34 rows per page
+        // If total is small (e.g. 11 to 22), balance between Page 1 and Page 2 so Page 2 isn't empty or tiny
+        int p1TargetLimit = MAX_PAGE_1_ROWS;
+        if (total < 24) {
+            p1TargetLimit = Math.max(6, total / 2 + (total % 2));
+        }
+
         while (idx < total) {
-            int end = Math.min(idx + 34, total);
-            pages.add(new ArrayList<>(all.subList(idx, end)));
-            idx = end;
+            Transaction tx = all.get(idx);
+            float rh = estimateRowHeight(tx);
+            if (!p1.isEmpty() && (p1Height + rh > BUDGET_PAGE_1 || p1.size() >= p1TargetLimit)) {
+                break;
+            }
+            p1.add(tx);
+            p1Height += rh;
+            idx++;
+        }
+        pages.add(p1);
+
+        // 3. Continuation pages
+        while (idx < total) {
+            int remCount = total - idx;
+            float remH = 0.0f;
+            for (int i = idx; i < total; i++) {
+                remH += estimateRowHeight(all.get(i));
+            }
+
+            // Can all remaining fit on this page as the last page?
+            if (remCount <= MAX_LAST_ROWS && remH <= BUDGET_LAST_PAGE) {
+                pages.add(new ArrayList<>(all.subList(idx, total)));
+                break;
+            }
+
+            // Otherwise, fill an intermediate continuation page
+            List<Transaction> cont = new ArrayList<>();
+            float ch = 0.0f;
+            while (idx < total) {
+                Transaction tx = all.get(idx);
+                float rh = estimateRowHeight(tx);
+                if (!cont.isEmpty() && (ch + rh > BUDGET_CONT_PAGE || cont.size() >= MAX_CONT_ROWS)) {
+                    break;
+                }
+                cont.add(tx);
+                ch += rh;
+                idx++;
+            }
+            pages.add(cont);
+        }
+
+        // 4. Rebalance trailing page if needed so last page has at least 6 transactions
+        if (pages.size() >= 2) {
+            List<Transaction> last = pages.get(pages.size() - 1);
+            List<Transaction> prev = pages.get(pages.size() - 2);
+            while (last.size() < 6 && prev.size() > 10) {
+                Transaction cand = prev.get(prev.size() - 1);
+                float candH = estimateRowHeight(cand);
+                float lastH = 0.0f;
+                for (Transaction tx : last) {
+                    lastH += estimateRowHeight(tx);
+                }
+                if (lastH + candH <= BUDGET_LAST_PAGE && last.size() + 1 <= MAX_LAST_ROWS) {
+                    prev.remove(prev.size() - 1);
+                    last.add(0, cand);
+                } else {
+                    break;
+                }
+            }
         }
 
         return pages;
@@ -234,16 +331,17 @@ public class AxisTemplate implements StatementTemplate {
         table.setWidth(AxisLayout.USABLE_WIDTH);
         table.setMargin(0);
         table.setMarginBottom(0);
+        table.setKeepTogether(false);
 
-        // Header Row (Printed on Page 1 or if needed)
+        // Header Row (Printed on Page 1 only)
         if (isFirstPage) {
-            table.addHeaderCell(headerCell("Tran Date", fontBold, TextAlignment.CENTER));
-            table.addHeaderCell(headerCell("Chq No", fontBold, TextAlignment.CENTER));
-            table.addHeaderCell(headerCell("Particulars", fontBold, TextAlignment.CENTER));
-            table.addHeaderCell(headerCell("Debit", fontBold, TextAlignment.CENTER));
-            table.addHeaderCell(headerCell("Credit", fontBold, TextAlignment.CENTER));
-            table.addHeaderCell(headerCell("Balance", fontBold, TextAlignment.CENTER));
-            table.addHeaderCell(headerCell("Init.\nBr", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Tran Date", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Chq No", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Particulars", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Debit", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Credit", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Balance", fontBold, TextAlignment.CENTER));
+            table.addCell(headerCell("Init.\nBr", fontBold, TextAlignment.CENTER));
 
             // Opening Balance Row
             table.addCell(dataCell("", fontRom, TextAlignment.CENTER));
@@ -305,7 +403,8 @@ public class AxisTemplate implements StatementTemplate {
                 .setPaddingTop(4.0f)
                 .setPaddingBottom(4.0f)
                 .setTextAlignment(align)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE);
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                .setKeepTogether(true);
 
         cell.add(new Paragraph(text)
                 .setFont(font)
@@ -325,7 +424,8 @@ public class AxisTemplate implements StatementTemplate {
                 .setPaddingTop(3.0f)
                 .setPaddingBottom(3.0f)
                 .setTextAlignment(align)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE);
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                .setKeepTogether(true);
 
         cell.add(new Paragraph(text)
                 .setFont(font)
@@ -402,14 +502,31 @@ public class AxisTemplate implements StatementTemplate {
 
     private String wrapParticulars(String raw) {
         if (raw == null || raw.isBlank()) return "";
-        if (raw.length() <= 34) return raw;
+        String trimmed = raw.trim();
+        if (trimmed.length() <= 34) return trimmed;
         StringBuilder sb = new StringBuilder();
         int cur = 0;
-        while (cur < raw.length()) {
-            int next = Math.min(cur + 32, raw.length());
+        int len = trimmed.length();
+        while (cur < len) {
+            if (len - cur <= 34) {
+                if (sb.length() > 0) sb.append("\n");
+                sb.append(trimmed.substring(cur).trim());
+                break;
+            }
+            int maxEnd = cur + 34;
+            int bestBreak = -1;
+            for (int i = maxEnd; i >= cur + 18; i--) {
+                char c = trimmed.charAt(i);
+                if (c == ' ' || c == '/' || c == '-') {
+                    bestBreak = (c == ' ') ? i : i + 1;
+                    break;
+                }
+            }
+            int breakAt = (bestBreak != -1) ? bestBreak : maxEnd;
             if (sb.length() > 0) sb.append("\n");
-            sb.append(raw, cur, next);
-            cur = next;
+            sb.append(trimmed.substring(cur, breakAt).trim());
+            cur = breakAt;
+            while (cur < len && trimmed.charAt(cur) == ' ') cur++;
         }
         return sb.toString();
     }

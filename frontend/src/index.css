@@ -138,6 +138,8 @@ body {
   font-size: 18.6px;
   color: #00B7FF;
   line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
 .sbi-metadata-branch-name {

@@ -227,7 +227,7 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
   const { customerDetails, branchDetails, accountInfo, settings, transactions, closingBalance, totalCredits, totalDebits, drCount, crCount } = record;
 
   const pageChunks = settings.bankStyle === 'SBI'
-    ? chunkTransactionsForA4(transactions, 6, 28)
+    ? chunkTransactionsForA4(transactions, 6, 21)
     : settings.bankStyle === 'SBI2'
       ? chunkTransactionsForA4(transactions, 9, 19)
       : settings.bankStyle === 'BOI'
@@ -248,8 +248,8 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
         : settings.bankStyle === 'Kotak'
           ? 'Kotak Mahindra Bank'
           : settings.bankStyle === 'SBI2'
-            ? 'State Bank of India 2.0'
-            : 'State Bank of India';
+            ? 'State Bank of India (V2)'
+            : 'State Bank of India (V1)';
 
 
     const originalTitle = document.title;
@@ -513,8 +513,8 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                       settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' :
                         'State Bank of India'
                 }
-                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] max-h-[297mm] overflow-hidden bg-white text-black relative flex flex-col ${settings.bankStyle === 'SBI2' ? 'justify-start pt-[50px] pb-[20px] box-border' : (settings.bankStyle === 'BOI' && !isFirst) ? 'justify-center p-0 pb-0' : 'justify-between p-0 pb-0'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 print:page-break-after`}
-                style={{ contentVisibility: 'auto', fontFamily: 'sans-serif', ...(settings.bankStyle === 'SBI2' ? { paddingTop: '50px', paddingBottom: '20px', boxSizing: 'border-box' } : {}) }}
+                className={`print-page w-[210mm] min-h-[297mm] h-[297mm] max-h-[297mm] overflow-hidden bg-white text-black relative flex flex-col ${settings.bankStyle === 'SBI2' ? 'justify-start pt-[50px] pb-[20px] box-border' : (settings.bankStyle === 'BOI' && !isFirst) ? 'justify-center p-0 pb-0' : 'justify-between p-0 pb-0'} shadow-xl border border-slate-200 print:border-none print:shadow-none print:m-0 ${isLast ? 'print:break-after-auto' : 'print:page-break-after'}`}
+                style={{ contentVisibility: 'auto', fontFamily: 'sans-serif', breakAfter: isLast ? 'auto' : 'page', pageBreakAfter: isLast ? 'auto' : 'always', ...(settings.bankStyle === 'SBI2' ? { paddingTop: '50px', paddingBottom: '20px', boxSizing: 'border-box' } : {}) }}
               >
                 {/* Hidden Text Layer for Automated PDF/DOM Extractors & Parsers (Digitap, Perfios, Karza, Perfisa, Anode) */}
                 <div style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
@@ -699,7 +699,7 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                                       <path d="M22 10h-6a2 2 0 000 4h6" />
                                     </svg>
                                   }>
-                                    <MetadataRow label="Clear Balance" value={`${accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR`} />
+                                    <MetadataRow label="Clear Balance" value={`${(closingBalance != null && closingBalance !== 0 ? closingBalance : accountInfo.openingBalance).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR`} />
                                     <MetadataRow label="Uncleared Amount" value="0.00" />
                                     <MetadataRow label="+MOD Bal" value="0.00" />
                                     <MetadataRow label="Lien" value="0.0" />
@@ -782,7 +782,7 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                               borderBottom: '1.5px solid #e2e8f0',
                               margin: 0
                             }}>
-                              Statement of {customerDetails.accountHolderName} (A/c-{customerDetails.accountNumber || '30521458920'}) between {transactions[0]?.valueDate} to {transactions[transactions.length - 1]?.valueDate}
+                              Statement From &nbsp; : &nbsp; {transactions[0]?.valueDate || '01-01-2026'} to {transactions[transactions.length - 1]?.valueDate || '27-10-2026'}
                             </div>
                           </div>
                         </div>
@@ -1727,12 +1727,12 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                 <div className={`${settings.bankStyle === 'SBI' ? 'px-[8mm] space-y-4' : 'space-y-4'}`}>
                   {isLast && settings.bankStyle === 'SBI' && (
                     <div className="mt-6 space-y-3 print:break-inside-avoid">
-                      <div className="bg-[#5452AA] text-white text-xs font-medium py-2 px-3 text-center rounded-t select-none uppercase tracking-wide">
-                        Statement Summary : {transactions[0]?.valueDate || '01-12-2025'} To {transactions[transactions.length - 1]?.valueDate || '31-05-2026'}
+                      <div className="bg-[#5452AA] text-white text-[11px] font-normal py-2 px-3 text-center rounded-t select-none uppercase tracking-wide">
+                        STATEMENT SUMMARY : {transactions[0]?.valueDate ? transactions[0].valueDate.replace(/\//g, '-') : '01-01-2026'} TO {transactions[transactions.length - 1]?.valueDate ? transactions[transactions.length - 1].valueDate.replace(/\//g, '-') : '27-10-2026'}
                       </div>
-                      <table className="w-full text-center text-xs border border-zinc-200">
+                      <table className="w-full text-center text-xs border border-zinc-200" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
                         <thead>
-                          <tr className="bg-[#5452AA] text-white font-medium text-[11px] border-b border-[#5452AA]">
+                          <tr className="bg-[#5452AA] text-white font-bold text-[11px] border-b border-[#5452AA]">
                             <th className="p-2 border-r border-[#7472cb] last:border-r-0">Brought Forward (₹)</th>
                             <th className="p-2 border-r border-[#7472cb] last:border-r-0">Dr Count</th>
                             <th className="p-2 border-r border-[#7472cb] last:border-r-0">Cr Count</th>
@@ -1741,14 +1741,14 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                             <th className="p-2 last:border-0">Closing Balance (₹)</th>
                           </tr>
                         </thead>
-                        <tbody className="bg-white text-zinc-800 font-medium text-[11px]">
-                          <tr className="border-b border-zinc-200 text-zinc-950">
-                            <td className="p-2.5 border-r border-zinc-200">{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}CR</td>
+                        <tbody className="bg-white text-black font-normal text-[11px]">
+                          <tr className="border-b border-zinc-200 text-black">
+                            <td className="p-2.5 border-r border-zinc-200">{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR</td>
                             <td className="p-2.5 border-r border-zinc-200">{drCount}</td>
                             <td className="p-2.5 border-r border-zinc-200">{crCount}</td>
-                            <td className="p-2.5 text-red-650 border-r border-zinc-200">₹{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                            <td className="p-2.5 text-emerald-650 border-r border-zinc-200">₹{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                            <td className="p-2.5 text-zinc-950">₹{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}CR</td>
+                            <td className="p-2.5 border-r border-zinc-200">₹{totalDebits.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className="p-2.5 border-r border-zinc-200">₹{totalCredits.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td className="p-2.5">₹{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}CR</td>
                           </tr>
                         </tbody>
                       </table>

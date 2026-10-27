@@ -7,9 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 class PdfTemplateFactoryTest {
 
     @Test
-    void sbi2StyleUsesSbi2Template() {
+    void sbiStylesUseCorrectTemplates() {
+        assertInstanceOf(SbiV1Template.class, PdfTemplateFactory.forBankStyle("SBI"));
+        assertInstanceOf(SbiV1Template.class, PdfTemplateFactory.forBankStyle("SBIV1"));
         assertInstanceOf(Sbi2Template.class, PdfTemplateFactory.forBankStyle("SBI2"));
-        assertInstanceOf(Sbi2Template.class, PdfTemplateFactory.forBankStyle("SBI"));
     }
 
     @Test

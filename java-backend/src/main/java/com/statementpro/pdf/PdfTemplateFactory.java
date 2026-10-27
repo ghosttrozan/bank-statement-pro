@@ -5,7 +5,10 @@ public final class PdfTemplateFactory {
     private PdfTemplateFactory() {}
 
     public static StatementTemplate forBankStyle(String bankStyle) {
-        if ("SBI2".equalsIgnoreCase(bankStyle) || "SBI".equalsIgnoreCase(bankStyle) || "STATE BANK OF INDIA".equalsIgnoreCase(bankStyle)) {
+        if ("SBI".equalsIgnoreCase(bankStyle) || "SBIV1".equalsIgnoreCase(bankStyle) || "SBI_V1".equalsIgnoreCase(bankStyle) || "SBI V1".equalsIgnoreCase(bankStyle)) {
+            return new SbiV1Template();
+        }
+        if ("SBI2".equalsIgnoreCase(bankStyle) || "SBIV2".equalsIgnoreCase(bankStyle) || "SBI_V2".equalsIgnoreCase(bankStyle) || "SBI V2".equalsIgnoreCase(bankStyle) || "STATE BANK OF INDIA".equalsIgnoreCase(bankStyle)) {
             return new Sbi2Template();
         }
         if ("BOB".equalsIgnoreCase(bankStyle) || "BANK OF BARODA".equalsIgnoreCase(bankStyle)) {

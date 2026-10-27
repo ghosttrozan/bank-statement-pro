@@ -114,6 +114,7 @@ const AXIS_BRANCH_DEFAULTS: BranchDetails = {
 };
 
 const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd'; label: string }[] = [
+  { value: 'SBI', label: 'SBI V1' },
   { value: 'SBI2', label: 'SBI V2' },
   { value: 'BOB', label: 'Bank of Baroda' },
   { value: 'AXIS', label: 'Axis Bank' },
@@ -687,9 +688,9 @@ export default function GeneratorPage() {
   const getBankFullName = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd') => {
     switch (style) {
       case 'SBI':
-        return 'State Bank of India';
+        return 'State Bank of India (V1)';
       case 'SBI2':
-        return 'State Bank of India 2.0';
+        return 'State Bank of India (V2)';
       case 'BOB':
         return 'Bank of Baroda (bob World)';
       case 'AXIS':
