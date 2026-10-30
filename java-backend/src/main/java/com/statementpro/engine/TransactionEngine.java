@@ -304,9 +304,14 @@ public final class TransactionEngine {
                 unassigned--;
             }
 
-            // Monthly recurring anchors (guaranteed 1 electricity bill & 1 mobile recharge per month for personal accounts)
+            // Monthly recurring anchors (guaranteed recurring bills & living expenses for salaried accounts)
             boolean electricityBilled = false;
             boolean mobileRecharged = false;
+            boolean rentPaid = false;
+            boolean emiPaid = false;
+            boolean ccPaid = false;
+            boolean sipPaid = false;
+            boolean groceryPaid = false;
 
             for (int dayOffset = 0; dayOffset < totalDays; dayOffset++) {
                 int dayTxCount = dailyAllocation[dayOffset];
@@ -328,7 +333,32 @@ public final class TransactionEngine {
                     boolean isCredit;
                     DetailAndAmount picked;
 
-                    if (!isBusiness && !electricityBilled && txDate.getDayOfMonth() >= 3 && txDate.getDayOfMonth() <= 8) {
+                    if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !rentPaid && txDate.getDayOfMonth() >= 2 && txDate.getDayOfMonth() <= 5) {
+                        isCredit = false;
+                        double amt = Math.round((salaryInfo.amount() * 0.27 + RandomUtils.randRange(-400, 400)) * 100.0) / 100.0;
+                        picked = new DetailAndAmount("UPI/RENT/9826019284@ybl/House Rent Payment", amt);
+                        rentPaid = true;
+                    } else if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !emiPaid && txDate.getDayOfMonth() >= 5 && txDate.getDayOfMonth() <= 8) {
+                        isCredit = false;
+                        double amt = Math.round((salaryInfo.amount() * 0.16 + RandomUtils.randRange(-300, 300)) * 100.0) / 100.0;
+                        picked = new DetailAndAmount("ACH DR-BAJAJ FINANCE LOAN EMI/" + RandomUtils.randRange(10000000, 99999999), amt);
+                        emiPaid = true;
+                    } else if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !sipPaid && txDate.getDayOfMonth() >= 6 && txDate.getDayOfMonth() <= 9) {
+                        isCredit = false;
+                        double amt = Math.round((salaryInfo.amount() * 0.07) / 500.0) * 500.0;
+                        picked = new DetailAndAmount("ACH DR-ZERODHA BROKING LTD/SIP-" + RandomUtils.randRange(100000, 999999), amt);
+                        sipPaid = true;
+                    } else if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !ccPaid && txDate.getDayOfMonth() >= 11 && txDate.getDayOfMonth() <= 15) {
+                        isCredit = false;
+                        double amt = Math.round((salaryInfo.amount() * 0.23 + RandomUtils.randRange(-600, 600) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                        picked = new DetailAndAmount("AUTOPAY/HDFC BANK CREDIT CARD PAYMENT/BIL" + RandomUtils.randRange(1000000, 9999999), amt);
+                        ccPaid = true;
+                    } else if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !groceryPaid && txDate.getDayOfMonth() >= 15 && txDate.getDayOfMonth() <= 20) {
+                        isCredit = false;
+                        double amt = Math.round((salaryInfo.amount() * 0.08 + RandomUtils.randRange(-250, 250) + RandomUtils.randomPaise()) * 100.0) / 100.0;
+                        picked = new DetailAndAmount("POS 451239******" + RandomUtils.randRange(1000, 9999) + " DMART INDORE", amt);
+                        groceryPaid = true;
+                    } else if (!isBusiness && !electricityBilled && txDate.getDayOfMonth() >= 3 && txDate.getDayOfMonth() <= 8) {
                         isCredit = false;
                         double amt = Math.round((RandomUtils.randRange(1850, 3200) + RandomUtils.randomPaise()) * 100.0) / 100.0;
                         picked = new DetailAndAmount("BBPS/ELECTRICITY BILL PAY/TATA POWER", amt);
@@ -341,7 +371,7 @@ public final class TransactionEngine {
                         mobileRecharged = true;
                     } else {
                         // Business has balanced 45% credit rate; personal has 14% credit rate allowing natural salary decay curve
-                        int creditChance = isBusiness ? 45 : 14;
+                        int creditChance = isBusiness ? 45 : (salaryInfo != null && salaryInfo.amount() > 25000 ? 4 : 14);
                         isCredit = RandomUtils.randRange(0, 99) < creditChance;
                         WeightedTemplate tmpl = RandomUtils.weightedPick(isCredit ? creditTemplates : debitTemplates);
                         picked = tmpl.detailAndAmount().apply(bankStyle);

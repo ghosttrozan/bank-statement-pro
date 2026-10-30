@@ -17,6 +17,9 @@ function formatKotakDate(dateStr: string): string {
   if (!dateStr) return '';
   const parts = dateStr.split(/[-/]/);
   if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+    }
     const day = parts[0].padStart(2, '0');
     const month = parts[1].padStart(2, '0');
     const year = parts[2];
@@ -1050,276 +1053,100 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                     <div>
                       {isFirst ? (
                         /* FIRST PAGE COMPLETE KOTAK HEADER */
-                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
-                          {/* Top red header bar */}
-                          <div style={{
-                            padding: '1px 10mm',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            boxSizing: 'border-box',
-                            width: '100%',
-                          }}>
-                            {/* Left image: Kotak logo + Mahindra Bank (combined or separate) */}
-                            <div>
-                              <img
-                                src="/kotak-logo1.png"   // replace with your actual image path
-                                alt="Kotak Mahindra Bank"
-                                style={{
-                                  height: '100px',               // adjust to match visual size of the text
-                                  width: 'auto',
-                                  display: 'block',
-                                }}
-                              />
-                            </div>
-
-                            {/* Right image: "Account Statement" label + date (if you want a combined image) */}
-                            <div>
-                              <img
-                                src="kotak-logo2.png"   // replace with your actual image path
-                                alt="Account Statement"
-                                style={{
-                                  height: 'auto',
-                                  maxHeight: '90px',            // adjust as needed
-                                  width: 'auto',
-                                  display: 'block',
-                                }}
-                              />
-                            </div>
+                        <div style={{ fontFamily: '"Source Sans 3", Arial, sans-serif' }}>
+                          {/* Top banner image */}
+                          <div style={{ width: '100%', marginBottom: '16px' }}>
+                            <img
+                              src="/images/kotak/kotak_header.jpeg"
+                              alt="Kotak Mahindra Bank"
+                              style={{ width: '100%', height: 'auto', display: 'block' }}
+                            />
                           </div>
 
-                          {/* Statement period bar */}
-                          <div style={{
-                            // background: '#f9f9f9',
-                            padding: '20px 18mm',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                          }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span className='text-3xl font-semibold' style={{ color: '#111827' }}>Account Statement</span>
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontSize: '11px',
-                                marginTop: '4px'
-                              }}>
-                                <span style={{ color: '#374151' }}>
-                                  <strong style={{ fontSize: '9.5px', fontWeight: 'normal' }}>
-                                    {formatKotakDate(transactions[0]?.valueDate) || '--'}
-                                  </strong>{' '}
-                                  -{' '}
-                                  <strong style={{ fontSize: '9.5px', fontWeight: 'normal' }}>
-                                    {formatKotakDate(transactions[transactions.length - 1]?.valueDate) || '--'}
-                                  </strong>
-                                </span>
-                              </div>
+                          {/* Statement title & period */}
+                          <div style={{ padding: '0 36px 0 36px' }}>
+                            <div style={{ fontSize: '25px', fontWeight: 600, color: '#000000', lineHeight: 1.1 }}>
+                              Account Statement
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#000000', marginTop: '4px' }}>
+                              {formatKotakDate(transactions[0]?.valueDate) || '01 Oct 2026'} - {formatKotakDate(transactions[transactions.length - 1]?.valueDate) || '21 Oct 2026'}
                             </div>
 
-                            {/* <span style={{   color: '#6b7280' }}>Ref: KKBK-{record.id.substring(5, 13).toUpperCase()}</span> */}
                           </div>
 
                           {/* Two-column: Customer & Account info */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0px', borderBottom: '1px solid #e5e7eb', margin: '0 10mm', paddingTop: '20px' }}>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1.2fr 1fr',
+                            gap: '20px',
+                            padding: '16px 38px 12px 38px',
+                          }}>
                             {/* Left: Customer Info */}
-                            <div style={{ padding: '' }}>
-                              <div style={{ fontSize: '8px', fontWeight: 700, color: '#ED1C24', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}></div>
-                              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '40px', marginLeft: '8mm' }}>{customerDetails.accountHolderName} <br /> <h5 style={{ fontSize: '11px', color: '#4b5563', lineHeight: 1.5, whiteSpace: 'pre-line', marginBottom: '4px', fontWeight: '400' }}>CRN  xxxxxx{customerDetails.cifNumber?.slice(-3)}</h5></div>
-                              <div className=''>
-                                <div className='text-gray-900' style={{
-                                  fontSize: '12px',
-                                  lineHeight: 1.5,
-                                  whiteSpace: 'normal',           // allow wrapping
-                                  wordWrap: 'break-word',
-                                  maxWidth: '120px',              // adjust based on your font and words
-                                  marginBottom: '4px',
-                                  margin: '0 8mm',
-                                  // fontWeight: '700',
-                                  // color: '#4b5563',               // set a proper colour
-                                }}>
-                                  {customerDetails.address}
-                                </div>
+                            <div>
+                              <div style={{ fontSize: '14px', fontWeight: 600, color: '#000000', marginBottom: '2px' }}>
+                                {customerDetails.accountHolderName || 'Jitendra Sapray'}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#9FA1A4', marginBottom: '14px' }}>
+                                CRN xxxxxx{customerDetails.cifNumber?.slice(-3) || customerDetails.accountNumber?.slice(-3) || '815'}
+                              </div>
+                              <div style={{
+                                fontSize: '9px',
+                                color: '#000000',
+                                lineHeight: '1.5',
+                                whiteSpace: 'pre-line',
+                                marginBottom: '14px',
+                                maxWidth: '240px',
+                              }}>
+                                {customerDetails.address || '379 Rukhmani Nagar\nChota Bangarda Road\nIndore\nIndore - 452005\nMadhya Pradesh - India'}
+                              </div>
 
-                                {/* MICR & IFSC – same line, smaller font, with top margin */}
-                                <div style={{
-                                  gridColumn: '1 / -1',
-                                  marginTop: '20px',
-                                  marginLeft: '8mm',
-                                  fontSize: '12px',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '10px'
-                                }}>
-                                  <div>
-                                    <span style={{ color: '#A8A8A8' }}>MICR Code </span>
-                                    <span style={{ color: '#111827', fontSize: '12px', fontWeight: '500' }}>{branchDetails.micrCode}</span>
-                                  </div>
-                                  <div>
-                                    <span style={{ color: '#A8A8A8' }}>IFSC Code </span>
-                                    <span style={{ color: '#111827', fontSize: '12px', fontWeight: '500' }}>{branchDetails.ifscCode}</span>
-                                  </div>
+                              {/* MICR & IFSC */}
+                              <div style={{
+                                fontSize: '9px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '14px',
+                              }}>
+                                <div>
+                                  <span style={{ color: '#9FA1A4' }}>MICR </span>
+                                  <span style={{ color: '#000000', fontWeight: 600 }}>{branchDetails.micrCode || '452485007'}</span>
                                 </div>
-                                {/* <div style={{ fontSize: '9px', color: '#6b7280' }}>Email: <span style={{ color: '#111827' }}>{customerDetails.email}</span></div> */}
+                                <div>
+                                  <span style={{ color: '#9FA1A4' }}>IFSC Code </span>
+                                  <span style={{ color: '#000000', fontWeight: 600 }}>{branchDetails.ifscCode || 'KKBK0005942'}</span>
+                                </div>
                               </div>
                             </div>
+
                             {/* Right: Account Info */}
-                            <div
-                              style={{
-                                padding: "10px 0 10px 12px",
-                                marginLeft: "60px",
-                                fontFamily: "Arial, Helvetica, sans-serif",
-                                fontSize: "15px",
-                                lineHeight: "1.18",
-                                color: "#111",
-                              }}
-                            >
-                              <div style={{ marginBottom: "5px" }}>
-                                <span
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-                                  }}
-                                >
-                                  Account No.&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-sm font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  {customerDetails.accountNumber}
-                                </span>
-                              </div>
-
-                              <div style={{ marginBottom: "5px" }}>
-                                <span
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-                                  }}
-                                >
-                                  Account Type&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-sm font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  {accountInfo.accountType}
-                                </span>
-                              </div>
-
-                              <div style={{ marginBottom: "5px" }}>
-                                <span
-
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-
-                                  }}
-                                >
-                                  Branch&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-xs font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  {branchDetails.branchName}
-                                </span>
-                              </div>
-
-                              <div style={{ marginBottom: "20px" }}>
-                                <span
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-                                  }}
-                                >
-                                  Branch Phone Number&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-sm font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  9713063909
-                                </span>
-                              </div>
-
-                              <div style={{ marginBottom: "3px" }}>
-                                <span
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-                                  }}
-                                >
-                                  Account Status&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-sm font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  Active
-                                </span>
-                              </div>
-
-                              <div style={{ marginBottom: "18px" }}>
-                                <span
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-                                  }}
-                                >
-                                  Nominee Registered&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-sm font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  Yes
-                                </span>
-                              </div>
-
+                            <div style={{
+                              fontSize: '9px',
+                              lineHeight: '1.75',
+                              paddingLeft: '10px',
+                            }}>
                               <div>
-                                <span
-                                  style={{
-                                    color: "#A2A2A2",
-                                    fontWeight: 400,
-                                  }}
-                                >
-                                  Currency&nbsp;
-                                </span>
-
-                                <span
-                                  className="text-xs font-bold"
-                                  style={{
-                                    color: "#111111",
-                                    fontWeight: 700,
-                                  }}
-                                >
-                                  INDIAN RUPEE
-                                </span>
+                                <span style={{ color: '#9FA1A4' }}>Account No. </span>
+                                <strong style={{ color: '#000000', fontWeight: 600 }}>{customerDetails.accountNumber || '6145810535'}</strong>
+                              </div>
+                              <div>
+                                <span style={{ color: '#9FA1A4' }}>Account Type </span>
+                                <strong style={{ color: '#000000', fontWeight: 600 }}>{accountInfo.accountType || 'Savings'}</strong>
+                              </div>
+                              <div>
+                                <span style={{ color: '#9FA1A4' }}>Branch </span>
+                                <strong style={{ color: '#000000', fontWeight: 600 }}>{branchDetails.branchName || 'Indore -Cloth Market'}</strong>
+                              </div>
+                              <div>
+                                <span style={{ color: '#9FA1A4' }}>Account Status </span>
+                                <strong style={{ color: '#000000', fontWeight: 600 }}>Active</strong>
+                              </div>
+                              <div>
+                                <span style={{ color: '#9FA1A4' }}>Nominee Registered </span>
+                                <strong style={{ color: '#000000', fontWeight: 600 }}>No</strong>
+                              </div>
+                              <div>
+                                <span style={{ color: '#9FA1A4' }}>Currency </span>
+                                <strong style={{ color: '#000000', fontWeight: 600 }}>INDIAN RUPEE</strong>
                               </div>
                             </div>
                           </div>
@@ -1327,25 +1154,23 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                       ) : (
                         /* PAGE 2+ KOTAK CONTINUATION HEADER */
                         <div style={{
-                          padding: '15px 10mm 10px 10mm',
+                          padding: '12px 36px 8px 36px',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'flex-start',
-                          fontFamily: 'Arial, Helvetica, sans-serif',
-                          fontSize: '13px',
-                          lineHeight: '1.4',
-                          color: '#000000',
+                          fontFamily: '"Source Sans 3", Arial, sans-serif',
+                          lineHeight: '1.35',
                         }}>
-                          <div style={{ fontWeight: 'normal', fontSize: '16px', textTransform: 'uppercase', marginBottom: '4px', color: '#111827' }}>
-                            {customerDetails.accountHolderName}
+                          <div style={{ fontWeight: 400, fontSize: '9px', color: '#000000', marginBottom: '2px' }}>
+                            {customerDetails.accountHolderName?.toUpperCase() || 'JITENDRA SAPRAY'}
                           </div>
-                          <div style={{ color: '#111827' }}>
-                            <span style={{ color: '#8c8c8c' }}>Account No. </span>
-                            <span style={{ fontWeight: 600 }}>{customerDetails.accountNumber}</span>
+                          <div style={{ fontSize: '9px' }}>
+                            <span style={{ color: '#9FA1A4' }}>Account No. </span>
+                            <span style={{ fontWeight: 600, color: '#000000' }}>{customerDetails.accountNumber || '6145810535'}</span>
                           </div>
-                          <div style={{ color: '#111827' }}>
-                            <span style={{ color: '#8c8c8c' }}>Account Statement </span>
-                            <span style={{ fontWeight: 600 }}>
+                          <div style={{ fontSize: '9px' }}>
+                            <span style={{ color: '#9FA1A4' }}>Account Statement </span>
+                            <span style={{ fontWeight: 600, color: '#000000' }}>
                               {formatKotakDate(transactions[0]?.valueDate)} - {formatKotakDate(transactions[transactions.length - 1]?.valueDate)}
                             </span>
                           </div>
@@ -1558,26 +1383,22 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                           </table>
                         </div>
                       ) : (
-                        /* ─── KOTAK TABLE – updated header UI ──────────────────── */
-                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                        /* ─── KOTAK TABLE ──────────────────── */
+                        <div style={{ fontFamily: '"Source Sans 3", Arial, sans-serif' }}>
                           {/* ── Title Bar ── */}
                           <div style={{
                             backgroundColor: '#ED1C24',
-                            height: '40px',
+                            height: '25px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            margin: '',
-                            padding: '0 8mm',
                             boxSizing: 'border-box',
-                            fontFamily: 'Arial, Helvetica, sans-serif',
+                            fontFamily: '"Source Sans 3", Arial, sans-serif',
                           }}>
                             <span style={{
                               color: '#ffffff',
-                              fontSize: '18px',
-                              fontWeight: 500,
-                              fontFamily: 'Arial, Helvetica, sans-serif',
-                              letterSpacing: '0.3px',
+                              fontSize: '12px',
+                              fontWeight: 400,
                               textAlign: 'center',
                             }}>
                               Savings Account Transactions
@@ -1585,132 +1406,45 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                           </div>
 
                           {/* ── Table ── */}
-                          <table className="w-full border-collapse" style={{ fontFamily: 'Arial, Helvetica, sans-serif', border: 'none', borderTop: '1px solid #d1d5db', borderBottom: '1px solid #d1d5db' }}>
+                          <table className="w-full border-collapse" style={{ fontFamily: '"Source Sans 3", Arial, sans-serif', border: 'none' }}>
                             <thead>
                               <tr style={{
-                                backgroundColor: '#A8A8A8',
-                                height: '42px',
+                                backgroundColor: '#9FA1A4',
+                                height: '25px',
                                 userSelect: 'none',
                               }}>
-                                <th style={{
-                                  width: '6%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  borderRight: '1px solid #ffffff',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>#</th>
-                                <th style={{
-                                  width: '12%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  borderRight: '1px solid #ffffff',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>Date</th>
-                                <th style={{
-                                  width: '35%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  borderRight: '1px solid #ffffff',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>Description</th>
-                                <th style={{
-                                  width: '17%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  borderRight: '1px solid #ffffff',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>Chq/Ref. No.</th>
-                                <th style={{
-                                  width: '10%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  borderRight: '1px solid #ffffff',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>Withdrawal (Dr.)</th>
-                                <th style={{
-                                  width: '10%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  borderRight: '1px solid #ffffff',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>Deposit (Cr.)</th>
-                                <th style={{
-                                  width: '10%',
-                                  padding: '0 4px 0 12px',
-                                  textAlign: 'left',
-                                  verticalAlign: 'middle',
-                                  border: 'none',
-                                  color: '#ffffff',
-                                  fontSize: '13px',
-                                  fontWeight: 400,
-                                  fontFamily: 'Arial, Helvetica, sans-serif',
-                                }}>Balance</th>
+                                <th style={{ width: '6.0%', padding: '0 4px', textAlign: 'center', verticalAlign: 'middle', borderRight: '0.75px solid #ffffff', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>#</th>
+                                <th style={{ width: '9.5%', padding: '0 4px', textAlign: 'left', verticalAlign: 'middle', borderRight: '0.75px solid #ffffff', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>Date</th>
+                                <th style={{ width: '30.0%', padding: '0 6px', textAlign: 'left', verticalAlign: 'middle', borderRight: '0.75px solid #ffffff', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>Description</th>
+                                <th style={{ width: '15.5%', padding: '0 4px', textAlign: 'left', verticalAlign: 'middle', borderRight: '0.75px solid #ffffff', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>Chq/Ref. No.</th>
+                                <th style={{ width: '13.0%', padding: '0 4px', textAlign: 'right', verticalAlign: 'middle', borderRight: '0.75px solid #ffffff', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>Withdrawal (Dr.)</th>
+                                <th style={{ width: '13.0%', padding: '0 4px', textAlign: 'right', verticalAlign: 'middle', borderRight: '0.75px solid #ffffff', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>Deposit (Cr.)</th>
+                                <th style={{ width: '13.0%', padding: '0 4px', textAlign: 'right', verticalAlign: 'middle', color: '#ffffff', fontSize: '9px', fontWeight: 400 }}>Balance</th>
                               </tr>
                             </thead>
-                            <tbody style={{ fontSize: '10px', color: '#111827' }}>
-                              {/* Brought forward row for subsequent pages */}
-                              {!isFirst && (
-                                <tr style={{ background: '#ffffff' }}>
-                                  <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}></td>
-                                  <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', whiteSpace: 'nowrap', borderBottom: '0.5px solid #d1d5db' }}>{formatKotakDate(chunkTransactions[0]?.valueDate)}</td>
-                                  <td style={{ padding: '6px 8px', fontWeight: 'normal', color: '#111827', borderBottom: '0.5px solid #d1d5db' }} colSpan={2}>Balance brought forward from page {pageIndex}</td>
-                                  <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}></td>
-                                  <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}></td>
-                                  <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', borderBottom: '0.5px solid #d1d5db' }}>{broughtForwardVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <tbody style={{ fontSize: '7.7px', color: '#000000' }}>
+                              {isFirst && (
+                                <tr style={{ background: '#ffffff', height: '14px', borderBottom: '0.5px solid #9FA1A4' }}>
+                                  <td style={{ padding: '2px 4px', textAlign: 'center' }}>-</td>
+                                  <td style={{ padding: '2px 4px', textAlign: 'left' }}>-</td>
+                                  <td style={{ padding: '2px 6px', textAlign: 'left' }}>Opening Balance</td>
+                                  <td style={{ padding: '2px 4px', textAlign: 'left' }}>-</td>
+                                  <td style={{ padding: '2px 4px', textAlign: 'right' }}>-</td>
+                                  <td style={{ padding: '2px 4px', textAlign: 'right' }}>-</td>
+                                  <td style={{ padding: '2px 4px', textAlign: 'right' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                                 </tr>
                               )}
                               {chunkTransactions.map((tx) => {
                                 const serialNo = transactions.indexOf(tx) + 1;
-                                const borderBottomStyle = (serialNo % 3 === 2)
-                                  ? '1.2px solid #d1d5db'
-                                  : '0.5px solid #d1d5db';
                                 return (
-                                  <tr key={tx.id} style={{ background: '#ffffff' }}>
-                                    <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', width: '6%', borderBottom: borderBottomStyle }}>{serialNo}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'left', whiteSpace: 'nowrap', color: '#111827', width: '12%', borderBottom: borderBottomStyle }}>{formatKotakDate(tx.valueDate)}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'left', lineHeight: 1.35, color: '#111827', width: '35%', wordWrap: 'break-word', whiteSpace: 'normal', borderBottom: borderBottomStyle }}>
-                                      {tx.details.toUpperCase()}
-                                    </td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'left', color: '#111827', width: '17%', wordWrap: 'break-word', whiteSpace: 'normal', borderBottom: borderBottomStyle }}>{tx.refNo || ''}</td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', width: '10%', borderBottom: borderBottomStyle }}>
-                                      {tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
-                                    </td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', width: '10%', borderBottom: borderBottomStyle }}>
-                                      {tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}
-                                    </td>
-                                    <td style={{ padding: '6px 8px', textAlign: 'right', color: '#111827', width: '10%', borderBottom: borderBottomStyle }}>
-                                      {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                    </td>
+                                  <tr key={tx.id} style={{ background: '#ffffff', borderBottom: '0.5px solid #9FA1A4' }}>
+                                    <td style={{ padding: '4px 4px', textAlign: 'center', width: '6.0%', verticalAlign: 'top' }}>{serialNo}</td>
+                                    <td style={{ padding: '4px 4px', textAlign: 'left', whiteSpace: 'nowrap', width: '9.5%', verticalAlign: 'top' }}>{formatKotakDate(tx.valueDate)}</td>
+                                    <td style={{ padding: '4px 6px', textAlign: 'left', lineHeight: 1.25, width: '30.0%', wordBreak: 'break-word', verticalAlign: 'top' }}>{tx.details}</td>
+                                    <td style={{ padding: '4px 4px', textAlign: 'left', width: '15.5%', wordBreak: 'break-word', verticalAlign: 'top' }}>{tx.refNo || '-'}</td>
+                                    <td style={{ padding: '4px 4px', textAlign: 'right', width: '13.0%', verticalAlign: 'top' }}>{tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                    <td style={{ padding: '4px 4px', textAlign: 'right', width: '13.0%', verticalAlign: 'top' }}>{tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
+                                    <td style={{ padding: '4px 4px', textAlign: 'right', width: '13.0%', verticalAlign: 'top' }}>{tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
                                   </tr>
                                 );
                               })}
@@ -1786,36 +1520,96 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                   )}
 
                   {isLast && settings.bankStyle === 'Kotak' && (
-                    <div style={{ margin: '40px 40px 40px 40px', fontFamily: 'Arial, Helvetica, sans-serif' }}>
-                      {/* Kotak Summary Table */}
-                      <div style={{ border: '1px solid #d1d5db', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ background: '#ED1C24', color: '#ffffff', padding: '8px 12px', fontSize: '14px', fontWeight: 'normal', textAlign: 'center' }}>
-                          Account Summary
-                        </div>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left', border: 'none' }}>
-                          <thead>
-                            <tr style={{ background: '#A8A8A8', color: '#ffffff', fontWeight: 'normal', height: '36px', userSelect: 'none' }}>
-                              <th style={{ width: '50%', padding: '0 12px', textAlign: 'left', verticalAlign: 'middle', border: 'none', borderRight: '1px solid #ffffff' }}>Particulars</th>
-                              <th style={{ width: '25%', padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none', borderRight: '1px solid #ffffff' }}>Opening Balance</th>
-                              <th style={{ width: '25%', padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>Closing Balance</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr style={{ background: '#ffffff', height: '36px', color: '#111827', borderBottom: '1px solid #d1d5db' }}>
-                              <td style={{ padding: '0 12px', textAlign: 'left', verticalAlign: 'middle', border: 'none' }}>Savings Account (SA):</td>
-                              <td style={{ padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                              <td style={{ padding: '0 12px', textAlign: 'right', verticalAlign: 'middle', border: 'none' }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                            </tr>
-                          </tbody>
-                        </table>
+                    <div style={{ margin: '20px 36px', fontFamily: '"Source Sans 3", Arial, sans-serif' }}>
+                      {/* Summary Banner */}
+                      <div style={{ backgroundColor: '#ED1C24', height: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '12px' }}>
+                        Account Summary
+                      </div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', border: 'none' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#9FA1A4', color: '#ffffff', height: '33px', fontSize: '9px' }}>
+                            <th style={{ width: '45%', padding: '0 12px', textAlign: 'left', borderRight: '0.75px solid #ffffff' }}>Particulars</th>
+                            <th style={{ width: '27.5%', padding: '0 12px', textAlign: 'center', borderRight: '0.75px solid #ffffff' }}>Opening Balance</th>
+                            <th style={{ width: '27.5%', padding: '0 12px', textAlign: 'center' }}>Closing Balance</th>
+                          </tr>
+                        </thead>
+                        <tbody style={{ fontSize: '7.7px', color: '#000000' }}>
+                          <tr style={{ height: '25px', borderBottom: '0.5px solid #9FA1A4' }}>
+                            <td style={{ padding: '0 12px' }}>Savings Account (SA):</td>
+                            <td style={{ padding: '0 12px', textAlign: 'center' }}>{accountInfo.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                            <td style={{ padding: '0 12px', textAlign: 'center' }}>{closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      {/* End of Statement */}
+                      <div style={{ marginTop: '24px', textAlign: 'center', color: '#000000', fontSize: '9.1px', lineHeight: '1.6' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>End of Statement</div>
+                        <div>Any discrepancy in the statement should be brought to the notice of Kotak Mahindra Bank Ltd. within</div>
+                        <div>one month from the date of receipt of the statement.</div>
+                        <div>This is a system generated report and does not require signature and stamp.</div>
                       </div>
 
-                      {/* Disclaimer */}
-                      <div style={{ marginTop: '40px', fontFamily: 'Arial, Helvetica, sans-serif', textAlign: 'center', color: '#111827', fontSize: '11px', lineHeight: '1.6', userSelect: 'none', width: '100%' }}>
-                        <div style={{ fontSize: '14px', marginBottom: '8px', color: '#000000' }}>End of Statement</div>
-                        <div>Any discrepancy in the statement should be brought to the notice of Kotak Mahindra Bank Ltd. within</div>
-                        <div style={{ marginBottom: '6px' }}>one month from the date of receipt of the statement.</div>
-                        <div>This is a system generated report and does not require signature and stamp.</div>
+                      {/* Hero Banner */}
+                      <div style={{ marginTop: '20px', width: '100%' }}>
+                        <img src="/images/kotak/kotak_hero_banner.jpeg" alt="Hausla hai toh ho jayega" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                      </div>
+
+                      {/* Assistance Section */}
+                      <div style={{ marginTop: '20px' }}>
+                        <div style={{ backgroundColor: '#ED1C24', height: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontSize: '12px' }}>
+                          For assistance, reach out to us at:
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', padding: '12px 0', borderBottom: '0.5px solid #9FA1A4' }}>
+                          <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '0.5px solid #9FA1A4' }}>
+                            <img src="/images/kotak/kotak_phone_icon.png" alt="Phone" style={{ width: '21px', height: '21px', margin: '0 auto 4px auto' }} />
+                            <div style={{ fontSize: '9.1px', fontWeight: 600 }}>Contact Us</div>
+                            <div style={{ fontSize: '9.1px' }}>1800 4100</div>
+                            <div style={{ fontSize: '9.1px' }}>(Toll-free number)</div>
+                          </div>
+                          <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '0.5px solid #9FA1A4' }}>
+                            <img src="/images/kotak/kotak_branch_icon.png" alt="Branch" style={{ width: '21px', height: '21px', margin: '0 auto 4px auto' }} />
+                            <div style={{ fontSize: '9px', fontWeight: 600 }}>Branch Address</div>
+                            <div style={{ fontSize: '9px' }}>{branchDetails.branchAddress || '85 -Rang Mahal Sir Seth Hukum Chand Marg, Cloth Market Itwariya'}</div>
+                            <div style={{ fontSize: '9px' }}>{branchDetails.city ? branchDetails.city + ', Indore-452002' : 'Bazar,Indore, Indore-452002, Madhya Pradesh, India'}</div>
+                          </div>
+                          <div style={{ textAlign: 'center', padding: '0 8px' }}>
+                            <img src="/images/kotak/kotak_mobile_icon.png" alt="Mobile" style={{ width: '21px', height: '21px', margin: '0 auto 4px auto' }} />
+                            <div style={{ fontSize: '9px', fontWeight: 600 }}>Branch Phone Number</div>
+                            <div style={{ fontSize: '9px' }}>{branchDetails.branchPhone || '9522204785'}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Remember Box */}
+                      <div style={{
+                        marginTop: '16px',
+                        backgroundColor: '#EAECED',
+                        borderRadius: '6px',
+                        padding: '12px 16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}>
+                        <div>
+                          <div style={{ color: '#ED1C24', fontSize: '12px', fontWeight: 600, marginBottom: '2px' }}>Remember!</div>
+                          <div style={{ color: '#000000', fontSize: '12px', lineHeight: '1.4' }}>
+                            Never share personal/sensitive information like PIN, CVV, OTP<br />
+                            or passwords with anyone.
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '0.5px solid #9FA1A4', paddingLeft: '14px' }}>
+                          <img src="/images/kotak/kotak_qr.jpeg" alt="QR" style={{ width: '45px', height: '45px' }} />
+                          <div style={{ fontSize: '10px', color: '#000000', lineHeight: '1.2' }}>
+                            Scan for<br />more safe<br />banking tips
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Corporate Footer */}
+                      <div style={{ marginTop: '16px', paddingTop: '10px', borderTop: '0.5px solid #9FA1A4', textAlign: 'center', fontSize: '8.5px', color: '#000000', lineHeight: '1.5' }}>
+                        <div>Kotak Mahindra Bank Ltd. | CIN: L65110MH1985PLC038137</div>
+                        <div>Registered Office: 27 BKC, C 27, G Block, Bandra Kurla Complex, Bandra (E), Mumbai - 400 051. www.kotak.bank.in</div>
                       </div>
                     </div>
                   )}
@@ -1830,23 +1624,21 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                   <div style={{ textAlign: 'right', fontFamily: 'sans-serif', fontSize: '10px', fontWeight: 400, color: '#000000', paddingRight: '10mm', paddingBottom: '10px', userSelect: 'none' }}>
                     Page No - {pageNum}
                   </div>
+                ) : settings.bankStyle === 'Kotak' ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 36px 12px 36px',
+                    fontFamily: '"Source Sans 3", Arial, sans-serif',
+                    fontSize: '9.6px',
+                    color: '#9FA1A4',
+                    userSelect: 'none',
+                  }}>
+                    <span>Statement Generated on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span style={{ fontSize: '10px' }}>Page {pageNum} of {chunkedTransactions.length}</span>
+                  </div>
                 ) : (
-                  /* Kotak / BOI bottom bar */
-                  // <div style={{ marginTop: '6px' }}>
-                  //   <div className='text-gray-600' style={{
-                  //     fontSize: '8.5px',
-                  //     fontFamily: 'Arial, Helvetica, sans-serif',
-                  //     padding: '5px 10mm',
-                  //     display: 'flex',
-                  //     alignItems: 'center',
-                  //     justifyContent: 'space-between',
-                  //     userSelect: 'none',
-                  //   }}>
-                  //     <span className='text-gray-600' style={{ fontStyle: 'italic', fontSize: '12px', letterSpacing: '-0.3px' }}>Statement Generated on {formattedDateNow()}</span>
-                  //     {/* <span style={{ opacity: 0.85 }}>This is a system-generated statement. | Kotak Mahindra Bank Ltd.</span> */}
-                  //     <span className='text-gray-600' style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 8px', borderRadius: '3px', fontSize: '12px' }}>Page {pageNum} of {allPages.length}</span>
-                  //   </div>
-                  // </div>
                   <div></div>
                 )}
 
