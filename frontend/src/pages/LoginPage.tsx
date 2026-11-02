@@ -104,13 +104,7 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Environment Credentials Notice */}
-        <div className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 p-2.5 rounded-xl text-xs mb-5 flex items-center justify-between">
-          <span className="text-[11px] font-medium text-slate-400">Credentials (.env):</span>
-          <span className="font-mono text-[11px] font-bold text-indigo-300 bg-slate-950 px-2 py-0.5 rounded border border-indigo-500/20">
-            {import.meta.env.VITE_AUTH_USERNAME || 'admin'} / {import.meta.env.VITE_AUTH_PASSWORD || 'admin123'}
-          </span>
-        </div>
+
 
         {/* Error Alert */}
         {errorMsg && (
