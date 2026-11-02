@@ -54,6 +54,51 @@ function formatSbiDate(dateStr: string): string {
   return dateStr;
 }
 
+function formatBoiTxnDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    let day = 0, month = 0, year = 0;
+    if (parts[0].length === 4) {
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      day = parseInt(parts[2], 10);
+    } else {
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10) - 1;
+      year = parseInt(parts[2], 10);
+    }
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 0 && month < 12) {
+      const d = day.toString().padStart(2, '0');
+      const m = MONTHS[month];
+      return `${d}-${m}-${year}`;
+    }
+  }
+  return dateStr;
+}
+
+function formatBoiHeaderDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split(/[-/]/);
+  if (parts.length === 3) {
+    let day = 0, month = 0, year = 0;
+    if (parts[0].length === 4) {
+      year = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      day = parseInt(parts[2], 10);
+    } else {
+      day = parseInt(parts[0], 10);
+      month = parseInt(parts[1], 10);
+      year = parseInt(parts[2], 10);
+    }
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      return `${day.toString().padStart(2, '0')}-${month.toString().padStart(2, '0')}-${year}`;
+    }
+  }
+  return dateStr;
+}
+
 function formatSbiAccountNumber(accNo?: string): string {
   const raw = (accNo || '30521458920').trim();
   if (raw.length < 17 && /^\d+$/.test(raw)) {
@@ -234,7 +279,7 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
     : settings.bankStyle === 'SBI2'
       ? chunkTransactionsForA4(transactions, 9, 19)
       : settings.bankStyle === 'BOI'
-        ? chunkTransactionsForA4(transactions, 18, 38)
+        ? chunkTransactionsForA4(transactions, 24, 35)
         : settings.bankStyle === 'PNB'
           ? chunkTransactionsForA4(transactions, 14, 34)
           : chunkTransactionsForA4(transactions, 18, 28);
@@ -913,86 +958,59 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                   ) : settings.bankStyle === 'BOI' ? (
 
                     /* BOI DESIGN THEME */
-                    <div className="w-full px-[10mm] pt-4" style={{ fontFamily: 'Arial, sans-serif', color: '#000000', paddingTop: '15px' }}>
+                    <div className="w-full" style={{ fontFamily: '"Times New Roman", Times, serif', color: '#000000', padding: '0 21.92mm', paddingTop: '10px' }}>
                       {isFirst ? (
                         <div>
-                          {/* Logo Top Right */}
-                          <div className="flex justify-end mb-2">
+                          {/* Centered BOI Logo 50x50 */}
+                          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>
                             <img
-                              src="/boi-logo.png"
+                              src="/logos/boi_logo.png"
                               alt="Bank of India"
-                              style={{ height: '100px', width: 'auto' }}
+                              style={{ width: '50px', height: '50px', objectFit: 'contain' }}
                             />
                           </div>
 
-                          {/* Title Centered */}
-                          <div className="text-center my-2 mb-10">
-                            <h1 className="text-xl font-bold text-black m-0">Detailed Statement</h1>
+                          {/* Report Generation Date Right Aligned */}
+                          <div style={{ textAlign: 'right', fontSize: '9pt', color: '#000000', marginRight: '24px', marginBottom: '8px' }}>
+                            Report Generation Date : {formatBoiHeaderDate(new Date().toISOString().split('T')[0])}
                           </div>
 
-                          {/* Date Right Aligned */}
-                          <div className="text-right text-xs font-bold text-black mb-2">
-                            Date: {(() => {
-                              const d = new Date();
-                              return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-                            })()}
-                          </div> <br />
+                          {/* Banner: Left-aligned at 90.3pt (~12%) */}
+                          <div style={{ fontSize: '10pt', color: '#000000', marginLeft: '28px', marginBottom: '22px', lineHeight: 1.45 }}>
+                            <div>THE MPASSBOOK STATEMENT IS GENERATED FOR SELECTED DATE RANGE BETWEEN</div>
+                            <div>{formatBoiHeaderDate(transactions[0]?.valueDate || '2022-10-22')} TO {formatBoiHeaderDate(transactions[transactions.length - 1]?.valueDate || '2023-04-20')}.</div>
+                          </div>
 
-                          {/* Account Metadata Box Table */}
-                          <table className="w-full border-collapse border border-black text-xs mb-4" style={{ color: '#000' }}>
-                            <tbody>
-                              <tr>
-                                <td className="p-1.5 pt-2.5  w-1/2 align-top">
-                                  <span className="inline-block w-40 font-normal">Account Name :</span>
-                                  <span className="font-normal">{customerDetails.accountHolderName}</span>
-                                </td>
-                                <td className="p-1.5 pt-2.5 w-1/2 align-top">
-                                  <span className="inline-block w-44 font-normal">Account holder address :</span>
-                                  <span className="font-normal">{customerDetails.address?.replace(/\n/g, ' ')}</span>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td className="p-1.5  align-top">
-                                  <span className="inline-block w-40 font-normal">Customer ID / CIF :</span>
-                                  <span className="font-normal">{customerDetails.cifNumber}</span>
-                                </td>
-                                <td className="p-1.5 align-top">
-                                  <span className="inline-block w-44 font-normal">IFSC Code :</span>
-                                  <span className="font-normal">{branchDetails.ifscCode}</span>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td className="p-1.5  align-top">
-                                  <span className="inline-block w-40 font-normal">Account Number :</span>
-                                  <span className="font-normal">{customerDetails.accountNumber}</span>
-                                </td>
-                                <td className="p-1.5 align-top">
-                                  <span className="inline-block w-44 font-normal">Branch Name :</span>
-                                  <span className="font-normal">{branchDetails.branchName}</span>
-                                </td>
-                              </tr>
-                            </tbody>
-                          </table>
+                          {/* Customer Details Header */}
+                          <div style={{ fontSize: '10pt', color: '#000000', marginBottom: '4px' }}>
+                            &nbsp;CUSTOMER DETAILS
+                          </div>
 
-                          {/* Transaction Date Filter Block */}
-                          <div className="text-xs leading-relaxed text-black mb-4 space-y-1">
-                            <div className="flex">
-                              <span className="w-40 font-bold">Transaction Date</span>
-                              <span><strong>from: {transactions[0]?.valueDate || '01/12/2025'} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </strong> <strong>to: {transactions[transactions.length - 1]?.valueDate || '31/05/2026'}</strong></span>
+                          {/* Customer Details 2-box grid */}
+                          <div style={{ display: 'flex', width: '100%', marginBottom: '20px' }}>
+                            <div style={{ width: '50%', border: '0.5px solid #000', padding: '4px 6px', fontSize: '9pt', lineHeight: 1.45 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                <span>Customer ID</span>
+                                <span>{customerDetails.cifNumber || '138157654'}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                <span>Account No</span>
+                                <span>{customerDetails.accountNumber || '902610110005760'}</span>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span>Name of Customer</span>
+                                <span style={{ textAlign: 'right' }}>{(customerDetails.accountHolderName || 'ARVIND S/O  NARBAT SINGH').toUpperCase()}</span>
+                              </div>
                             </div>
-                            <div className="flex">
-                              <span className="w-40 font-bold">Amount</span>
-                              <span><strong>from:</strong> - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> -</span>
+                            <div style={{ width: '50%', border: '0.5px solid #000', borderLeft: 'none', padding: '4px 8px', fontSize: '9pt', lineHeight: 1.45 }}>
+                              <div>Address of Customer</div>
+                              <div>{customerDetails.address || '2229/2 RAMNAGAR TEH ICHHAWAR DIST SEHORE'}</div>
+                              <div>{(customerDetails.city || 'MP ICHHAWAR MADHYA PRADESH') + ' INDIA ' + (customerDetails.pinCode || '466115')}</div>
                             </div>
-                            <div className="flex">
-                              <span className="w-40 font-bold">Cheque</span>
-                              <span><strong>from:</strong> - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>to:</strong> -</span>
-                            </div>
-                            <div className="mt-1"><strong>Transaction type: All</strong></div>
                           </div>
                         </div>
                       ) : (
-                        <div></div>
+                        <div style={{ height: '10px' }}></div>
                       )}
                     </div>
                   ) : settings.bankStyle === 'PNB' ? (
@@ -1317,40 +1335,68 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                       ) : settings.bankStyle === 'BOI' ? (
 
                         /* ─── BOI TABLE ─────────────────────────────────────────── */
-                        <div style={{ fontFamily: 'Arial, Helvetica, sans-serif', padding: '10px 0' }}>
-                          <table className="w-full border-collapse" style={{ border: '1px solid #000', fontSize: '10.5px' }}>
+                        <div style={{ fontFamily: '"Times New Roman", Times, serif', width: '100%', padding: '0 21.92mm' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                            <colgroup>
+                              <col style={{ width: '12.5%' }} />
+                              <col style={{ width: '14.3%' }} />
+                              <col style={{ width: '37.5%' }} />
+                              <col style={{ width: '10.7%' }} />
+                              <col style={{ width: '10.7%' }} />
+                              <col style={{ width: '14.3%' }} />
+                            </colgroup>
                             {isFirst && (
                               <thead>
-                                <tr style={{ backgroundColor: '#ffffff', color: '#000000', fontWeight: 'normal', height: '32px' }}>
-                                  <th style={{ width: '6%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000', fontWeight: 'normal' }}>Sr No</th>
-                                  <th style={{ width: '12%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000', fontWeight: 'normal' }}>Date</th>
-                                  <th style={{ width: '44%', padding: '4px 6px', textAlign: 'left', border: '1px solid #000', fontWeight: 'normal' }}>Remarks</th>
-                                  <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000', fontWeight: 'normal' }}>Debit</th>
-                                  <th style={{ width: '12%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000', fontWeight: 'normal' }}>Credit</th>
-                                  <th style={{ width: '14%', padding: '4px 6px', textAlign: 'right', border: '1px solid #000', fontWeight: 'normal' }}>Balance</th>
+                                <tr style={{ height: '24px', backgroundColor: '#fff' }}>
+                                  <th style={{ border: '0.5px solid #000', padding: '2px', textAlign: 'center', fontSize: '10pt', fontWeight: 'normal', lineHeight: 1.1 }}>
+                                    Transaction<br />Date
+                                  </th>
+                                  <th style={{ border: '0.5px solid #000', padding: '2px', textAlign: 'center', fontSize: '10pt', fontWeight: 'normal' }}>Instrument Id</th>
+                                  <th style={{ border: '0.5px solid #000', padding: '2px', textAlign: 'center', fontSize: '10pt', fontWeight: 'normal' }}>Narration</th>
+                                  <th style={{ border: '0.5px solid #000', padding: '2px', textAlign: 'center', fontSize: '10pt', fontWeight: 'normal' }}>Debit</th>
+                                  <th style={{ border: '0.5px solid #000', padding: '2px', textAlign: 'center', fontSize: '10pt', fontWeight: 'normal' }}>Credit</th>
+                                  <th style={{ border: '0.5px solid #000', padding: '2px', textAlign: 'center', fontSize: '10pt', fontWeight: 'normal' }}>Balance</th>
                                 </tr>
                               </thead>
                             )}
-                            <tbody style={{ backgroundColor: '#ffffff', color: '#111827' }}>
-                              {chunkTransactions.map((tx) => {
-                                const serialNo = transactions.indexOf(tx) + 1;
-                                return (
-                                  <tr key={tx.id} style={{ borderBottom: '1px solid #000' }}>
-                                    <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', color: '#111827', width: '6%', border: '1px solid #000' }}>{serialNo}</td>
-                                    <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', whiteSpace: 'nowrap', color: '#111827', width: '12%', border: '1px solid #000' }}>{tx.valueDate.replace(/\//g, '-')}</td>
-                                    <td style={{ padding: '5px 6px', textAlign: 'left', fontSize: '10px', lineHeight: 1.3, color: '#111827', width: '44%', wordBreak: 'break-word', border: '1px solid #000', textTransform: 'uppercase' }}>{tx.details}</td>
-                                    <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#111827', width: '12%', border: '1px solid #000' }}>{tx.debit ? tx.debit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                                    <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#111827', width: '12%', border: '1px solid #000' }}>{tx.credit ? tx.credit.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : ''}</td>
-                                    <td style={{ padding: '5px 6px', textAlign: 'right', fontSize: '10px', color: '#111827', width: '14%', border: '1px solid #000', whiteSpace: 'nowrap' }}>₹ {tx.balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-                                  </tr>
-                                );
-                              })}
+                            <tbody>
+                              {chunkTransactions.map((tx) => (
+                                <tr key={tx.id} style={{ height: tx.details && tx.details.length > 28 ? '22px' : '13px' }}>
+                                  <td style={{ border: '0.5px solid #000', padding: '2px 4px', fontSize: '9pt', textAlign: 'left', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+                                    {formatBoiTxnDate(tx.valueDate)}
+                                  </td>
+                                  <td style={{ border: '0.5px solid #000', padding: '2px 4px', fontSize: '9pt', textAlign: 'left', verticalAlign: 'top' }}>
+                                    {tx.refNo && !tx.refNo.match(/^\d{12}$/) ? tx.refNo : ''}
+                                  </td>
+                                  <td style={{ border: '0.5px solid #000', padding: '2px 4px', fontSize: '9pt', textAlign: 'left', verticalAlign: 'top', wordBreak: 'break-word', lineHeight: 1.1 }}>
+                                    {tx.details}
+                                  </td>
+                                  <td style={{ border: '0.5px solid #000', padding: '2px 4px', fontSize: '9pt', textAlign: 'right', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+                                    {tx.debit && tx.debit > 0 ? tx.debit.toFixed(2) : '-'}
+                                  </td>
+                                  <td style={{ border: '0.5px solid #000', padding: '2px 4px', fontSize: '9pt', textAlign: 'right', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+                                    {tx.credit && tx.credit > 0 ? tx.credit.toFixed(2) : '-'}
+                                  </td>
+                                  <td style={{ border: '0.5px solid #000', padding: '2px 4px', fontSize: '9pt', textAlign: 'right', verticalAlign: 'top', whiteSpace: 'nowrap' }}>
+                                    {tx.balance.toFixed(2)}
+                                  </td>
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                           {isLast && (
-                            <div className="mt-4 text-xs text-slate-900 leading-relaxed font-sans select-none">
-                              <strong>NOTE:</strong><br />
-                              Any discrepancy in the account statement should be notified to the bank within period of 30 days of generation of statement. It will be treated that the entries/contents of this statement are checked and found correct by you, if no such complaint is made within the period stated above. Please do not share your ATM, Card details, PIN, OTP and Passwords with anyone else. Bank never asks for such details.
+                            <div style={{ marginTop: '20px', fontSize: '10pt', color: '#000000', lineHeight: 1.6 }}>
+                              <div>Effective available balance as on {(() => {
+                                const d = new Date();
+                                const dd = String(d.getDate()).padStart(2, '0');
+                                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                                const yyyy = d.getFullYear();
+                                const hh = String(d.getHours()).padStart(2, '0');
+                                const min = String(d.getMinutes()).padStart(2, '0');
+                                const ss = String(d.getSeconds()).padStart(2, '0');
+                                return `${dd}-${mm}-${yyyy} ${hh}:${min}:${ss}`;
+                              })()} is INR {closingBalance.toFixed(2)}</div>
+                              <div style={{ marginTop: '8px' }}>**This is a computer generated statement and does not require a signature.</div>
                             </div>
                           )}
                         </div>
@@ -1636,7 +1682,7 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
                     userSelect: 'none',
                   }}>
                     <span>Statement Generated on {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}, {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
-                    <span style={{ fontSize: '10px' }}>Page {pageNum} of {chunkedTransactions.length}</span>
+                    <span style={{ fontSize: '10px' }}>Page {pageNum} of {allPages.length}</span>
                   </div>
                 ) : (
                   <div></div>

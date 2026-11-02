@@ -121,6 +121,7 @@ const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | '
   { value: 'PNB', label: 'Punjab National Bank' },
   { value: 'Kotak', label: 'Kotak Mahindra' },
   { value: 'IndusInd', label: 'IndusInd Bank' },
+  { value: 'BOI', label: 'Bank of India' },
 ];
 
 // ── Shared form building blocks ────────────────

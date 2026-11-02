@@ -26,6 +26,9 @@ public final class PdfTemplateFactory {
         if ("KOTAK".equalsIgnoreCase(bankStyle) || "KOTAK MAHINDRA BANK".equalsIgnoreCase(bankStyle) || "KOTAK MAHINDRA".equalsIgnoreCase(bankStyle)) {
             return new KotakTemplate();
         }
+        if ("BOI".equalsIgnoreCase(bankStyle) || "BANK OF INDIA".equalsIgnoreCase(bankStyle)) {
+            return new BoiTemplate();
+        }
         return new StandardBankTemplate();
     }
 }
