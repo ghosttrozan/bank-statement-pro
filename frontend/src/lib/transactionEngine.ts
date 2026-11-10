@@ -605,9 +605,9 @@ function generateRawSalariedTransactions(
         } else if (option === 3) {
           return { detail: `ACH DR-HDFC ERGO HEALTH INS/${randRange(100000, 999999)}`, amount: pick([840.00, 1248.00, 1950.00]) };
         } else if (option === 4) {
-          return { detail: `ACH DR-BAJAJ FINANCE EMI/${randRange(10000000, 99999999)}`, amount: pick([2480.00, 3450.00, 4890.00]) };
+          return { detail: `ACH DR-HDFC LIFE INSURANCE/${randRange(10000000, 99999999)}`, amount: pick([2150.00, 3200.00, 4850.00]) };
         } else {
-          return { detail: `ACH DR-HDB FINANCIAL SERVICES/${randRange(100000, 999999)}`, amount: pick([3200.00, 5400.00, 6250.00]) };
+          return { detail: `ACH DR-ICICI PRUDENTIAL MF SIP/${randRange(100000, 999999)}`, amount: pick([2000.00, 3000.00, 5000.00]) };
         }
       },
       weight: 5

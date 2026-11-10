@@ -163,8 +163,8 @@ public final class TransactionEngine {
                     return switch (option) {
                         case 1 -> new DetailAndAmount("ACH DR-NETFLIX ENTERTAINMENT/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(199.00, 499.00, 649.00)));
                         case 2 -> new DetailAndAmount("ACH DR-NIPPON INDIA MF SIP/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(1000.00, 2500.00, 5000.00)));
-                        case 3 -> new DetailAndAmount("ACH DR-BAJAJ FINANCE EMI/" + RandomUtils.randRange(10000000, 99999999), RandomUtils.pick(List.of(2480.00, 3450.00, 4890.00)));
-                        default -> new DetailAndAmount("ACH DR-HDB FINANCIAL SERVICES/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(3200.00, 5400.00, 6250.00)));
+                        case 3 -> new DetailAndAmount("ACH DR-HDFC LIFE INSURANCE/" + RandomUtils.randRange(10000000, 99999999), RandomUtils.pick(List.of(2150.00, 3200.00, 4850.00)));
+                        default -> new DetailAndAmount("ACH DR-ICICI PRUDENTIAL MF SIP/" + RandomUtils.randRange(100000, 999999), RandomUtils.pick(List.of(2000.00, 3000.00, 5000.00)));
                     };
                 }, 6)
         );
@@ -308,7 +308,6 @@ public final class TransactionEngine {
             boolean electricityBilled = false;
             boolean mobileRecharged = false;
             boolean rentPaid = false;
-            boolean emiPaid = false;
             boolean ccPaid = false;
             boolean sipPaid = false;
             boolean groceryPaid = false;
@@ -338,11 +337,6 @@ public final class TransactionEngine {
                         double amt = Math.round((salaryInfo.amount() * 0.27 + RandomUtils.randRange(-400, 400)) * 100.0) / 100.0;
                         picked = new DetailAndAmount("UPI/RENT/9826019284@ybl/House Rent Payment", amt);
                         rentPaid = true;
-                    } else if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !emiPaid && txDate.getDayOfMonth() >= 5 && txDate.getDayOfMonth() <= 8) {
-                        isCredit = false;
-                        double amt = Math.round((salaryInfo.amount() * 0.16 + RandomUtils.randRange(-300, 300)) * 100.0) / 100.0;
-                        picked = new DetailAndAmount("ACH DR-BAJAJ FINANCE LOAN EMI/" + RandomUtils.randRange(10000000, 99999999), amt);
-                        emiPaid = true;
                     } else if (!isBusiness && salaryInfo != null && salaryInfo.amount() > 25000 && !sipPaid && txDate.getDayOfMonth() >= 6 && txDate.getDayOfMonth() <= 9) {
                         isCredit = false;
                         double amt = Math.round((salaryInfo.amount() * 0.07) / 500.0) * 500.0;
