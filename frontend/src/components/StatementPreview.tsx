@@ -282,22 +282,26 @@ export default function StatementPreview({ record, onClose, onPrint, hideControl
         ? chunkTransactionsForA4(transactions, 24, 35)
         : settings.bankStyle === 'PNB'
           ? chunkTransactionsForA4(transactions, 14, 34)
-          : chunkTransactionsForA4(transactions, 18, 28);
+          : settings.bankStyle === 'IPPB'
+            ? chunkTransactionsForA4(transactions, 18, 34)
+            : chunkTransactionsForA4(transactions, 18, 28);
 
-  const allPages = (settings.bankStyle === 'BOI' || settings.bankStyle === 'SBI2')
+  const allPages = (settings.bankStyle === 'BOI' || settings.bankStyle === 'SBI2' || settings.bankStyle === 'IPPB')
     ? pageChunks
     : [...pageChunks, [] as Transaction[]];
 
   useEffect(() => {
-    const bankFullName = settings.bankStyle === 'PNB'
-      ? 'Punjab National Bank'
-      : settings.bankStyle === 'BOI'
-        ? 'Bank of India'
-        : settings.bankStyle === 'Kotak'
-          ? 'Kotak Mahindra Bank'
-          : settings.bankStyle === 'SBI2'
-            ? 'State Bank of India (V2)'
-            : 'State Bank of India (V1)';
+    const bankFullName = settings.bankStyle === 'IPPB'
+      ? 'India Post Payments Bank'
+      : settings.bankStyle === 'PNB'
+        ? 'Punjab National Bank'
+        : settings.bankStyle === 'BOI'
+          ? 'Bank of India'
+          : settings.bankStyle === 'Kotak'
+            ? 'Kotak Mahindra Bank'
+            : settings.bankStyle === 'SBI2'
+              ? 'State Bank of India (V2)'
+              : 'State Bank of India (V1)';
 
 
     const originalTitle = document.title;

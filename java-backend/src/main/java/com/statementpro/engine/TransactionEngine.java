@@ -53,7 +53,7 @@ public final class TransactionEngine {
         StringBuilder sb = new StringBuilder(12);
         for (int i = 0; i < 12; i++) sb.append(RandomUtils.randRange(0, 9));
         String digits = sb.toString();
-        return "IndusInd".equals(bankStyle) ? "S" + digits.substring(0, 8) : digits;
+        return ("IndusInd".equalsIgnoreCase(bankStyle) || "IPPB".equalsIgnoreCase(bankStyle)) ? "S" + digits.substring(0, 8) : digits;
     }
 
     private static List<Transaction> generateRawSalariedTransactions(
@@ -511,7 +511,7 @@ public final class TransactionEngine {
                         case "AXIS" -> "SMS Banking Charges/" + RandomUtils.randRange(10000000, 99999999);
                         default -> "SMS ALERT CHARGES";
                     };
-                    String smsRef = "IndusInd".equalsIgnoreCase(bankStyle) ? "S" + RandomUtils.randRange(10000000, 99999999) : generateRefNo(bankStyle);
+                    String smsRef = ("IndusInd".equalsIgnoreCase(bankStyle) || "IPPB".equalsIgnoreCase(bankStyle)) ? "S" + RandomUtils.randRange(10000000, 99999999) : generateRefNo(bankStyle);
                     totalTxs.add(new Transaction("tx_sms_" + smsDate, dateStr, dateStr, smsNarrative, smsRef, 17.70, null, 0));
                 }
             }

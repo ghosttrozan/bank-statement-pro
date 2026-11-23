@@ -32,7 +32,7 @@ export interface AccountInfo {
 }
 
 export interface StatementSettings {
-  bankStyle: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd';
+  bankStyle: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd' | 'IPPB';
 
 
   // Existing Quick Duration Mode

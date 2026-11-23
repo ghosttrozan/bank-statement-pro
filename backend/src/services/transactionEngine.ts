@@ -39,7 +39,7 @@ export function getRandomOpeningBalance(): number {
 // Generate realistic Indian-sounding reference numbers with correct lengths
 export function generateRefNo(bankStyle?: string): string {
   const digits = Array.from({ length: 12 }, () => Math.floor(Math.random() * 10)).join('');
-  if (bankStyle === 'IndusInd') {
+  if (bankStyle === 'IndusInd' || bankStyle === 'IPPB') {
     return `S${digits.substring(0, 8)}`;
   }
   return digits;
@@ -278,6 +278,8 @@ function buildUpiNarrativeForMerchant(merch: MerchantInfo, isCredit: boolean, ba
     return `UPI/${ref}/${hh}:${mm}:${ss}/UPI/${merch.handle}/${direction}`;
   } else if (bankStyle === 'Kotak') {
     return `UPI/${direction}/${ref}/${merch.name}/${merch.handle}`;
+  } else if (bankStyle === 'IPPB') {
+    return `UPI~${ref}~${direction}~${merch.name.toUpperCase()}~${bank}~${merch.handle}~`;
   }
   const tag = isCredit ? 'UPIAB' : 'UPIAR';
   return `${tag}/${ref}/${direction}/${merch.name}/${bank}/${accountSuffix}/Paymen`;
@@ -301,6 +303,8 @@ function buildUpiNarrative(isCredit: boolean, bankStyle: string, customName?: st
     return `UPI/${ref}/${hh}:${mm}:${ss}/UPI/${vpa}/${direction}`;
   } else if (bankStyle === 'Kotak') {
     return `UPI/${direction}/${ref}/${firstName.toUpperCase()}/${vpa}`;
+  } else if (bankStyle === 'IPPB') {
+    return `UPI~${ref}~${direction}~${firstName.toUpperCase()}~${isCredit ? bank : 'IPOS'}~${firstName.toLowerCase()}@axl~`;
   }
 
   if (styleSelector === 1) {

@@ -1,0 +1,1602 @@
+[
+  {
+    "date": "02-04-2026",
+    "refNo": "S51045310",
+    "details": "UPI~652902287328~CR~Varun~SBIN~varunjoshiok@ax~P",
+    "debit": null,
+    "credit": 500.0,
+    "balance": 622.73
+  },
+  {
+    "date": "02-04-2026",
+    "refNo": "S54175436",
+    "details": "UPI~792135470080~CR~Varun~SBIN~varunjoshiok@ax~P",
+    "debit": null,
+    "credit": 200.0,
+    "balance": 822.73
+  },
+  {
+    "date": "02-04-2026",
+    "refNo": "S55238194",
+    "details": "UPI~197070903550~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 17.0,
+    "credit": null,
+    "balance": 805.73
+  },
+  {
+    "date": "02-04-2026",
+    "refNo": "S56144937",
+    "details": "UPI~283749577360~CR~Sagar\nTir~IDFB~7697271510@axl",
+    "debit": null,
+    "credit": 50.0,
+    "balance": 855.73
+  },
+  {
+    "date": "02-04-2026",
+    "refNo": "S71153466",
+    "details": "UPI~380824752373~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 845.73
+  },
+  {
+    "date": "02-04-2026",
+    "refNo": "S82896037",
+    "details": "UPI~963905335154~DR~VARUN~IPOS~PRAKASH\nCHANDRA~",
+    "debit": 40.0,
+    "credit": null,
+    "balance": 805.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S89682275",
+    "details": "UPI~645914117707~CR~NILESH\nJOS~IPOS~nileshjoshi259",
+    "debit": null,
+    "credit": 500.0,
+    "balance": 1305.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S4851824",
+    "details": "UPI~065162644347~DR~VARUN~IPOS~9174053369@ibl~",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 1285.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S8409217",
+    "details": "UPI~515460298664~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 50.0,
+    "credit": null,
+    "balance": 1235.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S13338588",
+    "details": "UPI~612033469242~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 1215.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S19325363",
+    "details": "UPI~422776741535~CR~Suraj\nMal~IDFB~8435191379@axl",
+    "debit": null,
+    "credit": 8000.0,
+    "balance": 9215.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S19442087",
+    "details": "UPI~273559671075~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 8000.0,
+    "credit": null,
+    "balance": 1215.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S19701023",
+    "details": "UPI~217310697086~DR~VARUN~IPOS~SANGEETA\nBAI SA~",
+    "debit": 65.0,
+    "credit": null,
+    "balance": 1150.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S20587101",
+    "details": "UPI~941406770407~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 40.0,
+    "credit": null,
+    "balance": 1110.73
+  },
+  {
+    "date": "03-04-2026",
+    "refNo": "S21681757",
+    "details": "UPI~689263756256~DR~VARUN~IPOS~PRAKASH\nCHANDRA~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 1100.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S34605903",
+    "details": "UPI~484015044498~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 45.0,
+    "credit": null,
+    "balance": 1055.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S45322344",
+    "details": "UPI~696113190724~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1000.0,
+    "credit": null,
+    "balance": 55.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S56210115",
+    "details": "UPI~960421217707~DR~VARUN~IPOS~MUSKAN\nYADAV DO~",
+    "debit": 15.0,
+    "credit": null,
+    "balance": 40.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S60182774",
+    "details": "UPI~616024503859~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 15.0,
+    "credit": null,
+    "balance": 25.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S60278959",
+    "details": "UPI~946856121496~CR~Dhiraj\nTiw~IDFB~7697636070@axl",
+    "debit": null,
+    "credit": 2000.0,
+    "balance": 2025.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S60350814",
+    "details": "UPI~733322434785~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 2000.0,
+    "credit": null,
+    "balance": 25.73
+  },
+  {
+    "date": "04-04-2026",
+    "refNo": "S63906788",
+    "details": "UPI~123950905037~DR~VARUN~IPOS~MANFUL\nBALAI~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 15.73
+  },
+  {
+    "date": "05-04-2026",
+    "refNo": "S85174631",
+    "details": "UPI~768700564218~CR~ANIKET~BARB~8085465167@yb",
+    "debit": null,
+    "credit": 1000.0,
+    "balance": 1015.73
+  },
+  {
+    "date": "05-04-2026",
+    "refNo": "S92630174",
+    "details": "UPI~193726691563~CR~Ansh\nKhan~SBIN~8963967499-2@y",
+    "debit": null,
+    "credit": 1850.0,
+    "balance": 2865.73
+  },
+  {
+    "date": "05-04-2026",
+    "refNo": "S93552776",
+    "details": "UPI~029481986067~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 1000.0,
+    "credit": null,
+    "balance": 1865.73
+  },
+  {
+    "date": "05-04-2026",
+    "refNo": "S95392988",
+    "details": "UPI~935077188509~CR~VIRENDRA\n~SBIN~vsanoniya@ybl~",
+    "debit": null,
+    "credit": 600.0,
+    "balance": 2465.73
+  },
+  {
+    "date": "06-04-2026",
+    "refNo": "S5701687",
+    "details": "UPI~291078350773~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 150.0,
+    "credit": null,
+    "balance": 2315.73
+  },
+  {
+    "date": "06-04-2026",
+    "refNo": "S10101557",
+    "details": "UPI~056695399808~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 30.0,
+    "credit": null,
+    "balance": 2285.73
+  },
+  {
+    "date": "06-04-2026",
+    "refNo": "S12809009",
+    "details": "UPI~388177365243~CR~ROSHNI\nMAL~BARB~7415502452@axl",
+    "debit": null,
+    "credit": 130.0,
+    "balance": 2415.73
+  },
+  {
+    "date": "06-04-2026",
+    "refNo": "S29617301",
+    "details": "UPI~299336362994~CR~AAYUSH\nSA~SBIN~aayushsaraiya@",
+    "debit": null,
+    "credit": 1000.0,
+    "balance": 3415.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S47569155",
+    "details": "UPI~638825795028~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 1825.0,
+    "credit": null,
+    "balance": 1590.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S49184221",
+    "details": "UPI~610601508565~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 30.0,
+    "credit": null,
+    "balance": 1560.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S52602143",
+    "details": "UPI~003168660788~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 50.0,
+    "credit": null,
+    "balance": 1510.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S54716722",
+    "details": "UPI~609794197356~DR~VARUN~IPOS~MOHALLA\nTECH PR~",
+    "debit": 1.0,
+    "credit": null,
+    "balance": 1509.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S54722844",
+    "details": "UPI~609794197356~CR~VARUN~IPOS~027810033405~",
+    "debit": null,
+    "credit": 1.0,
+    "balance": 1510.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S57355564",
+    "details": "UPI~818588005485~DR~VARUN~IPOS~Story TV~",
+    "debit": 1.0,
+    "credit": null,
+    "balance": 1509.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S60468356",
+    "details": "UPI~522794240641~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 22.0,
+    "credit": null,
+    "balance": 1487.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S60809959",
+    "details": "NEFT-IN-UTIBN62026040761564146-PRIMEONE W-\nBatchId:",
+    "debit": null,
+    "credit": 3036.0,
+    "balance": 4523.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S60811368",
+    "details": "NEFT-IN-UTIBN62026040761562367-PRIMEONE W-\nBatchId:",
+    "debit": null,
+    "credit": 10600.0,
+    "balance": 15123.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S64405810",
+    "details": "UPI~510312959650~DR~VARUN~IPOS~DILIP\nJAGDISH A~",
+    "debit": 36.0,
+    "credit": null,
+    "balance": 15087.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S68453319",
+    "details": "UPI~124321004948~CR~BHOLURAM\nP~BARB~bholukalota@ax",
+    "debit": null,
+    "credit": 7500.0,
+    "balance": 22587.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S69067586",
+    "details": "UPI~315052130269~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 7000.0,
+    "credit": null,
+    "balance": 15587.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S71562426",
+    "details": "UPI~134274351191~DR~VARUN~IPOS~Rajiya Bee~",
+    "debit": 12.0,
+    "credit": null,
+    "balance": 15575.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S73088681",
+    "details": "UPI~971017377775~DR~VARUN~IPOS~RANI SATI\nKISAN~",
+    "debit": 111.0,
+    "credit": null,
+    "balance": 15464.73
+  },
+  {
+    "date": "07-04-2026",
+    "refNo": "S74095373",
+    "details": "UPI~852794068638~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 15444.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S84156874",
+    "details": "UPI~528636720233~DR~VARUN~IPOS~PRAKASH\nCHANDRA~",
+    "debit": 5.0,
+    "credit": null,
+    "balance": 15439.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S84985736",
+    "details": "UPI~355762940936~CR~DHARMENDRA~HDFC~8225989",
+    "debit": null,
+    "credit": 4000.0,
+    "balance": 19439.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S90259984",
+    "details": "UPI~188458804363~CR~AAKASH SO\n~BKID~9617301253@ybl",
+    "debit": null,
+    "credit": 900.0,
+    "balance": 20339.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S90639123",
+    "details": "UPI~685347386118~DR~VARUN~IPOS~GIRIRAJFILLING",
+    "debit": 81.0,
+    "credit": null,
+    "balance": 20258.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S97328004",
+    "details": "UPI~608177787627~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 2000.0,
+    "credit": null,
+    "balance": 18258.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S97375260",
+    "details": "UPI~989098172536~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 15000.0,
+    "credit": null,
+    "balance": 3258.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S469413",
+    "details": "UPI~728458868125~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 100.0,
+    "credit": null,
+    "balance": 3158.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S3221504",
+    "details": "UPI~028087923565~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 3148.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S8563089",
+    "details": "UPI~739650101202~CR~Nikita\nMe~SBIN~8962062851@ybl",
+    "debit": null,
+    "credit": 1800.0,
+    "balance": 4948.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S13969605",
+    "details": "UPI~721753533772~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 4900.0,
+    "credit": null,
+    "balance": 48.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S14241251",
+    "details": "UPI~657090184593~DR~VARUN~IPOS~JITENDRA\nMANDLO~",
+    "debit": 6.0,
+    "credit": null,
+    "balance": 42.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S15713804",
+    "details": "UPI~001598626012~CR~MOHIT\nJOSH~BKID~8964995451-1@n",
+    "debit": null,
+    "credit": 500.0,
+    "balance": 542.73
+  },
+  {
+    "date": "08-04-2026",
+    "refNo": "S15734810",
+    "details": "UPI~501164232591~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 500.0,
+    "credit": null,
+    "balance": 42.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S23380490",
+    "details": "UPI~665814148409~DR~VARUN~IPOS~JITENDRA\nMANDLO~",
+    "debit": 23.0,
+    "credit": null,
+    "balance": 19.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S31056042",
+    "details": "UPI~944764963294~CR~SHRI\nSIDDH~BARB~adiction.apoor",
+    "debit": null,
+    "credit": 2500.0,
+    "balance": 2519.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S31092630",
+    "details": "UPI~578206948570~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 2500.0,
+    "credit": null,
+    "balance": 19.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S32807113",
+    "details": "UPI~293013072883~CR~Nikita\nMe~SBIN~8962062851@ybl",
+    "debit": null,
+    "credit": 4000.0,
+    "balance": 4019.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S33511057",
+    "details": "UPI~951171059471~CR~VAISHALI\nR~BKID~vaishalirathor",
+    "debit": null,
+    "credit": 1000.0,
+    "balance": 5019.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S35809393",
+    "details": "UPI~243008915193~DR~VARUN~IPOS~HIMANSHU~",
+    "debit": 4000.0,
+    "credit": null,
+    "balance": 1019.73
+  },
+  {
+    "date": "09-04-2026",
+    "refNo": "S44114479",
+    "details": "UPI~694430471276~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 60.0,
+    "credit": null,
+    "balance": 959.73
+  },
+  {
+    "date": "10-04-2026",
+    "refNo": "S58850644",
+    "details": "UPI~055626294976~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 800.0,
+    "credit": null,
+    "balance": 159.73
+  },
+  {
+    "date": "10-04-2026",
+    "refNo": "S85093615",
+    "details": "UPI~424731519070~DR~VARUN~IPOS~Mr Sanjay\nMakw~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 149.73
+  },
+  {
+    "date": "10-04-2026",
+    "refNo": "S87207850",
+    "details": "UPI~694780375349~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 50.0,
+    "credit": null,
+    "balance": 99.73
+  },
+  {
+    "date": "11-04-2026",
+    "refNo": "S98399151",
+    "details": "UPI~610165647216~DR~VARUN~IPOS~JioSaavn~",
+    "debit": 49.0,
+    "credit": null,
+    "balance": 50.73
+  },
+  {
+    "date": "11-04-2026",
+    "refNo": "S4296008",
+    "details": "UPI~606755902778~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 40.0,
+    "credit": null,
+    "balance": 10.73
+  },
+  {
+    "date": "11-04-2026",
+    "refNo": "S17318672",
+    "details": "UPI~529394868480~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1.0,
+    "credit": null,
+    "balance": 9.73
+  },
+  {
+    "date": "11-04-2026",
+    "refNo": "S21844919",
+    "details": "UPI~051103730840~CR~Harsh\nRat~SBIN~8359838134-4@y",
+    "debit": null,
+    "credit": 50.0,
+    "balance": 59.73
+  },
+  {
+    "date": "12-04-2026",
+    "refNo": "S68196288",
+    "details": "UPI~176091184386~CR~Sagar\nTir~IDFB~7697271510@axl",
+    "debit": null,
+    "credit": 1000.0,
+    "balance": 1059.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S74179496",
+    "details": "UPI~110808414677~CR~Hemant\nMee~IDFB~9009755728-2@y",
+    "debit": null,
+    "credit": 500.0,
+    "balance": 1559.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S76898800",
+    "details": "UPI~441406692838~CR~MUKESH\nDA~SBIN~9009377470@ybl",
+    "debit": null,
+    "credit": 1500.0,
+    "balance": 3059.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S79599467",
+    "details": "UPI~376968196695~CR~Shraddha\n~SBIN~6267121838@axl",
+    "debit": null,
+    "credit": 2000.0,
+    "balance": 5059.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S84484988",
+    "details": "UPI~069158953087~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 1500.0,
+    "credit": null,
+    "balance": 3559.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S89900548",
+    "details": "UPI~344609451777~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 1899.0,
+    "credit": null,
+    "balance": 1660.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S89988045",
+    "details": "UPI~132666534620~CR~Ankit~BARB~9630388556@axl~P",
+    "debit": null,
+    "credit": 2000.0,
+    "balance": 3660.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S90022653",
+    "details": "UPI~806274246210~DR~VARUN~IPOS~9174053369@ibl~",
+    "debit": 500.0,
+    "credit": null,
+    "balance": 3160.73
+  },
+  {
+    "date": "13-04-2026",
+    "refNo": "S8834073",
+    "details": "UPI~821280381225~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 3000.0,
+    "credit": null,
+    "balance": 160.73
+  },
+  {
+    "date": "14-04-2026",
+    "refNo": "S20234000",
+    "details": "UPI~679492703019~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 100.0,
+    "credit": null,
+    "balance": 60.73
+  },
+  {
+    "date": "14-04-2026",
+    "refNo": "S36808450",
+    "details": "UPI~198432073224~CR~Nikita\nMe~SBIN~8962062851@ybl",
+    "debit": null,
+    "credit": 6000.0,
+    "balance": 6060.73
+  },
+  {
+    "date": "14-04-2026",
+    "refNo": "S36938614",
+    "details": "UPI~742248959061~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 5560.0,
+    "credit": null,
+    "balance": 500.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S56188903",
+    "details": "UPI~472030913791~CR~Nikita\nMe~SBIN~8962062851@ybl",
+    "debit": null,
+    "credit": 2500.0,
+    "balance": 3000.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S56237482",
+    "details": "UPI~230693877799~DR~VARUN~IPOS~9174053369@ibl~",
+    "debit": 3000.0,
+    "credit": null,
+    "balance": 0.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S58276146",
+    "details": "UPI~280003427971~CR~Mrs ANJU\nS~MAHB~8305638057-2@a",
+    "debit": null,
+    "credit": 1000.0,
+    "balance": 1000.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S61374359",
+    "details": "UPI~165703641435~DR~VARUN~IPOS~Shree Sant Sing~",
+    "debit": 120.0,
+    "credit": null,
+    "balance": 880.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S66286955",
+    "details": "UPI~896013353176~CR~Nikita\nMe~SBIN~8962062851@ybl",
+    "debit": null,
+    "credit": 4500.0,
+    "balance": 5380.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S66626426",
+    "details": "UPI~838189329499~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1000.0,
+    "credit": null,
+    "balance": 4380.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S66636858",
+    "details": "UPI~370668150301~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1500.0,
+    "credit": null,
+    "balance": 2880.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S79886412",
+    "details": "UPI~043104255260~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 35.0,
+    "credit": null,
+    "balance": 2845.73
+  },
+  {
+    "date": "15-04-2026",
+    "refNo": "S81113133",
+    "details": "UPI~913242013256~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 2835.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S90402686",
+    "details": "UPI~135686127858~DR~VARUN~IPOS~SHRIJI PAN\nSADA~",
+    "debit": 136.0,
+    "credit": null,
+    "balance": 2699.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S4989678",
+    "details": "UPI~414645087539~DR~VARUN~IPOS~HONEY THAI\nSPA~",
+    "debit": 1600.0,
+    "credit": null,
+    "balance": 1099.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S5517725",
+    "details": "UPI~101838513162~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1000.0,
+    "credit": null,
+    "balance": 99.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S5675066",
+    "details": "UPI~608386501066~CR~RITESH~UTIB~8889209210@axi",
+    "debit": null,
+    "credit": 500.0,
+    "balance": 599.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S5694743",
+    "details": "UPI~773578431753~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 500.0,
+    "credit": null,
+    "balance": 99.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S7159621",
+    "details": "UPI~002278805504~DR~VARUN~IPOS~PRADEEP\nSINGH P~",
+    "debit": 25.0,
+    "credit": null,
+    "balance": 74.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S21586229",
+    "details": "UPI~419510232447~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 54.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S21589305",
+    "details": "UPI~336455739368~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 1.0,
+    "credit": null,
+    "balance": 53.73
+  },
+  {
+    "date": "16-04-2026",
+    "refNo": "S23224804",
+    "details": "UPI~070343649853~DR~VARUN~IPOS~Jio Recharge~",
+    "debit": 19.0,
+    "credit": null,
+    "balance": 34.73
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S33269339",
+    "details": "UPI~990957061286~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 30.0,
+    "credit": null,
+    "balance": 4.73
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S34553420",
+    "details": "UPI~385929973082~CR~SANJAY\nPE~SBIN~sanjaypethari@",
+    "debit": null,
+    "credit": 2000.0,
+    "balance": 2004.73
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S53131592",
+    "details": "UPI~604472641543~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 32.0,
+    "credit": null,
+    "balance": 1972.73
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S57308870",
+    "details": "UPI~331052423179~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 1952.73
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S57433375",
+    "details": "UPI~293922245128~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1000.0,
+    "credit": null,
+    "balance": 952.73
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S57504166",
+    "details": "UPI~050280923519~DR~VARUN~IPOS~MPOKKET\nFINANCI~",
+    "debit": 400.59,
+    "credit": null,
+    "balance": 552.14
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S57526573",
+    "details": "UPI~976424591020~DR~VARUN~IPOS~MPOKKET\nFINANCI~",
+    "debit": 370.57,
+    "credit": null,
+    "balance": 181.57
+  },
+  {
+    "date": "17-04-2026",
+    "refNo": "S58906947",
+    "details": "UPI~318908623812~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 22.0,
+    "credit": null,
+    "balance": 159.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S71036245",
+    "details": "UPI~938392682636~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 15.0,
+    "credit": null,
+    "balance": 144.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S80771062",
+    "details": "UPI~763912212450~DR~VARUN~IPOS~Siddheshwar Fil~",
+    "debit": 81.0,
+    "credit": null,
+    "balance": 63.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S88461014",
+    "details": "NEFT-IN-YESBN12026041808853389-MPOKKET FI-\nBatchId:",
+    "debit": null,
+    "credit": 1853.0,
+    "balance": 1916.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S90089139",
+    "details": "UPI~418321042890~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 32.0,
+    "credit": null,
+    "balance": 1884.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S95598744",
+    "details": "UPI~076224919878~DR~VARUN~IPOS~MR YOGESH\nYADA~",
+    "debit": 90.0,
+    "credit": null,
+    "balance": 1794.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S96036604",
+    "details": "UPI~642755731307~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 83.0,
+    "credit": null,
+    "balance": 1711.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S97517404",
+    "details": "UPI~816458366596~DR~VARUN~IPOS~VIJAY\nVERMA~",
+    "debit": 250.0,
+    "credit": null,
+    "balance": 1461.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S97639847",
+    "details": "UPI~616533888782~DR~VARUN~IPOS~Dinesh Prajapat~",
+    "debit": 13.0,
+    "credit": null,
+    "balance": 1448.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S98548994",
+    "details": "UPI~934747739736~DR~VARUN~IPOS~DAMODAR\nKAILASH~",
+    "debit": 80.0,
+    "credit": null,
+    "balance": 1368.57
+  },
+  {
+    "date": "18-04-2026",
+    "refNo": "S98558862",
+    "details": "UPI~328314168265~DR~VARUN~IPOS~Dinesh Prajapat~",
+    "debit": 13.0,
+    "credit": null,
+    "balance": 1355.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S5960123",
+    "details": "UPI~978993667074~DR~VARUN~IPOS~RANI SATI\nKISAN~",
+    "debit": 222.0,
+    "credit": null,
+    "balance": 1133.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S6497995",
+    "details": "UPI~325551144905~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 5.0,
+    "credit": null,
+    "balance": 1128.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S7155426",
+    "details": "UPI~691232511365~CR~SUNIL\nBALR~BKID~gurjarsunil378",
+    "debit": null,
+    "credit": 1830.0,
+    "balance": 2958.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S9648653",
+    "details": "UPI~610927119224~CR~KEVALRAM\nM~BKID~kevalrammalviy",
+    "debit": null,
+    "credit": 1845.0,
+    "balance": 4803.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S10488984",
+    "details": "UPI~741707282200~CR~Tejal\nSirs~IDFB~9826831581@axl",
+    "debit": null,
+    "credit": 1802.0,
+    "balance": 6605.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S10918914",
+    "details": "UPI~524739595181~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 12.0,
+    "credit": null,
+    "balance": 6593.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S18701059",
+    "details": "UPI~111644564709~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 6573.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S24158716",
+    "details": "UPI~875782949306~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 6563.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S26512968",
+    "details": "UPI~108951400046~DR~VARUN~IPOS~Mr Ajay Kumar\nB~",
+    "debit": 60.0,
+    "credit": null,
+    "balance": 6503.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S26825333",
+    "details": "UPI~544817523858~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 6009.0,
+    "credit": null,
+    "balance": 494.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S33882002",
+    "details": "UPI~930030644324~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 25.0,
+    "credit": null,
+    "balance": 469.57
+  },
+  {
+    "date": "19-04-2026",
+    "refNo": "S36920124",
+    "details": "UPI~534449867955~DR~VARUN~IPOS~MEESHO\nTECHNOLO~",
+    "debit": 259.0,
+    "credit": null,
+    "balance": 210.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S54127922",
+    "details": "UPI~378815151572~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 110.0,
+    "credit": null,
+    "balance": 100.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S57159345",
+    "details": "UPI~400842608115~CR~SANJAY\nPE~SBIN~sanjaypethari@",
+    "debit": null,
+    "credit": 4000.0,
+    "balance": 4100.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S58102513",
+    "details": "UPI~808150465092~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 3500.0,
+    "credit": null,
+    "balance": 600.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S68668997",
+    "details": "UPI~875175134198~DR~VARUN~IPOS~MR YOGESH\nYADA~",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 580.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S68731593",
+    "details": "UPI~854570906435~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 42.0,
+    "credit": null,
+    "balance": 538.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S69445628",
+    "details": "UPI~706769122237~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 32.0,
+    "credit": null,
+    "balance": 506.57
+  },
+  {
+    "date": "20-04-2026",
+    "refNo": "S75281332",
+    "details": "UPI~600109461838~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 72.0,
+    "credit": null,
+    "balance": 434.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S81125593",
+    "details": "UPI~542746983457~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 73.0,
+    "credit": null,
+    "balance": 361.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S83392679",
+    "details": "UPI~650569933312~CR~MANEESH\nCH~BKID~8719997676@ybl",
+    "debit": null,
+    "credit": 1600.0,
+    "balance": 1961.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S83423954",
+    "details": "UPI~522869024786~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1612.0,
+    "credit": null,
+    "balance": 349.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S84405594",
+    "details": "UPI~892641298803~CR~MANEESH\nCH~BKID~8719997676@ybl",
+    "debit": null,
+    "credit": 1800.0,
+    "balance": 2149.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S84420966",
+    "details": "UPI~824500675696~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 1800.0,
+    "credit": null,
+    "balance": 349.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S87358560",
+    "details": "UPI~459062937676~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 12.0,
+    "credit": null,
+    "balance": 337.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S96387584",
+    "details": "UPI~297857392703~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 100.0,
+    "credit": null,
+    "balance": 237.57
+  },
+  {
+    "date": "21-04-2026",
+    "refNo": "S96398748",
+    "details": "UPI~964653723613~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 50.0,
+    "credit": null,
+    "balance": 187.57
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S11972533",
+    "details": "UPI~050269244510~DR~VARUN~IPOS~SANJAY\nKANOJIYA~",
+    "debit": 26.0,
+    "credit": null,
+    "balance": 161.57
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S11994604",
+    "details": "UPI~105244107075~DR~VARUN~IPOS~Shree Balaji Fi~",
+    "debit": 117.0,
+    "credit": null,
+    "balance": 44.57
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S21098912",
+    "details": "UPI~032249476914~CR~Abhishek\nP~AUBL~8966941618@ybl",
+    "debit": null,
+    "credit": 1216.0,
+    "balance": 1260.57
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S29230275",
+    "details": "UPI~152386250782~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 16.0,
+    "credit": null,
+    "balance": 1244.57
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S31373511",
+    "details": "UPI~755667522954~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 716.0,
+    "credit": null,
+    "balance": 528.57
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S32713736",
+    "details": "UPI~652489702172~DR~VARUN~IPOS~MPOKKET\nFINANCI~",
+    "debit": 253.42,
+    "credit": null,
+    "balance": 275.15
+  },
+  {
+    "date": "22-04-2026",
+    "refNo": "S32773063",
+    "details": "UPI~021681856812~DR~VARUN~IPOS~MPOKKET\nFINANCI~",
+    "debit": 123.26,
+    "credit": null,
+    "balance": 151.89
+  },
+  {
+    "date": "23-04-2026",
+    "refNo": "S77172691",
+    "details": "UPI~158860073151~CR~LOKESH\nAMA~SBIN~9827624194@ybl",
+    "debit": null,
+    "credit": 1500.0,
+    "balance": 1651.89
+  },
+  {
+    "date": "23-04-2026",
+    "refNo": "S77257138",
+    "details": "UPI~569228254393~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 1351.0,
+    "credit": null,
+    "balance": 300.89
+  },
+  {
+    "date": "23-04-2026",
+    "refNo": "S83490496",
+    "details": "UPI~874606413573~DR~VARUN~IPOS~Jio Recharge~",
+    "debit": 19.0,
+    "credit": null,
+    "balance": 281.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S93194019",
+    "details": "UPI~239908325781~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 25.0,
+    "credit": null,
+    "balance": 256.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S96320460",
+    "details": "UPI~652864857161~DR~VARUN~IPOS~SHREE\nGANGA NAR~",
+    "debit": 110.0,
+    "credit": null,
+    "balance": 146.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S98280755",
+    "details": "UPI~611480329054~CR~Asha\nBai~AUBL~asha11123000@au~",
+    "debit": null,
+    "credit": 4681.0,
+    "balance": 4827.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S459300",
+    "details": "UPI~144664573858~DR~VARUN~IPOS~SHREE\nGANGA NAR~",
+    "debit": 4700.0,
+    "credit": null,
+    "balance": 127.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S4586797",
+    "details": "SMS Charges from 01-JAN-26 to 31-MAR-26",
+    "debit": 118.0,
+    "credit": null,
+    "balance": 9.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S15451323",
+    "details": "UPI~611473660659~CR~NILESH\nJOS~IPOS~nileshjoshi259",
+    "debit": null,
+    "credit": 200.0,
+    "balance": 209.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S18761754",
+    "details": "UPI~805508445205~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 25.0,
+    "credit": null,
+    "balance": 184.89
+  },
+  {
+    "date": "24-04-2026",
+    "refNo": "S23500760",
+    "details": "UPI~659035916742~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 164.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S30626195",
+    "details": "UPI~213068154581~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 20.0,
+    "credit": null,
+    "balance": 144.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S41028011",
+    "details": "UPI~243494869322~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 12.0,
+    "credit": null,
+    "balance": 132.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S43851717",
+    "details": "UPI~710811434468~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 122.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S46618340",
+    "details": "UPI~767199200783~DR~VARUN~IPOS~Vishal Verma~",
+    "debit": 35.0,
+    "credit": null,
+    "balance": 87.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S47636737",
+    "details": "UPI~396236709167~CR~NITESH\nCH~SBIN~7745949931@axl",
+    "debit": null,
+    "credit": 52.0,
+    "balance": 139.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S51858312",
+    "details": "UPI~795405334536~DR~VARUN~IPOS~JITENDRA\nMANDLO~",
+    "debit": 13.0,
+    "credit": null,
+    "balance": 126.89
+  },
+  {
+    "date": "25-04-2026",
+    "refNo": "S54190205",
+    "details": "UPI~642636233492~DR~VARUN~IPOS~JITENDRA\nMANDLO~",
+    "debit": 5.0,
+    "credit": null,
+    "balance": 121.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S73274851",
+    "details": "UPI~155819372781~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 30.0,
+    "credit": null,
+    "balance": 91.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S82530012",
+    "details": "UPI~984894303669~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 81.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S83667520",
+    "details": "UPI~931362666369~CR~DINESH\nJOS~BKID~8349904418@ibl",
+    "debit": null,
+    "credit": 1894.0,
+    "balance": 1975.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S84002035",
+    "details": "UPI~131882723024~CR~AAKASH\nPAT~IPOS~9630564730@ybl",
+    "debit": null,
+    "credit": 6368.0,
+    "balance": 8343.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S85758787",
+    "details": "UPI~267232454914~DR~VARUN~IPOS~Mr Bhupendra~",
+    "debit": 15.0,
+    "credit": null,
+    "balance": 8328.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S86655412",
+    "details": "UPI~139778181372~DR~VARUN~IPOS~9174053369@ibl~",
+    "debit": 8262.0,
+    "credit": null,
+    "balance": 66.89
+  },
+  {
+    "date": "26-04-2026",
+    "refNo": "S93193750",
+    "details": "UPI~454387005517~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 56.89
+  },
+  {
+    "date": "27-04-2026",
+    "refNo": "S9462966",
+    "details": "UPI~101928782914~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 30.0,
+    "credit": null,
+    "balance": 26.89
+  },
+  {
+    "date": "27-04-2026",
+    "refNo": "S19077402",
+    "details": "UPI~472863064097~DR~VARUN~IPOS~MR VASUDEV\nRAW~",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 16.89
+  },
+  {
+    "date": "27-04-2026",
+    "refNo": "S26289020",
+    "details": "UPI~056501899651~CR~VAISHALI\nR~UTIB~9165167466-3@a",
+    "debit": null,
+    "credit": 2465.0,
+    "balance": 2481.89
+  },
+  {
+    "date": "27-04-2026",
+    "refNo": "S27194335",
+    "details": "UPI~430704145889~DR~VARUN~IPOS~IDFC FIRST\nBANK~",
+    "debit": 2465.0,
+    "credit": null,
+    "balance": 16.89
+  },
+  {
+    "date": "28-04-2026",
+    "refNo": "S62077842",
+    "details": "UPI~330680429702~CR~SANJAY\nPE~SBIN~sanjaypethari@",
+    "debit": null,
+    "credit": 1900.0,
+    "balance": 1916.89
+  },
+  {
+    "date": "28-04-2026",
+    "refNo": "S62194391",
+    "details": "UPI~248219345907~DR~VARUN~IPOS~MPOKKET\nFINANCI~",
+    "debit": 976.9,
+    "credit": null,
+    "balance": 939.99
+  },
+  {
+    "date": "28-04-2026",
+    "refNo": "S62254737",
+    "details": "UPI~974032170282~DR~VARUN~IPOS~SI CREVA\nCAPITA~",
+    "debit": 600.0,
+    "credit": null,
+    "balance": 339.99
+  },
+  {
+    "date": "28-04-2026",
+    "refNo": "S66891045",
+    "details": "UPI~590225604502~DR~VARUN~IPOS~Sourabh\nKusvah~",
+    "debit": 75.0,
+    "credit": null,
+    "balance": 264.99
+  },
+  {
+    "date": "28-04-2026",
+    "refNo": "S76113938",
+    "details": "UPI~318834686596~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 56.0,
+    "credit": null,
+    "balance": 208.99
+  },
+  {
+    "date": "28-04-2026",
+    "refNo": "S79170081",
+    "details": "UPI~221050768692~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 35.0,
+    "credit": null,
+    "balance": 173.99
+  },
+  {
+    "date": "29-04-2026",
+    "refNo": "S90877224",
+    "details": "UPI~713125715878~DR~VARUN~IPOS~9174053369@ybl",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 163.99
+  },
+  {
+    "date": "29-04-2026",
+    "refNo": "S90889588",
+    "details": "UPI~611999466020~CR~Sanjay\nMe~SBIN~sanjaymeena806",
+    "debit": null,
+    "credit": 50.0,
+    "balance": 213.99
+  },
+  {
+    "date": "29-04-2026",
+    "refNo": "S91539200",
+    "details": "UPI~342449889644~DR~VARUN~IPOS~Anup Singh\nKush~",
+    "debit": 16.0,
+    "credit": null,
+    "balance": 197.99
+  },
+  {
+    "date": "29-04-2026",
+    "refNo": "S2203622",
+    "details": "UPI~119355733403~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 10.0,
+    "credit": null,
+    "balance": 187.99
+  },
+  {
+    "date": "29-04-2026",
+    "refNo": "S11368293",
+    "details": "UPI~029060927717~DR~VARUN~IPOS~AYUSH\nBANSAL~",
+    "debit": 44.0,
+    "credit": null,
+    "balance": 143.99
+  },
+  {
+    "date": "30-04-2026",
+    "refNo": "S31620994",
+    "details": "UPI~635147811854~CR~FIROJ\nSHAH~UBIN~shaanpoint@ybl",
+    "debit": null,
+    "credit": 5314.0,
+    "balance": 5457.99
+  },
+  {
+    "date": "30-04-2026",
+    "refNo": "S32261229",
+    "details": "UPI~918548436147~CR~AMAN\nPATEL~ICIC~amannpatel07@a",
+    "debit": null,
+    "credit": 608.0,
+    "balance": 6065.99
+  },
+  {
+    "date": "30-04-2026",
+    "refNo": "S32406766",
+    "details": "UPI~627844774481~CR~AMAN\nPATEL~ICIC~amannpatel07@a",
+    "debit": null,
+    "credit": 4378.0,
+    "balance": 10443.99
+  },
+  {
+    "date": "30-04-2026",
+    "refNo": "S35355777",
+    "details": "UPI~676866792997~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 10000.0,
+    "credit": null,
+    "balance": 443.99
+  },
+  {
+    "date": "30-04-2026",
+    "refNo": "S35396049",
+    "details": "UPI~211796390787~CR~SATISH\nBAB~PUNB~7354832582@ybl",
+    "debit": null,
+    "credit": 9000.0,
+    "balance": 9443.99
+  },
+  {
+    "date": "30-04-2026",
+    "refNo": "S35400888",
+    "details": "UPI~094357765963~DR~VARUN~IPOS~9174053369@axl",
+    "debit": 9000.0,
+    "credit": null,
+    "balance": 443.99
+  }
+]

@@ -113,7 +113,7 @@ const AXIS_BRANCH_DEFAULTS: BranchDetails = {
   ckycrNumber: 'XXXXXXXXXX1484',
 };
 
-const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd'; label: string }[] = [
+const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd' | 'IPPB'; label: string }[] = [
   { value: 'SBI', label: 'SBI V1' },
   { value: 'SBI2', label: 'SBI V2' },
   { value: 'BOB', label: 'Bank of Baroda' },
@@ -122,6 +122,7 @@ const BANK_STYLE_OPTIONS: { value: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | '
   { value: 'Kotak', label: 'Kotak Mahindra' },
   { value: 'IndusInd', label: 'IndusInd Bank' },
   { value: 'BOI', label: 'Bank of India' },
+  { value: 'IPPB', label: 'India Post (IPPB)' },
 ];
 
 // ── Shared form building blocks ────────────────
@@ -271,6 +272,17 @@ const INDUSIND_BRANCH_DEFAULTS: BranchDetails = {
   ckycrNumber: 'CKYCR123456789',
 };
 
+const IPPB_BRANCH_DEFAULTS: BranchDetails = {
+  branchName: 'DEWAS BRANCH',
+  branchAddress: 'DEWAS BRANCH , JIYAGAON , JIYAGAON,DEWAS - - DEWAS MADHYA PRADESH 455336',
+  branchCode: '0278',
+  branchEmail: 'contact@ippbonline.in',
+  branchPhone: '155299',
+  ifscCode: 'IPOS0000001',
+  micrCode: '455768001',
+  ckycrNumber: 'XXXXX0625',
+};
+
 export default function GeneratorPage() {
   const { user, logout } = useAuth();
 
@@ -279,7 +291,7 @@ export default function GeneratorPage() {
   const [generationMode, setGenerationMode] = useState<GenerationMode>('duration');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
-  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd'>('SBI2');
+  const [bankStyle, setBankStyle] = useState<'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd' | 'IPPB'>('SBI2');
 
   // ─── Salary configuration states ──────────────────────────────────────
   const [salaryMode, setSalaryMode] = useState<SalaryMode>('auto');
@@ -334,7 +346,7 @@ export default function GeneratorPage() {
     profile: 'Personal',
   };
 
-  const handleBankStyleChange = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd') => {
+  const handleBankStyleChange = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd' | 'IPPB') => {
     setBankStyle(style);
     let newBranch = SBI_BRANCH_DEFAULTS;
     if (style === 'BOB') newBranch = BOB_BRANCH_DEFAULTS;
@@ -343,6 +355,7 @@ export default function GeneratorPage() {
     else if (style === 'BOI') newBranch = BOI_BRANCH_DEFAULTS;
     else if (style === 'PNB') newBranch = PNB_BRANCH_DEFAULTS;
     else if (style === 'IndusInd') newBranch = INDUSIND_BRANCH_DEFAULTS;
+    else if (style === 'IPPB') newBranch = IPPB_BRANCH_DEFAULTS;
     setBranch(newBranch);
 
     const patchRecord = (prev: StatementRecord | null) => {
@@ -686,7 +699,7 @@ export default function GeneratorPage() {
     window.print();
   };
 
-  const getBankFullName = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd') => {
+  const getBankFullName = (style: 'SBI' | 'SBI2' | 'BOB' | 'AXIS' | 'Kotak' | 'BOI' | 'PNB' | 'IndusInd' | 'IPPB') => {
     switch (style) {
       case 'SBI':
         return 'State Bank of India (V1)';
@@ -704,6 +717,8 @@ export default function GeneratorPage() {
         return 'Punjab National Bank';
       case 'IndusInd':
         return 'IndusInd Bank (INDIE)';
+      case 'IPPB':
+        return 'India Post Payments Bank (IPPB)';
     }
   };
 
@@ -729,7 +744,9 @@ export default function GeneratorPage() {
                             ? 'bg-[#E6503D]'
                             : bankStyle === 'BOI'
                               ? 'bg-sky-700'
-                              : 'bg-red-700'
+                              : bankStyle === 'IPPB'
+                                ? 'bg-[#900C3F]'
+                                : 'bg-red-700'
                   }`}
               >
                 <Landmark size={20} className="text-white" />
@@ -750,7 +767,9 @@ export default function GeneratorPage() {
                                 ? 'bg-orange-900/60 text-orange-300'
                                 : bankStyle === 'BOI'
                                   ? 'bg-sky-900/60 text-sky-300'
-                                  : 'bg-red-900/60 text-amber-300'
+                                  : bankStyle === 'IPPB'
+                                    ? 'bg-red-950/60 text-rose-200'
+                                    : 'bg-red-900/60 text-amber-300'
                       }`}
                   >
                     Generator

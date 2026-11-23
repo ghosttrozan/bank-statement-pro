@@ -144,7 +144,7 @@ function patchPdfFontsAndMetadata(pdfBuffer: Buffer, bankStyle = 'SBI'): Buffer 
   try {
     let pdfStr = pdfBuffer.toString('binary');
     const producer = 'iText 2.1.7 by 1T3XT';
-    const bankName = bankStyle === 'BOI' ? 'Bank of India' : bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' : 'State Bank of India';
+    const bankName = bankStyle === 'BOI' ? 'Bank of India' : bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' : bankStyle === 'IPPB' ? 'India Post Payments Bank' : 'State Bank of India';
     const creator = `${bankName} Internet Banking System`;
 
     // 1. Metadata Patching
@@ -265,7 +265,7 @@ export const generateStatementPdf = async (req: Request, res: Response): Promise
     pdfBuffer = patchPdfFontsAndMetadata(pdfBuffer, settings.bankStyle);
 
     // 5. Apply PKCS#7 Digital Signature
-    const bankName = settings.bankStyle === 'BOI' ? 'Bank of India' : settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' : 'State Bank of India';
+    const bankName = settings.bankStyle === 'BOI' ? 'Bank of India' : settings.bankStyle === 'Kotak' ? 'Kotak Mahindra Bank' : settings.bankStyle === 'IPPB' ? 'India Post Payments Bank' : 'State Bank of India';
     pdfBuffer = await signPdfBuffer(pdfBuffer, {
       reason: `${bankName} Official Account Statement Digital Signature`,
       location: bankName,

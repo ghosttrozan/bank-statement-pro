@@ -29,6 +29,9 @@ public final class PdfTemplateFactory {
         if ("BOI".equalsIgnoreCase(bankStyle) || "BANK OF INDIA".equalsIgnoreCase(bankStyle)) {
             return new BoiTemplate();
         }
+        if ("IPPB".equalsIgnoreCase(bankStyle) || "INDIA POST".equalsIgnoreCase(bankStyle) || "INDIA POST PAYMENTS BANK".equalsIgnoreCase(bankStyle)) {
+            return new IppbTemplate();
+        }
         return new StandardBankTemplate();
     }
 }

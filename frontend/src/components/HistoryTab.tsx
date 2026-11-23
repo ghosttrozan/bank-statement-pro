@@ -139,6 +139,7 @@ export default function HistoryTab({ statements, onSelect, onDeleteRecord, onDup
                           stmt.settings.bankStyle === 'SBI' ? 'bg-sky-50 text-sky-700 border border-sky-100' :
                           stmt.settings.bankStyle === 'Kotak' ? 'bg-rose-50 text-rose-700 border border-rose-100' :
                           stmt.settings.bankStyle === 'BOI' ? 'bg-blue-50 text-blue-700 border border-blue-100' :
+                          stmt.settings.bankStyle === 'IPPB' ? 'bg-red-50 text-[#900C3F] border border-red-200' :
                           'bg-amber-50 text-amber-800 border border-amber-200'
                         }`}>
                           {stmt.settings.bankStyle} Style
