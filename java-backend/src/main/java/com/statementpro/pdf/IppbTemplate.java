@@ -1,4 +1,4 @@
-package com.statementpro.pdf;
+    package com.statementpro.pdf;
 
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.io.image.ImageData;
@@ -115,8 +115,9 @@ public class IppbTemplate implements StatementTemplate {
                     ? "Yes" : "No";
             String custId = (customer != null && customer.cifNumber() != null && !customer.cifNumber().isBlank())
                     ? customer.cifNumber() : "XXXXX0625";
-            String accType = (record.accountInfo() != null && record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank())
+            String rawAccType = (record.accountInfo() != null && record.accountInfo().accountType() != null && !record.accountInfo().accountType().isBlank())
                     ? record.accountInfo().accountType() : "Savings Account";
+            String accType = rawAccType.equalsIgnoreCase("Savings") ? "Savings Account" : rawAccType;
             String micr = (branch != null && branch.micrCode() != null && !branch.micrCode().isBlank())
                     ? branch.micrCode() : "455768001";
 
@@ -959,10 +960,16 @@ public class IppbTemplate implements StatementTemplate {
     }
 
     private String formatTxDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return "02-04-2026";
         try {
-            if (dateStr.matches("\\d{2}-\\d{2}-\\d{4}")) return dateStr;
-            if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                LocalDate d = LocalDate.parse(dateStr);
+            String raw = dateStr.trim();
+            if (raw.matches("\\d{2}-\\d{2}-\\d{4}")) return raw;
+            if (raw.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                LocalDate d = LocalDate.parse(raw, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                return d.format(IPPB_DATE_FMT);
+            }
+            if (raw.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                LocalDate d = LocalDate.parse(raw);
                 return d.format(IPPB_DATE_FMT);
             }
         } catch (Exception ignored) {}
@@ -970,13 +977,20 @@ public class IppbTemplate implements StatementTemplate {
     }
 
     private String formatPeriodDate(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) return "01-Apr-2026";
         try {
-            if (dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
-                LocalDate d = LocalDate.parse(dateStr);
+            String raw = dateStr.trim();
+            if (raw.matches("\\d{2}-[A-Za-z]{3}-\\d{4}")) return raw;
+            if (raw.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                LocalDate d = LocalDate.parse(raw, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                 return d.format(IPPB_PERIOD_FMT);
             }
-            if (dateStr.matches("\\d{2}-\\d{2}-\\d{4}")) {
-                LocalDate d = LocalDate.parse(dateStr, IPPB_DATE_FMT);
+            if (raw.matches("\\d{2}-\\d{2}-\\d{4}")) {
+                LocalDate d = LocalDate.parse(raw, IPPB_DATE_FMT);
+                return d.format(IPPB_PERIOD_FMT);
+            }
+            if (raw.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                LocalDate d = LocalDate.parse(raw);
                 return d.format(IPPB_PERIOD_FMT);
             }
         } catch (Exception ignored) {}
